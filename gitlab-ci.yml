@@ -1,0 +1,73 @@
+# GitLab CI/CD for MATLAB toolbox
+# Adapted from .github/workflows/matlab.yml
+#
+# CUSTOMIZATION REQUIRED:
+# 1. MATLAB access: You have several options for running MATLAB in GitLab CI:
+#    a) Self-hosted runner with MATLAB installed:
+#       - Register a GitLab Runner on a machine with MATLAB installed
+#       - Set the `tags:` on jobs to match your runner's tags
+#       - Set MLM_LICENSE_FILE or MLM_LICENSE_TOKEN in GitLab CI/CD Variables
+#    b) MathWorks-provided Docker image:
+#       - Use image: mathworks/matlab:<release> (e.g., mathworks/matlab:r2024b)
+#       - Requires a license server or batch token
+#       - See https://hub.docker.com/r/mathworks/matlab
+#    c) matlab-actions equivalent for GitLab does not exist officially;
+#       the GitHub Actions setup-matlab has no direct GitLab counterpart.
+#       MathWorks recommends using their Docker images or a self-hosted runner.
+#
+# 2. License configuration:
+#    - Add MLM_LICENSE_TOKEN as a CI/CD Variable (Settings > CI/CD > Variables)
+#      if using MathWorks batch licensing
+#    - Or set MLM_LICENSE_FILE pointing to your network license server
+#
+# 3. Runner tags: Replace `matlab` in `tags:` below with your actual runner tag(s),
+#    or remove `tags:` entirely if using a shared runner with MATLAB available.
+#
+# References:
+#   https://hub.docker.com/r/mathworks/matlab
+#   https://www.mathworks.com/help/cloudcenter/ug/matlab-in-docker.html
+
+stages:
+  - test
+
+variables:
+  # Set in GitLab CI/CD Variables (Settings > CI/CD > Variables), not here.
+  # MLM_LICENSE_TOKEN: <set in GitLab UI>
+  # MLM_LICENSE_FILE: <set in GitLab UI, e.g. 27000@your-license-server>
+
+  # CUSTOMIZE: Set your desired MATLAB release tag, e.g. r2024b, r2025a, latest
+  MATLAB_RELEASE: "latest"
+
+matlab-tests:
+  stage: test
+
+  # OPTION A: Use MathWorks Docker image (remove/replace if using self-hosted runner)
+  # CUSTOMIZE: Set MATLAB_RELEASE variable above or replace tag here directly
+  image: mathworks/matlab:${MATLAB_RELEASE}
+
+  # OPTION B: Self-hosted runner — remove the `image:` line above and uncomment:
+  # tags:
+  #   - matlab   # CUSTOMIZE: replace with your runner's actual tag(s)
+
+  # Only run on pushes/MRs to main (mirrors the GitHub Actions trigger)
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - when: manual  # allows manual trigger from GitLab UI (mirrors workflow_dispatch)
+
+  script:
+    # The MathWorks Docker image entrypoint is MATLAB. To run tests:
+    # CUSTOMIZE: Adjust the test command to match your project structure.
+    # If using a MATLAB project file (.prj), openProject opens it automatically
+    # when MATLAB starts in that directory.
+    - |
+      matlab -batch "
+        addpath('toolbox');
+        results = runtests('tests', 'IncludeSubfolders', true);
+        assertSuccess(results);
+      "
+
+  # CUSTOMIZE: Set cache paths if you have build artifacts to cache between runs
+  # cache:
+  #   paths:
+  #     - .matlab_cache/
