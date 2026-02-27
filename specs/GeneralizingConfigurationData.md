@@ -1,8 +1,10 @@
 # Generalizing ConfigurationData: Design Assessment
 
 **Date:** 2026-02-25
+
 **Status:** Pre-spec assessment — exploring generalization beyond configuration files
-**Context:** Evaluating whether ConfigurationData is "struct 2.0" and identifying appropriate terminology
+
+**Context:** Considerations of generalizing the ConfigurationData datatype to serve any use cases for hierarchical, perhaps heterogeneous, data. Consider relationship with struct. This does not include consideration of what to do about currently specified toml and yaml datatypes.
 
 ---
 
