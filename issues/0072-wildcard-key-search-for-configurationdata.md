@@ -1,8 +1,15 @@
 # #72: Wildcard key search for ConfigurationData
 
-**State:** open  
-**Created:** 2026-02-20  
-**Labels:** enhancement  
+**State:** open
+**Created:** 2026-02-20
+**Updated:** 2026-02-26
+**Labels:** enhancement
+
+## Status
+
+✅ **Spec complete** — see [specs/SearchCapabilities.md](../specs/SearchCapabilities.md)
+
+This issue is now covered by the broader search capabilities spec in issue #71.
 
 ## Description
 
@@ -23,26 +30,33 @@ run1Keys = ???(config, "Run1*");   % ["Run1_accuracy", "Run1_loss"]
 run1Data = select(config, run1Keys);
 ```
 
-## Open design questions
+## Spec decisions
 
-1. **Pattern type**: Accept MATLAB `wildcardPattern` / `regexp` objects? Basic glob strings (`"Run*"`)? Both?
-2. **Search scope**: Top-level keys only, or recursive into nested objects?
-3. **Return type**: String array of matching key names (composable with `select()`), or a projected sub-object directly?
-4. **API name**: `keysmatch`, `findkeys`, `searchkeys`? (avoid `grep` — shadows MATLAB's grep-like builtins)
+The [full spec](../specs/SearchCapabilities.md) addresses the open design questions:
 
-## Proposed direction (needs validation)
+1. **Pattern type**: Support wildcards (`*`) converted to `wildcardPattern`, with optional support for `pattern` objects and function handles
+2. **Search scope**: Recursive by default, with `Recursive=false` option for top-level only
+3. **Return type**: String array of dot-notation paths (composable with `select()`)
+4. **API name**: `findkeys` (clearer intent than `keysmatch` or `searchkeys`)
 
-A function `keysmatch(obj, pattern)` returning a string array of matching canonical key names seems most composable:
+## Proposed API (from spec)
 
 ```matlab
-run1Keys = keysmatch(config, "Run1*");   % string array
-run1Data = select(config, run1Keys);     % project to sub-object
-```
+paths = findkeys(obj, pattern)
+paths = findkeys(obj, pattern, Name=Value)
 
-This keeps search and projection separate, letting users iterate over matching keys too.
+% Examples:
+run1Keys = findkeys(config, "Run1*");   % wildcard pattern
+run1Data = select(config, run1Keys);     % compose with select()
+
+% Case-insensitive, partial matching
+dbKeys = findkeys(config, "database", IgnoreCase=true, MatchType="partial");
+```
 
 ## Related
 
-- `select(obj, keys)` — already implemented, composes naturally with a key search function
-- `keys(obj)` — already returns all top-level canonical key names; a `keysmatch` could be a thin filter on top
+- [#71: Add search capabilities](0071-add-search-capabilities.md) — parent issue with full spec
+- [specs/SearchCapabilities.md](../specs/SearchCapabilities.md) — complete specification
+- `select(obj, keys)` — composes naturally with `findkeys()` output
+- `keys(obj)` — returns all top-level keys; `findkeys()` filters and recurses
 
