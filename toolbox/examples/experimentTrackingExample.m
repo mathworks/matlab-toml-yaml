@@ -1,5 +1,10 @@
 %[text] # Experiment Tracking with configdata() and merge()
 %[text] When running a parameter sweep, you need to track both the configuration that produced each result and the result itself. This example shows how `configdata()` and `merge()` make that natural — parameters and results live in the same object, variant creation is concise, and array operations make analysis straightforward.
+%[text] **ConfigurationData features used:**
+%[text] - **Arrays of ConfigurationData** — Store parameters and results together in each element
+%[text] - **merge()** — Create parameter variants by specifying only what changes
+%[text] - **Dot access on arrays** — Extract fields from all elements without loops
+%[text] - **Heterogeneous schema with iskey()** — Add fields to only the elements that need them \
 %%
 %[text] ## Define Base Parameters
 %[text] Start with a shared base configuration that every run inherits.
@@ -13,7 +18,8 @@ baseParams.optimizer = "sgd";
 runs = [];
 learningRates = [0.001, 0.01, 0.1, 0.5];
 for i = 1:numel(learningRates)
-    params = merge(baseParams, configdata(struct('learning_rate', learningRates(i))));
+    learningRateConfig=configdata(struct('learning_rate', learningRates(i)));
+    params = merge(baseParams, learningRateConfig);
     runs = [runs, params];
 end
 runs %[output:050ec1b5]

@@ -1,5 +1,11 @@
 %[text] # Event Log Processing: Heterogeneous Schema Handling
 %[text] Processing event streams is a natural fit for `configdata` arrays. Events from a real system rarely share the same fields — a `"start"` event carries a session ID, a `"measurement"` event carries sensor data, and an `"error"` event carries an error code and message. Struct arrays require every element to have every field, which means either padding with empty placeholders or giving up vectorized access. `configdata` arrays have no such constraint.
+%[text] 
+%[text] **ConfigurationData features used:**
+%[text] - **Heterogeneous schema per element** — Each event type has only the fields it needs
+%[text] - **Dot access on arrays** — Extract typed MATLAB arrays from filtered subsets
+%[text] - **iskey() filtering** — Select elements by field presence without try-catch
+%[text] - **keys() union** — Inspect all field names across the entire array \
 %%
 %[text] ## Build the Event Log
 %[text] Construct a synthetic stream of events. Each event is a `configdata` object. `"start"`, `"measurement"`, and `"error"` events each share a `timestamp` and `type` field, plus their own type-specific fields.
@@ -51,7 +57,7 @@ end
 keys(events) %[output:949af8d6]
 %%
 [allKeys, perEvent] = keys(events);
-isequal(perEvent{:}) %[output:254f1fa8] %[output:215db057]
+isequal(perEvent{:}) %[output:254f1fa8]
 %%
 %[text] ## Filter by Event Type
 %[text] Dot access on a `configdata` array gathers a field from every element. Because every event has `type`, this returns a string array you can compare directly. Logical indexing then selects the matching subset.
@@ -69,7 +75,7 @@ sensors = measurements.sensor %[output:53b79aac]
 %%
 %[text] ## Filter by Key Presence
 %[text] The measurement events in this log come from two different sensors and would not all share the same sub-fields in a richer schema. `iskey` is vectorized: it returns a logical array the same size as the input, one entry per element.
-hasSensor = iskey(events, "sensor") %[output:47117073]
+hasSensor = iskey(events, "sensor") %[output:01f414fd]
 %%
 %[text] Use the result as a logical index to only work with elements that have this key, then select only temperature readings, then compute the mean.
 eventsWithSensor = events(hasSensor);
@@ -92,9 +98,6 @@ avgTemp = mean(tempReadings.value) %[output:8a865e65]
 %[output:254f1fa8]
 %   data: {"dataType":"textualVariable","outputData":{"header":"logical","name":"ans","value":"   0\n"}}
 %---
-%[output:215db057]
-%   data: {"dataType":"text","outputData":{"text":"\n  1x10 array\n\n    timestamp:          double\n    type:               string\n    session_id:         string\n    sensor:             string\n    value:              double\n    unit:               string\n    code:               double\n    message:            string\n\n","truncated":false}}
-%---
 %[output:998a13a1]
 %   data: {"dataType":"textualVariable","outputData":{"name":"measurements","value":"  1x8 <a href=\"matlab:helpPopup matlab.io.config.ConfigurationData\">ConfigurationData<\/a> array with keys:\n\n    timestamp\n    type\n    sensor\n    value\n    unit\n\n    <a href=\"matlab:show(measurements)\">Show all values<\/a>\n"}}
 %---
@@ -110,12 +113,9 @@ avgTemp = mean(tempReadings.value) %[output:8a865e65]
 %[output:53b79aac]
 %   data: {"dataType":"matrix","outputData":{"columns":8,"header":"1×8 string array","name":"sensors","rows":1,"type":"string","value":[["temperature","temperature","temperature","temperature","temperature","pressure","pressure","pressure"]]}}
 %---
-%[output:47117073]
+%[output:01f414fd]
 %   data: {"dataType":"matrix","outputData":{"columns":10,"header":"1×10 logical array","name":"hasSensor","rows":1,"type":"logical","value":[["0","1","1","1","1","1","0","1","1","1"]]}}
 %---
 %[output:8a865e65]
 %   data: {"dataType":"textualVariable","outputData":{"name":"avgTemp","value":"20.2587"}}
-%---
-%[output:8aa533b9]
-%   data: {"dataType":"textualVariable","outputData":{"name":"avgPressure","value":"1.0121e+03"}}
 %---

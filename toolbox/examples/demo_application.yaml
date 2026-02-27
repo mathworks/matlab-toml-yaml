@@ -1,0 +1,119 @@
+# Multi-environment application configuration
+# Demonstrates ConfigurationData features: heterogeneous arrays, vectorized extraction, key aliasing
+
+app-name: DataPipeline
+version: 3.2.1
+build-system: gradle
+
+# Multiple deployment environments with varying configurations
+environments:
+  - name: development
+    region: us-east-1
+    instance-type: t2.micro
+    debug-mode: true
+    log-level: debug
+
+  - name: staging
+    region: us-west-2
+    instance-type: t3.medium
+    ssl-enabled: true
+    backup-schedule: "0 2 * * *"
+
+  - name: production
+    region: eu-central-1
+    instance-type: c5.xlarge
+    ssl-enabled: true
+    auto-scaling: true
+    min-instances: 3
+    max-instances: 10
+    backup-schedule: "0 1 * * *"
+    monitoring-level: detailed
+
+# Services with heterogeneous schemas - some have databases, some don't
+services:
+  - name: api-gateway
+    port: 8080
+    endpoints: ["/health", "/api/v1", "/metrics"]
+    rate-limit: 1000
+
+  - name: auth-service
+    port: 8081
+    database:
+      host: auth-db.internal
+      port: 5432
+      pool-size: 20
+    jwt-expiry: 3600
+
+  - name: data-processor
+    port: 8082
+    database:
+      host: main-db.internal
+      port: 5432
+      pool-size: 50
+    batch-size: 100
+    cache-enabled: true
+
+  - name: notification-service
+    port: 8083
+    smtp:
+      host: smtp.internal
+      port: 587
+    sms-provider: twilio
+
+  - name: analytics-engine
+    port: 8084
+    database:
+      host: analytics-db.internal
+      port: 5432
+      pool-size: 30
+    spark-master: spark://cluster:7077
+
+# Feature flags - varying types
+features:
+  new-ui: true
+  experimental-api: false
+  beta-users: ["user123", "user456", "user789"]
+  rollout-percentage: 15
+  a-b-test:
+    variant-a: 0.5
+    variant-b: 0.5
+
+# Monitoring configuration
+monitoring:
+  metrics:
+    - name: response_time
+      unit: milliseconds
+      threshold: 500
+      alert: true
+
+    - name: error_rate
+      unit: percentage
+      threshold: 1.0
+      alert: true
+
+    - name: cpu_usage
+      unit: percentage
+      threshold: 80.0
+
+    - name: memory_usage
+      unit: percentage
+      threshold: 85.0
+      alert: true
+
+database-connections:
+  - name: primary
+    host: main-db.internal
+    port: 5432
+    pool:
+      min-size: 5
+      max-size: 50
+      timeout: 30
+
+  - name: cache
+    host: redis.internal
+    port: 6379
+
+  - name: analytics
+    host: analytics-db.internal
+    port: 5432
+    read-only: true

@@ -210,7 +210,7 @@ serverConfig = readyaml("server.yaml");
 %[text] Convert to struct
 serverStruct = struct(serverConfig);
 %[text] Converted to struct:
-serverStruct
+serverStruct %[output:26964a0f]
 %%
 %[text] ## Best Practices
 %[text] Best practices for reading YAML files:
@@ -224,10 +224,10 @@ serverStruct
 %%
 %[text] ## Cleanup
 %[text] Delete temporary YAML files
-delete("basic_config.yaml", "nested_config.yaml", "flow_arrays.yaml", ...
-    "block_arrays.yaml", "mixed_array.yaml", "array_types.yaml", ...
-    "workflow_steps.yaml", "github_workflow.yaml", "special_keys.yaml", ...
-    "types.yaml", "server.yaml", "docker-compose.yaml");
+delete("basic_config.yaml", "nested_config.yaml", "flow_arrays.yaml", ... %[output:group:702a57a9] %[output:0e15cbfb]
+    "block_arrays.yaml", "mixed_array.yaml", "array_types.yaml", ... %[output:0e15cbfb]
+    "workflow_steps.yaml", "github_workflow.yaml", "special_keys.yaml", ... %[output:0e15cbfb]
+    "types.yaml", "server.yaml", "docker-compose.yaml"); %[output:group:702a57a9] %[output:0e15cbfb]
 
 %[appendix]{"version":"1.0"}
 %---
@@ -314,4 +314,10 @@ delete("basic_config.yaml", "nested_config.yaml", "flow_arrays.yaml", ...
 %---
 %[output:9c05f12e]
 %   data: {"dataType":"textualVariable","outputData":{"name":"types","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    string_val: \"Hello, World!\"\n    quoted_string: \"Quoted text\"\n    integer_val: 42\n    float_val: 3.14159\n    boolean_true: true\n    boolean_false: false\n    yes_val: true\n    no_val: false\n    null_val: []\n"}}
+%---
+%[output:26964a0f]
+%   data: {"dataType":"textualVariable","outputData":{"header":"struct with fields:","name":"serverStruct","value":"    server: [1×1 struct]\n"}}
+%---
+%[output:0e15cbfb]
+%   data: {"dataType":"warning","outputData":{"text":"Warning: File 'docker-compose.yaml' not found."}}
 %---

@@ -106,33 +106,33 @@ fieldnames(server) %[output:480a4b3d]
 arrays = readyaml("examples/arrays_config.yaml") %[output:03fb2519]
 %%
 %[text] Numeric arrays convert to MATLAB numeric arrays:
-ports = arrays.web.ports
-class(ports)
+ports = arrays.web.ports %[output:8868c3e2]
+class(ports) %[output:5b7ba6c0]
 %%
 %[text] String arrays convert to MATLAB string arrays:
-hosts = arrays.web.hosts
-class(hosts)
+hosts = arrays.web.hosts %[output:41aa417d]
+class(hosts) %[output:7c2463f4]
 %%
 %[text] Mixed-type arrays become cell arrays:
-settings = arrays.web.settings
-class(settings)
+settings = arrays.web.settings %[output:5987c58e]
+class(settings) %[output:8a101afa]
 %%
 %[text] ### Force YAML arrays to convert to cell arrays with SequenceRule
 %[text] By default, arrays are converted based on their content (auto mode). If you want consistent behavior regardless of content, set `SequenceRule` `=` "`cell"` to always get cell arrays
 arraysCell = readyaml("examples/arrays_config.yaml", SequenceRule="cell");
-portsCell = arraysCell.web.ports
-class(portsCell)
+portsCell = arraysCell.web.ports %[output:80f9ff28]
+class(portsCell) %[output:36ee49f0]
 %%
 %[text] ### Indexing into Arrays of Objects
 %[text] When a YAML sequence of mappings is read, it becomes a YAMLData array. You can index into it and then use dot notation to access fields:
-services = arrays.mixed
-firstName = services(1).name
-secondPort = services(2).port
+services = arrays.mixed %[output:30ff37cf]
+firstName = services(1).name %[output:821971b8]
+secondPort = services(2).port %[output:93752ded]
 %[text] You can also chain the index directly:
-arrays.mixed(1).name
+arrays.mixed(1).name %[output:4faff471]
 %%
 %[text] `describe` is particularly useful when data contains arrays — it shows sizes and types at a glance instead of expanding every element:
-describe(arrays)
+describe(arrays) %[output:86ed8348]
 %%
 %[text] ## Writing YAML Files
 %[text] After modifying configuration, write it back. Let"s read, modify, and save:
@@ -140,10 +140,10 @@ config = readyaml("examples/basic_config.yaml");
 config.port = 9000;
 config.("max-connections") = 100;
 writeyaml(config, "examples/modified_config.yaml");
-disp("Configuration saved!")
+disp("Configuration saved!") %[output:0e5878c8]
 %%
 %[text] View what was written:
-type("examples/modified_config.yaml")
+type("examples/modified_config.yaml") %[output:0109587c]
 %%
 %[text] ### Controlling YAML Output Format
 %[text] YAML supports two styles of arrays: flow (inline) and block. Use `ArrayStyle` to control how arrays are formatted:
@@ -151,33 +151,33 @@ yml = yamldata();
 yml.ports = [8080, 8443, 9000];
 %[text] Flow style (inline):
 writeyaml(yml, "examples/flow_style.yaml", ArrayStyle="flow");
-type("examples/flow_style.yaml")
+type("examples/flow_style.yaml") %[output:5b400e05]
 %%
 %[text] Block style (vertical list; default):
 writeyaml(yml, "examples/block_style.yaml", ArrayStyle="block");
-type("examples/block_style.yaml")
+type("examples/block_style.yaml") %[output:87c06074]
 %%
 %[text] Remove spacing between sections:
 writeyaml(config, "examples/compact.yaml", SectionSpacing="compact");
-type("examples/compact.yaml")
+type("examples/compact.yaml") %[output:14fbb691]
 %%
 %[text] ## Working with TOML Files
 %[text] TOML files work similarly. Data is returned as `TOMLData`, which is like `YAMLData` but specialized for TOML.
 %[text] Read a simple TOML file:
-project = readtoml("examples/simple_project.toml")
+project = readtoml("examples/simple_project.toml") %[output:5a80e9c4]
 %%
 %[text] Access nested values:
-projectName = project.project.name
+projectName = project.project.name %[output:56e61a72]
 %%
 %[text] TOML also handles keys with hyphens:
-buildSystem = project.("build-system")
-requires = project.("build-system").requires
+buildSystem = project.("build-system") %[output:0dc03941]
+requires = project.("build-system").requires %[output:40eac79d]
 %%
 %[text] Modify and write back:
 project.project.version = "2.0.0";
 project.project.("new-field") = "new value";
 writetoml(project, "examples/modified_project.toml");
-type("examples/modified_project.toml")
+type("examples/modified_project.toml") %[output:6d54641a]
 %%
 %[text] ### TOML Formatting Options
 %[text] `writetoml` offers extensive formatting control. Here are common options:
@@ -186,13 +186,13 @@ type("examples/modified_project.toml")
 project = tomldata();
 project.dependencies = ["export_fig", "guilayout", "fsda"];
 writetoml(project, "examples/array_flow.toml", ArrayStyle="flow")
-type("examples/array_flow.toml")
+type("examples/array_flow.toml") %[output:32f66a45]
 writetoml(project, "examples/array_block.toml", ArrayStyle="block")
-type("examples/array_block.toml")
+type("examples/array_block.toml") %[output:02fb2a7b]
 %[text] TOML has multiple string styles. Use literal strings (`''`) to avoid the need to escape special characters. Control string formatting for paths (useful for Windows paths):
 project.paths.data = 'C:\Users\Data';
 writetoml(project, "examples/literal_strings.toml", StringEscapeStyle="literal")
-type("examples/literal_strings.toml")
+type("examples/literal_strings.toml") %[output:2ec04d0c]
 %%
 %[text] ## Summary
 %[text] You've learned how to:
@@ -254,7 +254,7 @@ delete("examples/modified_config.yaml", "examples/flow_style.yaml", ...
 %   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    username: \"Michelle\"\n    password: \"secret123\"\n"}}
 %---
 %[output:8edd4b91]
-%   data: {"dataType":"text","outputData":{"text":"application:\n  name: WebServer\n  version: 2.0.0\n  environment: production\ndatabase:\n  host: localhost\n  port: 5432\n  name: mydb\n  credentials:\n    username: Michelle\n    password: secret123\nlogging:\n  level: info\n  file: \/var\/log\/app.log\n\n","truncated":false}}
+%   data: {"dataType":"text","outputData":{"text":"application:\n  name: WebServer\n  version: 2.0.0\n  environment: production\n\ndatabase:\n  host: localhost\n  port: 5432\n  name: mydb\n  credentials:\n    username: Michelle\n    password: secret123\n\nlogging:\n  level: info\n  file: \/var\/log\/app.log\n\n","truncated":false}}
 %---
 %[output:7c182cfe]
 %   data: {"dataType":"textualVariable","outputData":{"name":"arrays","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    web: [1x1 YAMLData with 3 keys]\n    services: [3x1 string]\n    mixed: [1x2 YAMLData]\n\n    <a href=\"matlab:show(arrays)\">Show all values<\/a>\n"}}
@@ -263,13 +263,13 @@ delete("examples/modified_config.yaml", "examples/flow_style.yaml", ...
 %   data: {"dataType":"text","outputData":{"text":"\n  YAMLData with 3 keys\n\n    web:\n        ports:              3x1 double\n        hosts:              3x1 string\n        settings:           3x1 cell\n    services:           3x1 string\n    mixed:              1x2 array\n        name:               string\n        port:               double\n\n","truncated":false}}
 %---
 %[output:91b4b57b]
-%   data: {"dataType":"matrix","outputData":{"columns":4,"header":"1×4 string array","name":"topKeys","rows":1,"type":"string","value":[["application","database","logging","newdb"]]}}
+%   data: {"dataType":"matrix","outputData":{"columns":3,"header":"1×3 string array","name":"topKeys","rows":1,"type":"string","value":[["application","database","logging"]]}}
 %---
 %[output:9c111a52]
 %   data: {"dataType":"textualVariable","outputData":{"header":"logical","name":"tf","value":"   1\n"}}
 %---
 %[output:7864df86]
-%   data: {"dataType":"matrix","outputData":{"columns":4,"header":"1×4 string array","name":"ans","rows":1,"type":"string","value":[["application","database","newdb","cache"]]}}
+%   data: {"dataType":"matrix","outputData":{"columns":3,"header":"1×3 string array","name":"ans","rows":1,"type":"string","value":[["application","database","cache"]]}}
 %---
 %[output:787fb2d0]
 %   data: {"dataType":"textualVariable","outputData":{"name":"fresh","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    database: [1x1 YAMLData with 3 keys]\n\n    <a href=\"matlab:show(fresh)\">Show all values<\/a>\n"}}
@@ -278,8 +278,86 @@ delete("examples/modified_config.yaml", "examples/flow_style.yaml", ...
 %   data: {"dataType":"textualVariable","outputData":{"name":"fresh2","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    database: [1x1 YAMLData with 3 keys]\n\n    <a href=\"matlab:show(fresh2)\">Show all values<\/a>\n"}}
 %---
 %[output:480a4b3d]
-%   data: {"dataType":"matrix","outputData":{"columns":4,"header":"1×4 string array","name":"ans","rows":1,"type":"string","value":[["application","database","newdb","cache"]]}}
+%   data: {"dataType":"matrix","outputData":{"columns":3,"header":"1×3 string array","name":"ans","rows":1,"type":"string","value":[["application","database","cache"]]}}
 %---
 %[output:03fb2519]
 %   data: {"dataType":"textualVariable","outputData":{"name":"arrays","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    web: [1x1 YAMLData with 3 keys]\n    services: [3x1 string]\n    mixed: [1x2 YAMLData]\n\n    <a href=\"matlab:show(arrays)\">Show all values<\/a>\n"}}
+%---
+%[output:8868c3e2]
+%   data: {"dataType":"matrix","outputData":{"columns":1,"name":"ports","rows":3,"type":"double","value":[["8080"],["8443"],["9000"]]}}
+%---
+%[output:5b7ba6c0]
+%   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"'double'"}}
+%---
+%[output:41aa417d]
+%   data: {"dataType":"matrix","outputData":{"columns":1,"header":"3×1 string array","name":"hosts","rows":3,"type":"string","value":[["alpha"],["beta"],["gamma"]]}}
+%---
+%[output:7c2463f4]
+%   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"'string'"}}
+%---
+%[output:5987c58e]
+%   data: {"dataType":"tabular","outputData":{"columns":1,"header":"3×1 cell array","name":"settings","rows":3,"type":"cell","value":[["\"production\""],["8080"],["1"]]}}
+%---
+%[output:8a101afa]
+%   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"'cell'"}}
+%---
+%[output:80f9ff28]
+%   data: {"dataType":"tabular","outputData":{"columns":1,"header":"3×1 cell array","name":"portsCell","rows":3,"type":"cell","value":[["8080"],["8443"],["9000"]]}}
+%---
+%[output:36ee49f0]
+%   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"'cell'"}}
+%---
+%[output:30ff37cf]
+%   data: {"dataType":"textualVariable","outputData":{"name":"services","value":"  1x2 <a href=\"matlab:helpPopup matlab.io.config.YAMLData\">YAMLData<\/a> array with keys:\n\n    name\n    port\n\n    <a href=\"matlab:show(services)\">Show all values<\/a>\n"}}
+%---
+%[output:821971b8]
+%   data: {"dataType":"textualVariable","outputData":{"name":"firstName","value":"\"service1\""}}
+%---
+%[output:93752ded]
+%   data: {"dataType":"textualVariable","outputData":{"name":"secondPort","value":"8081"}}
+%---
+%[output:4faff471]
+%   data: {"dataType":"textualVariable","outputData":{"name":"ans","value":"\"service1\""}}
+%---
+%[output:86ed8348]
+%   data: {"dataType":"text","outputData":{"text":"\n  YAMLData with 3 keys\n\n    web:\n        ports:              3x1 double\n        hosts:              3x1 string\n        settings:           3x1 cell\n    services:           3x1 string\n    mixed:              1x2 array\n        name:               string\n        port:               double\n\n","truncated":false}}
+%---
+%[output:0e5878c8]
+%   data: {"dataType":"text","outputData":{"text":"Configuration saved!\n","truncated":false}}
+%---
+%[output:0109587c]
+%   data: {"dataType":"text","outputData":{"text":"\napp-name: MyApplication\n\nversion: 1.2.0\n\nport: 9000\n\ndebug: true\n\nauthor: Jane Doe\n\nmax-connections: 100\n","truncated":false}}
+%---
+%[output:5b400e05]
+%   data: {"dataType":"text","outputData":{"text":"\nports: [8080, 8443, 9000]\n","truncated":false}}
+%---
+%[output:87c06074]
+%   data: {"dataType":"text","outputData":{"text":"\nports:\n  - 8080\n  - 8443\n  - 9000\n","truncated":false}}
+%---
+%[output:14fbb691]
+%   data: {"dataType":"text","outputData":{"text":"\napp-name: MyApplication\nversion: 1.2.0\nport: 9000\ndebug: true\nauthor: Jane Doe\nmax-connections: 100\n","truncated":false}}
+%---
+%[output:5a80e9c4]
+%   data: {"dataType":"textualVariable","outputData":{"name":"project","value":"  <a href=\"matlab:helpPopup('matlab.io.config.TOMLData')\" style=\"font-weight:bold\">TOMLData<\/a> with keys:\n\n    project: [1x1 TOMLData with 4 keys]\n    build-system: [1x1 TOMLData with 2 keys]\n\n    <a href=\"matlab:show(project)\">Show all values<\/a>\n"}}
+%---
+%[output:56e61a72]
+%   data: {"dataType":"textualVariable","outputData":{"name":"projectName","value":"\"example-package\""}}
+%---
+%[output:0dc03941]
+%   data: {"dataType":"textualVariable","outputData":{"name":"buildSystem","value":"  <a href=\"matlab:helpPopup('matlab.io.config.TOMLData')\" style=\"font-weight:bold\">TOMLData<\/a> with keys:\n\n    requires: [1x2 string]\n    build-backend: \"setuptools.build_meta\"\n"}}
+%---
+%[output:40eac79d]
+%   data: {"dataType":"matrix","outputData":{"columns":2,"header":"1×2 string array","name":"requires","rows":1,"type":"string","value":[["setuptools>=61.0","wheel"]]}}
+%---
+%[output:6d54641a]
+%   data: {"dataType":"text","outputData":{"text":"\n[project]\nname = \"example-package\"\nversion = \"2.0.0\"\ndescription = \"An example project\"\nnew-field = \"new value\"\n\n[project.urls]\nhomepage = \"https:\/\/github.com\/example\/project\"\nrepository = \"https:\/\/github.com\/example\/project.git\"\n\n[build-system]\nrequires = [\"setuptools>=61.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n","truncated":false}}
+%---
+%[output:32f66a45]
+%   data: {"dataType":"text","outputData":{"text":"\ndependencies = [\"export_fig\", \"guilayout\", \"fsda\"]\n","truncated":false}}
+%---
+%[output:02fb2a7b]
+%   data: {"dataType":"text","outputData":{"text":"\ndependencies = [\n  \"export_fig\",\n  \"guilayout\",\n  \"fsda\"\n]\n","truncated":false}}
+%---
+%[output:2ec04d0c]
+%   data: {"dataType":"text","outputData":{"text":"\ndependencies = ['export_fig', 'guilayout', 'fsda']\n\n[paths]\ndata = 'C:\\Users\\Data'\n","truncated":false}}
 %---
