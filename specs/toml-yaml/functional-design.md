@@ -1000,6 +1000,80 @@ All methods must be called using **function syntax** — dot notation routes to 
 
 ---
 
+#### `show` — ConfigurationData base class behavior
+
+Format-specific subclasses (`YAMLData`, `TOMLData`, `JSONData`, `INIData`) override `show()` to display data in their native format. The `ConfigurationData` base class provides a format-neutral implementation for objects created via `configdata()`.
+
+##### Syntax
+
+```matlab
+show(obj)
+```
+
+##### Input Arguments
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `obj` | `ConfigurationData` scalar or array | The configuration data object or array |
+
+##### Behavior
+
+**For scalar objects**: Displays an indented tree with values, **without type annotations**. Type annotations belong to `describe()`, not `show()`.
+
+```
+  ConfigurationData with 4 keys
+
+    name:               "experiment-1"
+    version:            2
+    training:
+        optimizer:          "adam"
+        learning_rate:      0.001
+        layers:         1x3 array
+        layers(1) =
+            type:       "conv"
+            filters:    64
+        layers(2) =
+            type:       "dense"
+            units:      128
+```
+
+**For arrays**: Each element is labeled with its index using ND-array style (`varname(i) =`), using the caller's variable name from `inputname(1)`, falling back to `ans` if unavailable.
+
+```
+runs(1) =
+
+    model:          "linear"
+    epochs:         50
+    optimizer:      "sgd"
+    learning_rate:  0.001
+
+
+runs(2) =
+
+    model:          "linear"
+    epochs:         50
+    optimizer:      "sgd"
+    learning_rate:  0.01
+```
+
+**Spacing rules:**
+- Top-level arrays: blank line after `=` and double blank between elements (matches MATLAB's ND array convention)
+- Embedded arrays: no blank lines around `key(i) =` headers (keeps parent object compact)
+
+##### Notes
+
+- `show()` is a **value viewer** — always shows actual data values
+- `describe()` is a **schema inspector** — shows types and structure
+- The two are complementary; this design sharpens the distinction
+
+##### See Also
+
+- [Issue #75](../../issues/0075-show-isnt-useful-on-configurationdata.md) — design discussion and alternatives considered
+- [ConfigurationDataShow spec](ConfigurationDataShow.md) — detailed design specification
+- `describe` — structural overview with types
+
+---
+
 ### YAML vs. TOML API Differences
 
 `YAMLData` and `TOMLData` share identical class APIs. The reader and writer functions are intentionally parallel, but a few options differ between formats to reflect genuine differences in the YAML and TOML specifications. This section collects those divergences in one place.
