@@ -1297,6 +1297,40 @@ Index into the array first, e.g., obj(1).name or use:
 
 ---
 
+#### B3: Error on Missing Key Access (missing key behavior)
+
+**Description:** Throw an error when accessing a key that doesn't exist, rather than returning `missing`.
+
+```matlab
+events = readyaml("event_log.yaml");  % Array with heterogeneous keys
+tempEvents = events(events.sensor == "temperature");  % Errors if any element lacks "sensor"
+```
+
+| # | **Pros** | **Priority** |
+|---|----------|--------------|
+| 1 | Strict validation — catches assumption violations early | HIGH |
+| 2 | Error message is informative: tells user their assumption is wrong | MEDIUM |
+| 3 | No learning curve — matches traditional struct behavior | MEDIUM |
+
+| # | **Cons** | **Priority** |
+|---|----------|--------------|
+| 1 | Requires `iskey()` guard for every filtering operation on heterogeneous arrays | HIGH |
+| 2 | Updating array elements requires complex index mapping (extract indices, filter, map back) | HIGH |
+| 3 | Six-line pattern for simple operations: `hasSensor = iskey(events, "sensor"); sensorIndices = find(hasSensor); eventsWithSensor = events(hasSensor); tempMask = eventsWithSensor.sensor == "temperature"; tempIndices = sensorIndices(tempMask); events(tempIndices).value = ...` | HIGH |
+| 4 | Inconsistent with MATLAB table semantics (tables return `NaN`/`missing` for empty cells) | HIGH |
+| 5 | Not composable — can't use boolean masks directly throughout pipeline | HIGH |
+
+**Decision:** Rejected after extensive analysis (see Issue #74). The `missing`-return approach provides:
+- One-step filtering without `iskey()` guards: `events(events.sensor == "temperature")`
+- Direct boolean indexing for updates: `events(tempMask).value = events(tempMask).value * 1.1`
+- Alignment with familiar MATLAB table semantics
+- Read-only convenience without side effects (keys aren't actually added)
+- `iskey()` remains available as the authoritative existence check
+
+**Key design property:** Reading a missing key returns `missing` but doesn't modify the object — `iskey()` still returns `false`, `keys()` doesn't include it, and file writes omit it. This is read-only convenience, not data pollution.
+
+---
+
 ### Category C: Class Hierarchy Alternatives
 
 #### C1: Format-Specific Classes Without Shared Base (YAMLData, TOMLData class hierarchy)
