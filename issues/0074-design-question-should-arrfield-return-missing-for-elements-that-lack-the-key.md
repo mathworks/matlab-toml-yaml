@@ -1,6 +1,6 @@
 # #74: Design question: should arr.field return missing for elements that lack the key?
 
-**State:** open  
+**State:** close  
 **Created:** 2026-02-23  
 **Labels:** enhancement  
 
