@@ -253,13 +253,21 @@ classdef subsasgnTest < matlab.unittest.TestCase
         end
 
         function testArrayDotReferenceMissingKeyError(testCase)
-            % Test: error when key missing in some elements
+            % Test: missing returned when key absent in some elements (Issue #74)
             arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(3).name = "Charlie";
             % arr(2) has no "name" key
 
-            testCase.verifyError(@() arr.name, 'ConfigurationData:MissingKey');
+            % Should return ["Alice", missing, "Charlie"] without error
+            names = arr.name;
+            testCase.verifyEqual(numel(names), 3);
+            testCase.verifyEqual(names(1), "Alice");
+            testCase.verifyTrue(ismissing(names(2)));
+            testCase.verifyEqual(names(3), "Charlie");
+
+            % Verify key not actually added to arr(2)
+            testCase.verifyFalse(iskey(arr(2), "name"));
         end
 
         function testArrayDotReferenceTypeMismatchError(testCase)
@@ -330,10 +338,13 @@ classdef subsasgnTest < matlab.unittest.TestCase
             arr(3).name = "Charlie";
             arr(3).score = 85;
 
-            % Direct access would error because not all have "score"
-            testCase.verifyError(@() arr.score, 'ConfigurationData:MissingKey');
+            % Direct access now returns [100, NaN, 85] (missing coerces to NaN for double)
+            allScores = arr.score;
+            testCase.verifyEqual(allScores(1), 100);
+            testCase.verifyTrue(isnan(allScores(2)));  % missing becomes NaN for double
+            testCase.verifyEqual(allScores(3), 85);
 
-            % But arr.score(logicalMask) should pre-filter and work
+            % arr.score(logicalMask) pre-filters and returns only existing values
             hasScore = iskey(arr, "score");
             scores = arr.score(hasScore);  % This should NOT error
             testCase.verifyEqual(scores, [100, 85]);
