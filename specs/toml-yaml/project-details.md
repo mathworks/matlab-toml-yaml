@@ -40,6 +40,14 @@ MATLAB users working in mixed-language environments or DevOps workflows must eit
 - **No External Dependencies:** Pure MATLAB implementation, no Java libraries or MEX files
 - **Subset Parsers:** Focus on common patterns rather than full spec compliance
 
+#### Key Features
+
+**Heterogeneous Array Handling (Issue #74):**
+- Reading missing keys returns `missing` instead of erroring — enables direct filtering without `iskey` guards
+- Keys aren't actually added to objects — read-only convenience without side effects
+- Example: `events(events.sensor == "temperature")` works even when some events lack "sensor" field
+- Aligns with MATLAB table semantics for familiar, composable behavior
+
 #### Risks and Assumptions
 
 | Risk | Mitigation |

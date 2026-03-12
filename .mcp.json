@@ -5,7 +5,7 @@
       "command": "/Applications/MCP Servers/matlab-mcp-core-server",
       "args": [
         "--matlab-root",
-        "/Applications/MATLAB_R2026a.app",
+        "/Applications/MATLABR2026aPrerelease/MATLAB_R2026a.app",
         "--matlab-display-mode",
         "nodesktop"
       ],

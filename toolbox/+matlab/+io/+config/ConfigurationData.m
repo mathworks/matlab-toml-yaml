@@ -495,19 +495,17 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
 
                 % Check which elements have the key (on potentially pre-filtered array)
                 hasKey = iskey(obj, fieldName);
-                if ~all(hasKey)
-                    missingIndices = find(~hasKey);
-                    error('ConfigurationData:MissingKey', ...
-                        ['Key "%s" is missing in elements %s.\n' ...
-                         'Use iskey(arr, ''%s'') to check which elements have this key.'], ...
-                        fieldName, mat2str(missingIndices(:)'), fieldName);
-                end
 
                 % Collect values from all elements
+                % For elements lacking the key, insert missing (read-only convenience)
                 values = cell(size(obj));
                 for i = 1:numel(obj)
-                    resolvedKey = obj(i).resolveKey(fieldName);
-                    values{i} = obj(i).getData(resolvedKey);
+                    if hasKey(i)
+                        resolvedKey = obj(i).resolveKey(fieldName);
+                        values{i} = obj(i).getData(resolvedKey);
+                    else
+                        values{i} = missing;
+                    end
                 end
 
                 % Try to concatenate homogeneously
@@ -915,6 +913,10 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
             %   Returns typed array if all values have same type, otherwise errors.
             %   This implements the "strict homogeneous" policy: no surprise cells.
             %
+            %   Handles missing values: if an element lacks the key, missing is inserted.
+            %   MATLAB's concatenation coerces missing to NaN for double/single, keeps it
+            %   for string, but errors for integer/logical types.
+            %
             %   The shape of the result matches the shape of the values cell array.
             %   If values is Nx1, result is Nx1. If values is 1xN, result is 1xN.
 
@@ -930,24 +932,48 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
 
             % Get types of all values
             types = cellfun(@class, values, 'UniformOutput', false);
-            uniqueTypes = unique(types);
+
+            % Check for missing values
+            isMissingValue = strcmp(types, 'missing');
+
+            if all(isMissingValue)
+                % All values are missing - return missing array with correct shape
+                result = repmat(missing, inputShape);
+                return;
+            end
+
+            % Filter out missing when checking type homogeneity
+            nonMissingTypes = types(~isMissingValue);
+            uniqueTypes = unique(nonMissingTypes);
 
             if numel(uniqueTypes) > 1
-                % Find first mismatch to report helpful error
-                firstType = types{1};
-                for i = 2:numel(types)
-                    if ~strcmp(types{i}, firstType)
+                % Find first mismatch to report helpful error (ignoring missing)
+                firstType = nonMissingTypes{1};
+                firstIdx = find(~isMissingValue, 1, 'first');
+                for i = 1:numel(types)
+                    if ~isMissingValue(i) && ~strcmp(types{i}, firstType)
                         error('ConfigurationData:TypeMismatch', ...
                             ['Cannot concatenate values for key "%s": types differ.\n' ...
-                             'Element 1 is %s, element %d is %s.\n' ...
+                             'Element %d is %s, element %d is %s.\n' ...
                              'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for heterogeneous values.'], ...
-                            fieldName, firstType, i, types{i}, fieldName);
+                            fieldName, firstIdx, firstType, i, types{i}, fieldName);
                     end
                 end
             end
 
-            % All same type - try to concatenate
+            % All non-missing values have same type
             theType = uniqueTypes{1};
+
+            % Check for integer or logical types with missing values
+            if any(isMissingValue) && ...
+               (startsWith(theType, 'int') || startsWith(theType, 'uint') || strcmp(theType, 'logical'))
+                error('ConfigurationData:MissingNotSupported', ...
+                    ['Cannot concatenate values for key "%s": field has missing values.\n' ...
+                     'Type %s cannot represent missing in MATLAB.\n' ...
+                     'Use iskey(arr, ''%s'') to filter elements before accessing, or\n' ...
+                     'use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
+                    fieldName, theType, fieldName, fieldName);
+            end
 
             % Handle different types appropriately
             if strcmp(theType, 'char')

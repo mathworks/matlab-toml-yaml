@@ -124,6 +124,25 @@ getData(obj(j), key)
 - `show(obj)` — value viewer; displays actual data. Format-specific subclasses emit native format (YAML/TOML/JSON/INI). Format-neutral `ConfigurationData` emits an indented tree with values and no type annotations. Arrays use ND-array style (`varname(i) =`).
 - `describe(obj)` — schema inspector; shows key hierarchy with MATLAB types and sizes. Supports `Depth=N` limiting and returns a queryable table when called with an output argument.
 
+### Missing Key Behavior (Issue #74)
+Reading a missing key returns `missing` instead of erroring:
+```matlab
+events(3).sensor  % returns missing if events(3) has no "sensor" key
+```
+
+**Key properties:**
+- The key is **not actually added** to the object — `iskey()` still returns false, `keys()` doesn't include it, `show()` and file writes omit it
+- This is **read-only convenience** without side effects
+- Enables direct filtering: `events(events.sensor == "temperature")` works even when some events lack "sensor"
+- Works naturally for `double` and `string` types (most common in configs)
+- Errors for integer/logical types (MATLAB can't concatenate `missing` with these)
+
+**Use `iskey()` for authoritative key existence checks:**
+```matlab
+iskey(obj, "field")  % true only if key actually exists
+obj.field            % returns missing if absent (read convenience)
+```
+
 ## Key Files
 
 | File | Purpose |
