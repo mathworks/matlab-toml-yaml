@@ -496,6 +496,12 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
                 % Check which elements have the key (on potentially pre-filtered array)
                 hasKey = iskey(obj, fieldName);
 
+                % If NO elements have the key, error (key doesn't exist on this array)
+                if ~any(hasKey)
+                    error('ConfigurationData:InvalidKey', ...
+                        'Key "%s" does not exist.', fieldName);
+                end
+
                 % Collect values from all elements
                 % For elements lacking the key, insert missing (read-only convenience)
                 values = cell(size(obj));
