@@ -162,7 +162,8 @@ classdef subsasgnTest < matlab.unittest.TestCase
             data.normal = "normal value";
 
             % All values accessible via dot notation
-            testCase.verifyEqual(data.keys, ["key1", "key2"]);
+            % Arrays are normalized to column vectors (Issue #77)
+            testCase.verifyEqual(data.keys, ["key1"; "key2"]);
             testCase.verifyEqual(data.isfield, false);
             testCase.verifyEqual(data.struct, "struct value");
             testCase.verifyEqual(data.normal, "normal value");
