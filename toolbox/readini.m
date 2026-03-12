@@ -123,12 +123,12 @@ function value = parseValue(valueStr)
         % Try parsing as numeric array
         numArray = str2double(parts);
         if ~any(isnan(numArray))
-            value = numArray';  % Transpose to row vector
+            value = numArray;  % Orientation normalized by ConfigurationData (Issue #77)
             return;
         end
 
-        % Otherwise as string array (row vector)
-        value = parts';
+        % Otherwise as string array
+        value = parts;  % Orientation normalized by ConfigurationData (Issue #77)
         return;
     end
 

@@ -103,8 +103,9 @@ classdef initest < matlab.unittest.TestCase
             ports = config.arrays.ports;
             hosts = config.arrays.hosts;
 
-            testCase.verifyEqual(ports, [8080 8443 9000]);
-            testCase.verifyEqual(hosts, ["alpha" "beta" "gamma"]);
+            % Arrays are now normalized to column vectors (Issue #77)
+            testCase.verifyEqual(ports, [8080; 8443; 9000]);
+            testCase.verifyEqual(hosts, ["alpha"; "beta"; "gamma"]);
 
             delete('test_csv.ini');
         end

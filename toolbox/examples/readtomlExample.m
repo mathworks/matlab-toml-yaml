@@ -113,10 +113,10 @@ show(project) %[output:82e03ecb]
 %%
 %[text] ### Reading Potentially Missing Keys
 %[text] You can read keys directly without checking existence first — missing keys return `missing`:
-value = project.nonexistent  %[output:new]
+value = project.nonexistent 
 %%
 %[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
-%[text] ```matlab
+%[text] ```
 %[text] % Filter array by optional field value
 %[text] filtered = items(items.optional_field == "value")
 %[text] % Elements without optional_field return missing, and missing == "value" is false

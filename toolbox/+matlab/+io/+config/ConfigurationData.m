@@ -1009,8 +1009,17 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
                         % Check all have same size
                         sizes = cellfun(@size, values, 'UniformOutput', false);
                         if all(cellfun(@(s) isequal(s, sizes{1}), sizes))
-                            % Same size - can concatenate
-                            result = cat(1, values{:});
+                            % Same size - concatenate based on input shape
+                            % For 1xN inputs (row vectors), use horizontal cat (cat(2, ...))
+                            % For Nx1 inputs (column vectors), use vertical cat (cat(1, ...))
+                            % This enables natural concatenation: 1xN arrays with column values -> MxN result
+                            if inputShape(1) == 1 && inputShape(2) > 1
+                                % Row input -> horizontal concatenation
+                                result = cat(2, values{:});
+                            else
+                                % Column or other shape -> vertical concatenation
+                                result = cat(1, values{:});
+                            end
                         else
                             error('ConfigurationData:SizeMismatch', ...
                                 ['Cannot concatenate values for key "%s": sizes differ.\n' ...
@@ -1054,8 +1063,10 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         function obj = setData(obj, key, value)
             %SETDATA Set value in Data dictionary (wraps in cell)
             %   Validates the value type before storing.
+            %   Normalizes array orientation for consistent concatenation (Issue #77).
             key = string(key);
             value = obj.validateAndConvertValue(value, key);
+            value = obj.normalizeVectorOrientation(value);
             obj.xInternal__.Data(key) = {value};
         end
 
@@ -1593,6 +1604,49 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
             else
                 word = singular + "s";
             end
+        end
+
+        function array = normalizeVectorOrientation(array)
+            %NORMALIZEVECTORORIENTATION Normalize vectors to column orientation
+            %   Ensures consistent concatenation behavior across all configuration
+            %   formats (YAML, TOML, JSON, INI).
+            %
+            %   Rationale: Column vector values enable natural concatenation when
+            %   extracting from 1xN object arrays (the common case). For 1xN objArray:
+            %     objArray.key with column values -> clean MxN array via horzcat
+            %     objArray.key with row values -> flattened 1x(M*N) via horzcat
+            %
+            %   What gets normalized:
+            %     - Numeric arrays (double, single, int*, uint*)
+            %     - String arrays
+            %     - Logical arrays
+            %     - ConfigurationData object arrays
+            %
+            %   What does NOT get normalized:
+            %     - Char arrays (represent strings, not value arrays)
+            %     - Cell arrays (no clear orientation semantics)
+            %     - Struct arrays (complex semantics)
+            %     - Scalar values (orientation-neutral)
+            %     - Empty arrays (no orientation)
+            %     - Multi-dimensional arrays (only true vectors - one dimension is 1)
+            %
+            %   See Issue #77 and Claude/ISSUE_77_ARRAY_ORIENTATION_PLAN.md
+
+            % Skip empty, scalar, char, cell arrays, and struct arrays
+            if isempty(array) || isscalar(array) || ischar(array) || iscell(array) || isstruct(array)
+                return;
+            end
+
+            % Get array size
+            arraySize = size(array);
+
+            % Only normalize true vectors (one dimension is 1, the other > 1)
+            % This skips multi-dimensional arrays like 2x3 matrices
+            if numel(arraySize) == 2 && arraySize(1) == 1 && arraySize(2) > 1
+                % Row vector (1xN) -> transpose to column (Nx1)
+                array = array(:);
+            end
+            % Column vectors (Nx1) and multi-dimensional arrays pass through unchanged
         end
 
         function shortName = shortClassName(fullName)

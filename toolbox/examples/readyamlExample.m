@@ -185,10 +185,10 @@ show(dbConfig) %[output:5360cd8e]
 %%
 %[text] ### Reading Potentially Missing Keys
 %[text] You can read keys directly without checking existence first — missing keys return `missing`:
-value = ghActions.nonexistent  %[output:new]
+value = ghActions.nonexistent 
 %%
 %[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
-%[text] ```matlab
+%[text] ```
 %[text] % Filter array by optional field value
 %[text] filtered = items(items.optional_field == "value")
 %[text] % Elements without optional_field return missing, and missing == "value" is false
