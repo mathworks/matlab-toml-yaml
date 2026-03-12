@@ -37,11 +37,44 @@ The classes are **struct-like** by design, with a few extensions:
 | Feature | Behavior |
 |---------|----------|
 | Dot notation access | `config.section.key` — reads and writes nested values in array `config.section` naturally, not comma-separated list |
+| Missing key behavior | `config.missingKey` returns `missing` (not an error) — key isn't actually added; enables filtering like `arr(arr.field == value)` even when some elements lack `field`. Works for `double` and `string` types; errors for integer/logical. Use `iskey()` for authoritative existence checks |
 | Special character keys | `config.("build-system")` — keys with hyphens, dots, or spaces are fully supported |
 | Key aliases | `config.build_system` also works (auto-generated `makeValidName` alias) |
 | Method calls | Function syntax required: `keys(config)`, `isfield(config, "k")`, `describe(config)` — dot syntax accesses data keys, not methods |
 | Key order | Insertion order preserved on both read and write |
 | Struct compatibility | `struct(config)` converts to a plain struct; writers also accept plain structs |
+
+#### Missing Key Behavior
+
+Reading a key that doesn't exist returns `missing` rather than erroring. This is a **read-only convenience** — the key is not actually added to the object:
+
+```matlab
+% Given: events(3) has no "sensor" key
+value = events(3).sensor;           % returns: missing
+iskey(events(3), "sensor")          % returns: false
+keys(events(3))                     % does not include "sensor"
+show(events(3))                     % does not display "sensor"
+writeyaml(events(3), "out.yaml")    % does not write "sensor"
+```
+
+**Key properties:**
+- Enables direct filtering without pre-checking: `tempEvents = events(events.sensor == "temperature")`
+- Works naturally for `double` and `string` types (MATLAB coerces `missing` to `NaN` for numeric, preserves `missing` for string)
+- Errors for integer/logical types (MATLAB cannot represent `missing` in these types)
+- Read-write asymmetry: reading returns `missing` (permissive), writing adds the key (explicit)
+
+**Use `iskey()` for authoritative existence checks:**
+```matlab
+iskey(obj, "field")  % true only if key actually exists
+obj.field            % returns missing if absent (read convenience)
+```
+
+**Example: Filtering heterogeneous arrays**
+```matlab
+% Filter and update values in one step — no iskey() guard needed
+tempMask = events.sensor == "temperature";  % false for events without "sensor"
+events(tempMask).value = events(tempMask).value * 1.1;
+```
 
 ## Proposed Design: Details
 
@@ -348,7 +381,7 @@ isequal(perStep{:})   % false if keys vary by element
 
 #### `iskey`
 
-Check whether a key exists in a `YAMLData` scalar or each element of an array. Useful for filtering arrays of configuration objects.
+Check whether a key exists in a `YAMLData` scalar or each element of an array. This is the **authoritative** method for checking key existence. Note that `obj.field` returns `missing` (not an error) when a key doesn't exist, so use `iskey()` when you need to distinguish between "key exists with value `missing`" and "key doesn't exist".
 
 ##### Syntax
 
@@ -378,6 +411,12 @@ emailUsers = data.users(hasEmail);
 
 % Require all elements to have a key
 all(iskey(data.users, "name"))
+
+% Authoritative existence check vs. read convenience
+iskey(events(3), "sensor")     % false — key doesn't exist
+events(3).sensor                % missing — read convenience, doesn't add key
+events(3).sensor = missing;     % NOW the key exists
+iskey(events(3), "sensor")     % true — key was added
 ```
 
 ---
@@ -1067,6 +1106,34 @@ authors = project.project.authors;
 deps = project.("build-system").requires;
 ```
 
+#### Design Case: Filtering Heterogeneous Arrays (yaml)
+
+```matlab
+% Read event log with mixed event types
+events = readyaml("event_log.yaml");
+% events is an array where some elements have "sensor" key, others don't
+
+% Direct filtering — no iskey() guard needed
+tempEvents = events(events.sensor == "temperature");
+
+% Scale all temperature readings by 1.1x
+tempMask = events.sensor == "temperature";
+events(tempMask).value = events(tempMask).value * 1.1;
+
+% Compare with pre-missing-behavior approach (6 lines):
+% hasSensor = iskey(events, "sensor");
+% sensorIndices = find(hasSensor);
+% eventsWithSensor = events(hasSensor);
+% tempMask = eventsWithSensor.sensor == "temperature";
+% tempIndices = sensorIndices(tempMask);
+% events(tempIndices).value = events(tempIndices).value * 1.1;
+
+% Authoritative check when needed
+if ~all(iskey(events, "timestamp"))
+    error("Some events missing timestamp");
+end
+```
+
 ### Design Rationale
 
 | # | **Pros** | **Priority** |
@@ -1079,6 +1146,7 @@ deps = project.("build-system").requires;
 | 6 | Namespace design (`matlab.io.config.*`) follows MathWorks convention; informal wrappers maintain discoverability | HIGH |
 | 7 | Function-syntax method calls allow config keys to have any name without conflict | HIGH |
 | 8 | Type validation at assignment provides immediate feedback before a file write is attempted | MEDIUM |
+| 9 | Missing key returns `missing` (not error) — enables direct filtering of heterogeneous arrays without `iskey()` guards; aligns with MATLAB table semantics | HIGH |
 
 | # | **Cons** | **Mitigation Plans** | **Priority** |
 |---|----------|---------------------|--------------|
@@ -1100,6 +1168,9 @@ deps = project.("build-system").requires;
 | 7 | Assigning unsupported type (e.g., `function_handle`) | `Error: Cannot assign value of type 'function_handle'. Function handles cannot be serialized to a config file.` |
 | 8 | Assigning a `table` | `Error: Cannot assign table directly. Convert first: struct(yourTable)` |
 | 9 | Accessing `data.users.name` on a ConfigurationData array | `Error: Cannot access field 'name' on a [1 3] array of YAMLData objects. Index into the array first, e.g., obj(1).name or use: arrayfun(@(x) x.name, obj)` |
+| 10 | Reading a missing key | Returns `missing` (no error). Key is not actually added to object. Use `iskey()` for authoritative existence checks. |
+| 11 | Reading missing key from array with integer/logical values | `Error: Cannot concatenate missing with integer/logical type. Use iskey() to pre-filter or arrayfun to extract values.` |
+| 12 | Accessing field on heterogeneous array with all elements missing that key | Returns array of `missing` with class `missing` (no error) |
 
 ## Alternate Designs Considered
 
