@@ -1,8 +1,10 @@
 # #77: Normalize YAML array orientation to avoid horzcat/vertcat issues
 
-**State:** open
+**State:** closed
 **Created:** 2026-02-27
+**Resolved:** 2026-03-12
 **Labels:** design, enhancement
+**Resolution:** Implemented array normalization to column vectors in ConfigurationData.tryConcatenate and setData
 
 ## Description
 
