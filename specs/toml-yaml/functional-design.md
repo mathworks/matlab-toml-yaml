@@ -76,6 +76,49 @@ tempMask = events.sensor == "temperature";  % false for events without "sensor"
 events(tempMask).value = events(tempMask).value * 1.1;
 ```
 
+#### Array Value Orientation
+
+All array **values** stored in ConfigurationData objects are normalized to **column vectors (Nx1)** internally. This enables natural concatenation behavior when extracting values from ConfigurationData object arrays.
+
+**Why Column Vectors?**
+
+ConfigurationData object arrays can be any shape (1xN, Nx1, MxN), but common workflows produce **1xN arrays** (row vectors):
+- Readers return 1xN arrays: `configs = readyaml('config*.yaml')`
+- Single-index expansion creates 1xN arrays: `config(2) = YAMLData` makes 1x2
+- This matches MATLAB struct behavior: `mystruct(2).field` expands to 1x2
+
+When extracting values from a **1xN object array** using dot notation, MATLAB uses `horzcat`:
+
+```matlab
+% 3 configs, each with ports = [8080; 8443; 9000] (3x1 column)
+configs = [config1 config2 config3];  % 1x3 object array
+ports = configs.ports;  % horzcat combines the values
+% Result: 3x3 array where each column is one config's ports ✅
+```
+
+If values were row vectors, `horzcat` would flatten them into a 1x9 mess, losing the structure.
+
+**Format Behavior:**
+
+All formats normalize array values to columns:
+- YAML: `[1, 2, 3]` → `[1; 2; 3]`
+- JSON: `[1, 2, 3]` → `[1; 2; 3]`
+- INI: `values=1,2,3` → `[1; 2; 3]`
+- TOML: `values = [1, 2, 3]` → `[1; 2; 3]`
+
+This ensures:
+- Consistent behavior across formats
+- Natural concatenation for 1xN object arrays (common case)
+- Alignment with MATLAB's column-major convention
+
+**Breaking Change (INI format only):**
+
+Prior to v2.x, INI arrays were row vectors. Code expecting row vectors should use transpose: `config.values'`.
+
+**Implementation:**
+
+Normalization occurs in `ConfigurationData.tryConcatenate` via the `normalizeVectorOrientation` helper method, applying uniformly to all formats and nested structures. See Issue #77 and `Claude/ISSUE_77_ARRAY_ORIENTATION_PLAN.md` for detailed rationale.
+
 ## Proposed Design: Details
 
 ### `readyaml`
@@ -1221,6 +1264,7 @@ end
 | 7 | Function-syntax method calls allow config keys to have any name without conflict | HIGH |
 | 8 | Type validation at assignment provides immediate feedback before a file write is attempted | MEDIUM |
 | 9 | Missing key returns `missing` (not error) — enables direct filtering of heterogeneous arrays without `iskey()` guards; aligns with MATLAB table semantics | HIGH |
+| 10 | Column vector normalization for array values — enables natural concatenation behavior when extracting from 1xN object arrays (common case); aligns with MATLAB's column-major convention | HIGH |
 
 | # | **Cons** | **Mitigation Plans** | **Priority** |
 |---|----------|---------------------|--------------|
