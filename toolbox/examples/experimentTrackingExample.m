@@ -52,6 +52,8 @@ for i = 1:numel(runs)
 end
 earlyStopped = runs(iskey(runs, "early_stopped")) %[output:5b695d4f]
 %%
+%[text] Note: We use `iskey()` here rather than direct filtering (`runs.early_stopped == true`) because the goal is to find runs where the field was explicitly set. While direct filtering would work (since `missing == true` is `false`), using `iskey()` makes the intent clearer: "get runs that have this field."
+%%
 %[text] Each entry in `earlyStopped` carries its full parameter set alongside the early-stopping metadata — everything in one place, with no schema enforcement forcing uniformity where the data naturally varies.
 
 %[appendix]{"version":"1.0"}

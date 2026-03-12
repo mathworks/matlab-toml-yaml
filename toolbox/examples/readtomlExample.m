@@ -111,6 +111,18 @@ end %[output:group:94bc2248]
 %[text] Project structure:
 show(project) %[output:82e03ecb]
 %%
+%[text] ### Reading Potentially Missing Keys
+%[text] You can read keys directly without checking existence first — missing keys return `missing`:
+value = project.nonexistent  %[output:new]
+%%
+%[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
+%[text] ```matlab
+%[text] % Filter array by optional field value
+%[text] filtered = items(items.optional_field == "value")
+%[text] % Elements without optional_field return missing, and missing == "value" is false
+%[text] ```
+%[text] Use `iskey()` when you need to distinguish "missing" from "exists but doesn't match."
+%%
 %[text] ## Data Types in TOML
 %[text] TOML supports various data types
 tomlTypes = [
@@ -204,6 +216,7 @@ fprintf("  Requires: %s\n", strjoin(buildSys.requires, ", ")); %[output:9b12b670
 %[text] - Use quoted syntax for special characters: config.("build-system")
 %[text] - Use keys to explore unknown structures
 %[text] - Use isfield to check for optional fields
+%[text] - Missing keys return `missing` for convenience; use `iskey()` for explicit existence checks
 %[text] - Use show for formatted display during debugging
 %[text] - Convert to struct when interfacing with code expecting structs\\ \
 %%

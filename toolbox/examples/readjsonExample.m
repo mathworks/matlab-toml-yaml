@@ -100,6 +100,18 @@ end %[output:group:3589c8b9]
 %[text] Use show for formatted display:
 show(proj) %[output:3836e79c]
 %%
+%[text] ### Reading Potentially Missing Keys
+%[text] You can read keys directly without checking existence first — missing keys return `missing`:
+value = proj.nonexistent  %[output:new]
+%%
+%[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
+%[text] ```matlab
+%[text] % Filter array by optional field value
+%[text] filtered = items(items.optional_field == "value")
+%[text] % Elements without optional_field return missing, and missing == "value" is false
+%[text] ```
+%[text] Use `iskey()` when you need to distinguish "missing" from "exists but doesn't match."
+%%
 %[text] ## Data Types in JSON
 %[text] JSON supports various data types.
 jsonTypes = sprintf('{\n  "string_val": "Hello, World!",\n  "integer_val": 42,\n  "float_val": 3.14159,\n  "boolean_true": true,\n  "boolean_false": false,\n  "null_val": null,\n  "array_val": [1, 2, 3],\n  "object_val": {"nested": "value"}\n}');
@@ -131,6 +143,7 @@ serverStruct = struct(serverConfig) %[output:128fa2aa] %[output:8b5c05bb] %[outp
 %[text] - Use quoted syntax for special characters: `config.("build-system")`
 %[text] - Use `keys` to explore unknown structures
 %[text] - Use `iskey` to check for optional fields
+%[text] - Direct filtering with potentially missing keys: `arr(arr.field == value)` works naturally
 %[text] - Use `show` for formatted display during debugging
 %[text] - Use `SequenceRule="cell"` when you need consistent array handling \
 %%

@@ -76,6 +76,14 @@ prodEnv = envs(iskey(envs, "auto-scaling")) %[output:2e8447ad]
 %[text] Now extraction works:
 prodEnv.("auto-scaling") %[output:67735d11]
 %%
+%[text] With missing-key behavior, you can also filter by checking for `missing`:
+prodEnvAlt = envs(~ismissing(envs.("auto-scaling")))  %[output:new]
+%%
+%[text] Or filter by value directly when you know the expected value:
+prodEnvByValue = envs(envs.("auto-scaling") == true)  %[output:new]
+%%
+%[text] Use `iskey()` when existence is the primary concern; use direct value comparison when filtering by specific values.
+%%
 %[text] ## Vectorized Operations
 %[text] Extract all service ports as a numeric array:
 config.services.port %[output:7d925521]
@@ -129,10 +137,19 @@ show(config.features) %[output:28a13514]
 %[text] Combine multiple operations to create a deployment overview table:
 envs = config.environments;
 
+%[text] Handle optional SSL field with two approaches:
+%[text]
+%[text] **Approach 1: Direct extraction with missing**
+sslEnabledDirect = envs.("ssl-enabled");  % some elements return missing
+sslEnabledDirect(ismissing(sslEnabledDirect)) = false;  % fill in defaults
+%%
+%[text] **Approach 2: Explicit iskey() guard (more traditional)**
 % Handle optional SSL field: default to false, then fill in actual values
 hasSsl = iskey(envs, "ssl-enabled");
 sslEnabled = false(size(envs));
 sslEnabled(hasSsl) = [envs(hasSsl).("ssl-enabled")];
+%%
+%[text] Both work. The first is more concise when defaults are simple; the second is clearer for complex logic or debugging unexpected missing values.
 
 summary = table(... %[output:group:6ab0ff1e] %[output:1bac20f9]
     envs.name', ... %[output:1bac20f9]

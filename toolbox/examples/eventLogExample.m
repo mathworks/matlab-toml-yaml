@@ -4,7 +4,8 @@
 %[text] **ConfigurationData features used:**
 %[text] - **Heterogeneous schema per element** — Each event type has only the fields it needs
 %[text] - **Dot access on arrays** — Extract typed MATLAB arrays from filtered subsets
-%[text] - **iskey() filtering** — Select elements by field presence without try-catch
+%[text] - **Direct filtering** — Read missing keys returns `missing`, enabling simple `arr(arr.field == value)` patterns
+%[text] - **iskey() when needed** — Explicit existence checks for distinguishing missing vs. mismatched values
 %[text] - **keys() union** — Inspect all field names across the entire array \
 %%
 %[text] ## Build the Event Log
@@ -73,14 +74,18 @@ values = measurements.value %[output:8936eed0]
 %%
 sensors = measurements.sensor %[output:53b79aac]
 %%
-%[text] ## Filter by Key Presence
-%[text] The measurement events in this log come from two different sensors and would not all share the same sub-fields in a richer schema. `iskey` is vectorized: it returns a logical array the same size as the input, one entry per element.
-hasSensor = iskey(events, "sensor") %[output:01f414fd]
-%%
-%[text] Use the result as a logical index to only work with elements that have this key, then select only temperature readings, then compute the mean.
-eventsWithSensor = events(hasSensor);
-tempReadings = eventsWithSensor(eventsWithSensor.sensor == "temperature");
+%[text] ## Filter and Compute Directly
+%[text] Because reading a missing key returns `missing` (not an error), you can filter directly without pre-checking. Elements without a `sensor` key return `missing`, and `missing == "temperature"` is `false`, so they're excluded naturally:
+tempReadings = events(events.sensor == "temperature");
 avgTemp = mean(tempReadings.value) %[output:8a865e65]
+%%
+%[text] This is equivalent to the explicit `iskey()` approach:
+hasSensor = iskey(events, "sensor");
+eventsWithSensor = events(hasSensor);
+tempReadingsExplicit = eventsWithSensor(eventsWithSensor.sensor == "temperature");
+mean(tempReadingsExplicit.value)  %[output:new]
+%%
+%[text] Use `iskey()` when you need to distinguish "key doesn't exist" vs "key exists with non-matching value." For straightforward filtering, the simplified pattern is clearer.
 %%
 %[text] ## Why Not a Struct Array?
 %[text] A MATLAB struct array requires every element to have the same field names. You would have to pad the `"start"` event with empty `sensor`, `value`, `unit`, `code`, and `message` fields, and do the same for `"error"` events. That padding is pure noise: `mean([events.value])` would silently include the empty placeholders unless you remembered to filter first.
