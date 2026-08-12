@@ -1,5 +1,9 @@
 # Configuration File I/O Toolbox
 
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=michellehirsch/matlab-toml-yaml)
+
+MATLAB&reg; has no native support for YAML or TOML configuration files. Most existing solutions require Java dependencies or external toolboxes. This toolbox fills that gap with a pure-MATLAB implementation that works out of the box — no additional setup required.
+
 A unified MATLAB toolbox for reading and writing YAML and TOML configuration files with intuitive dot notation access and full round-trip support.
 
 ## Features
@@ -155,7 +159,7 @@ writeyaml(d, 'config.yaml');    % Dictionaries work too
 
 ## Examples
 
-See `GettingStarted.mlx` for an interactive walkthrough, or explore the `examples/` folder:
+See `toolbox/GettingStarted.m` for an introductory walkthrough, or explore the `examples/` folder:
 
 **YAML Examples:**
 - `github-actions-ci.yaml` - GitHub Actions workflow
@@ -246,53 +250,11 @@ Detailed development notes, design decisions, and implementation details are in 
 
 ## License
 
-Copyright 2025 The MathWorks, Inc.
+Copyright 2025 The MathWorks, Inc. See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-This is a personal project. For bugs or suggestions, please create an issue.
-
-## Developer Setup with Claude Code
-
-This project is configured for development with [Claude Code](https://claude.ai/code). The repository includes shared MCP (Model Context Protocol) server configurations in `.mcp.json`.
-
-### Required Environment Variables
-
-Before running `claude` in this repository, set these environment variables:
-
-```bash
-# Required: Path to the MATLAB MCP server binary
-export MATLAB_MCP_SERVER_PATH=/path/to/matlab-mcp-core-server
-
-# Optional: MATLAB installation path (defaults to /Applications/MATLAB_R2026a.app)
-export MATLAB_ROOT=/Applications/MATLAB_R2026a.app
-
-# Required for GitHub MCP server: Your GitHub personal access token
-export GITHUB_TOKEN=ghp_your_token_here
-```
-
-Add these to your `~/.zshrc` or `~/.bashrc` for persistence.
-
-### MCP Servers
-
-The project uses three MCP servers:
-
-| Server | Purpose | Setup |
-|--------|---------|-------|
-| **matlab** | Run MATLAB code, tests, and static analysis | Requires `MATLAB_MCP_SERVER_PATH` env var pointing to the server binary |
-| **github** | GitHub API access for issues, PRs, etc. | Requires `GITHUB_TOKEN` env var with a [personal access token](https://github.com/settings/tokens) |
-| **filesystem** | File read/write operations | No setup required (uses npm package) |
-
-### First-Time Setup
-
-1. Clone the repository
-2. Set the environment variables above
-3. Run `claude` in the repository directory
-4. When prompted, approve the project MCP servers
-
-### Permissions
-
-Shared tool permissions are in `.claude/settings.json`. Personal permissions (like bash commands you've approved) go in `.claude/settings.local.json` which is git-ignored.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
 
 ---
 
