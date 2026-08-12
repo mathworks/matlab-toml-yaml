@@ -378,7 +378,8 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
             % Append to existing array
             currentArray = parent.(lastKey);
             if isa(currentArray, 'matlab.io.config.TOMLData')
-                parent.(lastKey) = [currentArray, newElement];
+                % Use vertical concatenation for column-oriented arrays (Issue #77)
+                parent.(lastKey) = [currentArray; newElement];
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" is not a TOMLData array', lastKey);

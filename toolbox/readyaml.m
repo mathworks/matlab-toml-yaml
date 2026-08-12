@@ -356,11 +356,9 @@ end
 function value = consolidateArray(parsedItems, arrayFormat)
     %CONSOLIDATEARRAY Convert cell array to specialized arrays based on arrayFormat
     %   Shared logic for both flow-style and block-style sequences
-
-    % Ensure parsedItems is a column cell array for consistent output
-    if size(parsedItems, 1) == 1 && size(parsedItems, 2) > 1
-        parsedItems = parsedItems(:);  % Convert row to column
-    end
+    %
+    %   Note: Array orientation normalization is now handled centrally by
+    %   ConfigurationData.tryConcatenate (Issue #77).
 
     if arrayFormat == "auto"
         % Check if all items are same type

@@ -94,7 +94,8 @@ classdef configdataTest < matlab.unittest.TestCase
             d = configdata();
             c = categorical(["a", "b", "a"]);
             d.labels = c;
-            testCase.verifyEqual(d.labels, c);
+            % Arrays are normalized to column vectors (Issue #77)
+            testCase.verifyEqual(d.labels, categorical(["a"; "b"; "a"]));
         end
 
         function testYamldataStillRejectsTable(testCase)
@@ -151,7 +152,8 @@ classdef configdataTest < matlab.unittest.TestCase
             base = configdata(); base.tags = ["a", "b", "c"];
             override = configdata(); override.tags = ["x", "y"];
             result = merge(base, override);
-            testCase.verifyEqual(result.tags, ["x", "y"]);
+            % Arrays are normalized to column vectors (Issue #77)
+            testCase.verifyEqual(result.tags, ["x"; "y"]);
         end
 
         function testMergePreservesBaseClass(testCase)

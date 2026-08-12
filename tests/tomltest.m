@@ -63,8 +63,9 @@ classdef tomltest < matlab.unittest.TestCase
             filename = 'test.toml';
             writelines(tomlContent, filename);
             data = readtoml(filename);
-            testCase.verifyEqual(data.numbers, [1, 2, 3, 4]);
-            testCase.verifyEqual(data.strings, ["red", "green", "blue"]);
+            % Arrays are now normalized to column vectors (Issue #77)
+            testCase.verifyEqual(data.numbers, [1; 2; 3; 4]);
+            testCase.verifyEqual(data.strings, ["red"; "green"; "blue"]);
             % With OverridesPublicDotMethodCall, "empty" works as a key name
             testCase.verifyEqual(data.empty, []);
         end
@@ -441,8 +442,8 @@ classdef tomltest < matlab.unittest.TestCase
             restored = readtoml(filename);
 
             testCase.verifyEqual(restored.name, "test");
-            % Arrays may be row or column depending on format
-            testCase.verifyEqual(restored.numbers(:), [1; 2; 3]);
+            % Arrays are now normalized to column vectors (Issue #77)
+            testCase.verifyEqual(restored.numbers, [1; 2; 3]);
             testCase.verifyEqual(restored.settings.value, 42);
         end
 

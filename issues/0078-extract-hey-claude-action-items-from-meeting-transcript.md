@@ -1,6 +1,6 @@
 # #78: Extract "Hey Claude" action items from a meeting transcript
 
-**State:** open
+**State:** closed
 **Created:** 2026-02-27
 **Labels:** tooling, workflow
 
@@ -69,3 +69,6 @@ create an issue for the schema preservation idea we discussed..."
 - Could be implemented as a MATLAB function or skill
 - May benefit from LLM summarization capabilities
 - Related to issue creation automation
+
+## Completion
+We did this, created some issues.
