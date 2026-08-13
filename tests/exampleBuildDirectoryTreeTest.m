@@ -6,12 +6,12 @@ classdef exampleBuildDirectoryTreeTest < matlab.unittest.TestCase
     properties (TestParameter)
     end
 
-    methods (TestMethodSetup)
-        function addPath(testCase)
-            % Add toolbox to path
+    methods (TestClassSetup)
+        function addToolboxPaths(testCase)
             toolboxPath = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'toolbox');
-            addpath(toolboxPath);
-            testCase.addTeardown(@() rmpath(toolboxPath));
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture(toolboxPath));
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                fullfile(toolboxPath, 'examples')));
         end
     end
 
