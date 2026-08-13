@@ -43,18 +43,15 @@ config = tomldata(d);
 disp('TOMLData created from dictionary:')
 disp(config)
 
-%% Creating ConfigurationData from containers.Map
-% Convert a containers.Map to ConfigurationData
+%% Creating ConfigurationData Programmatically
+% Build nested configuration from scratch
 
-% Create a containers.Map
-m = containers.Map();
-m('server') = containers.Map({'host', 'port'}, {'localhost', 8080});
-m('debug') = true;
-
-% Convert to YAMLData
-yamlFromMap = yamldata(m);
-disp('YAMLData created from containers.Map:')
-disp(yamlFromMap)
+fresh = yamldata();
+fresh.server.host = "localhost";
+fresh.server.port = 8080;
+fresh.debug = true;
+disp('YAMLData created programmatically:')
+disp(fresh)
 
 %% Converting ConfigurationData to Dictionary
 % Use the dictionary() method to convert back to a MATLAB dictionary
@@ -142,6 +139,7 @@ disp(['  Nested key: ', roundTripped.nested.key])
 %% Struct Array to ConfigurationData Array
 % Convert arrays of structs to arrays of ConfigurationData
 
+clear steps
 steps(1).name = 'Checkout';
 steps(1).uses = 'actions/checkout@v4';
 steps(2).name = 'Build';
