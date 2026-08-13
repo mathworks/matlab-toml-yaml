@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## MATLAB Agentic Toolkit
+
+This project uses the [MATLAB Agentic Toolkit](https://github.com/matlab/matlab-agentic-toolkit) for MATLAB skills (code authoring, testing, modernization, documentation) and the MATLAB MCP Server for code execution and static analysis. Install the toolkit for the full set of MATLAB skills rather than maintaining local copies.
+
 ## Project Overview
 
 MATLAB toolbox for reading/writing YAML, TOML, JSON, and INI configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
