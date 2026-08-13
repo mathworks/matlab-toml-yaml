@@ -156,7 +156,7 @@ writeyaml(d, 'config.yaml');    % Dictionaries work too
 
 ## Examples
 
-See `toolbox/GettingStarted.m` for an introductory walkthrough, or explore the `toolbox/examples/` folder:
+See `toolbox/doc/GettingStarted.m` for an introductory walkthrough, or explore the `toolbox/examples/` folder:
 
 **YAML Examples:**
 - `readyamlExample.m` - Reading YAML files
@@ -233,8 +233,7 @@ matlab-toml-yaml/
 │   ├── writeyaml.m
 │   ├── readtoml.m
 │   ├── writetoml.m
-│   ├── GettingStarted.m
-│   ├── doc/              ← Function and class reference
+│   ├── doc/              ← GettingStarted + function reference
 │   ├── examples/         ← Example scripts and sample files
 │   └── +matlab/+io/+config/
 │       ├── ConfigurationData.m

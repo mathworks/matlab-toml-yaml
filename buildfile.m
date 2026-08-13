@@ -36,6 +36,6 @@ opts.Description = "Pure MATLAB toolbox for reading and writing YAML and TOML " 
 if isfile(fullfile("images", "matlab-toml-yaml.png"))
     opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
 end
-opts.ToolboxGettingStartedGuide = fullfile("toolbox", "GettingStarted.m");
+opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.m");
 matlab.addons.toolbox.packageToolbox(opts);
 end
