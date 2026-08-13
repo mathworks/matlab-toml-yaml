@@ -24,7 +24,7 @@ end
 function mltbxTask(~)
 % Package toolbox/ into a .mltbx artifact.
 opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
-    "e3b8a7d2-5c14-4f6e-9a01-3d7f82c6b9e4");
+    "1dd978f7-c76b-4b6c-a0f6-b1bf82118978");
 opts.ToolboxName = "TOML and YAML Toolbox for MATLAB";
 opts.ToolboxVersion = "0.1.0";
 opts.MinimumMatlabRelease = "R2022b";
