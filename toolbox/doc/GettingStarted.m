@@ -56,13 +56,6 @@ topKeys = keys(server) %[output:91b4b57b]
 %[text] Check if a key is defined:
 tf = iskey(server.application,"name") %[output:9c111a52]
 %%
-%[text] ### Reading Missing Keys
-%[text] When you read a key that doesn't exist, you get `missing` instead of an error. This is a read-only convenience — the key isn't actually added:
-value = server.nonexistent_key  %[output:new]
-%%
-%[text] The key wasn't actually added:
-iskey(server, "nonexistent_key")  %[output:new]
-%%
 %[text] ### Add and remove keys
 %[text] Add new keys or remove existing ones:
 server.cache.enabled = true;
@@ -138,18 +131,6 @@ secondPort = services(2).port %[output:93752ded]
 %[text] You can also chain the index directly:
 arrays.mixed(1).name %[output:4faff471]
 %%
-%[text] ### Filtering Arrays by Field Value
-%[text] The `mixed` array has heterogeneous structure — not all elements have the same keys. You can filter directly without pre-checking:
-%[text] Even if only some elements have a `port` key, you can filter directly. For elements without `port`, the comparison `missing == 8081` returns `false`, so they're naturally excluded:
-withPort = arrays.mixed(arrays.mixed.port == 8081)  %[output:new]
-%%
-%[text] Compare this to the explicit `iskey()` approach:
-hasPort = iskey(arrays.mixed, "port");
-withPortExplicit = arrays.mixed(hasPort);
-withPortExplicit(withPortExplicit.port == 8081)  %[output:new]
-%%
-%[text] Both work. Use the simplified pattern when it reads clearly; use `iskey()` when you need to distinguish "missing" from legitimate values.
-%%
 %[text] `describe` is particularly useful when data contains arrays — it shows sizes and types at a glance instead of expanding every element:
 describe(arrays) %[output:86ed8348]
 %%
@@ -218,7 +199,7 @@ type("../examples/literal_strings.toml") %[output:2ec04d0c]
 %[text] - Read YAML and TOML files into intuitive data objects
 %[text] - Access values with dot notation, including keys with special characters
 %[text] - Use automatic aliasing for hyphenated keys
-%[text] - Read missing keys safely — returns `missing` without error, enabling simplified filtering
+%[text] - Check key existence with `iskey`
 %[text] - Explore configuration files with `keys` and `isfield`
 %[text] - Modify configurations programmatically
 %[text] - Understand how arrays are converted (`SequenceRule`)
