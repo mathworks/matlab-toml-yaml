@@ -2,8 +2,7 @@
 #
 # sync-to-github.sh — assemble the public release tree from release/manifest.txt.
 #
-# This staging repository contains development-only content (experimental JSON/INI
-# code, design docs, issues, research, presentations) that must NOT ship to the
+# This repository contains development-only content that must NOT ship to the
 # public repository at github.com/mathworks/matlab-toml-yaml. This script copies
 # only the paths listed in release/manifest.txt into a clean output tree.
 #

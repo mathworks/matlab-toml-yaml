@@ -62,7 +62,7 @@ All internal state is stored in a single `public Hidden` struct property named `
 - `xInternal__.OriginalKeys` - string array preserving insertion order
 - `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml", "json", "ini")
 
-This design uses one reserved key name to enable tab completion. See `Claude/TAB_COMPLETION_DESIGN.md`.
+This design uses one reserved key name to enable tab completion.
 
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`, `readjson`, `readini`) return subclass objects (YAMLData, TOMLData, etc.). Writer functions (`writeyaml`, `writetoml`, `writejson`, `writeini`) accept data objects or structs.
@@ -158,10 +158,6 @@ obj.field            % returns missing if absent (read convenience)
 | `toolbox/writetoml.m` | TOML writer with formatting options |
 | `toolbox/readjson.m` | JSON reader (wraps jsondecode) |
 | `toolbox/writejson.m` | JSON writer (wraps jsonencode) |
-| `Claude/DESIGN_DECISIONS.md` | Naming rationale and design philosophy |
-| `Claude/ISSUE_14_RESERVED_NAMES.md` | Reserved name handling explanation |
-| `Claude/TAB_COMPLETION_DESIGN.md` | Tab completion fix and xInternal__ rationale |
-| `specs/` | Design specs and RFAs for features |
 
 ## Known Limitations
 
@@ -180,7 +176,4 @@ obj.field            % returns missing if absent (read convenience)
 
 Sample configuration files for testing are in `tests/SampleFiles/` (27+ real-world files including GitHub Actions workflows, Kubernetes manifests, pyproject.toml variants).
 
-## Development Documentation
-
-The `Claude/` folder contains 14 detailed design documents explaining implementation decisions, known issues, and architecture rationale.
 
