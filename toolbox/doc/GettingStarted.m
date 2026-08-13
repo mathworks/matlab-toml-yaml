@@ -1,12 +1,12 @@
 %[text] #  Configuration File I/O - Getting Started
-%[text] Learn how to read and write YAML and TOML configuration files in MATLAB with intuitive dot notation access. The example files are provided with the toolbox. `cd` MATLAB to the toolbox root (the location of this file) to access the examples.
+%[text] Learn how to read and write YAML and TOML configuration files in MATLAB with intuitive dot notation access. The example files are in the `examples/` folder alongside this `doc/` folder.
 %[text:tableOfContents]{"heading":"Table of Contents"}
 %[text] ## Reading YAML Files
 %%
 %[text] ### Reading a Basic YAML File
 %[text] Start by reading a simple configuration file with no hierarchy.
-type("examples/basic_config.yaml") %[output:0b5d0dfa]
-config = readyaml("examples/basic_config.yaml") %[output:3680055a]
+type("../examples/basic_config.yaml") %[output:0b5d0dfa]
+config = readyaml("../examples/basic_config.yaml") %[output:3680055a]
 %%
 %[text] ### Understanding YAMLData
 %[text] The data is returned as a `YAMLData` object - a custom type designed to work naturally with YAML files. It works mostly like a struct, but preserves key order and handles special characters in field names.
@@ -32,8 +32,8 @@ appName = config.app_name %[output:4875e157]
 %%
 %[text] ### Reading Hierarchical YAML
 %[text] Most configuration files have nested structure. Let's read a more complex example:
-type("examples/server_config.yaml") %[output:3997f889]
-server = readyaml("examples/server_config.yaml") %[output:7c245bae]
+type("../examples/server_config.yaml") %[output:3997f889]
+server = readyaml("../examples/server_config.yaml") %[output:7c245bae]
 %%
 %[text] ### Multi-Level Dot Indexing
 %[text] Just like struct, read nested values with dot:
@@ -47,7 +47,7 @@ server.database.credentials %[output:794df1dd]
 show(server) %[output:8edd4b91]
 %%
 %[text] When data gets complex, `describe` gives a compact structural overview — especially useful when data contains arrays, since it shows sizes and types rather than printing all elements:
-arrays = readyaml("examples/arrays_config.yaml") %[output:7c182cfe]
+arrays = readyaml("../examples/arrays_config.yaml") %[output:7c182cfe]
 describe(arrays) %[output:2072aa20]
 %%
 %[text] ### Introspection
@@ -110,7 +110,7 @@ fieldnames(server) %[output:480a4b3d]
 %[text] | Sequence of mappings | YAMLData array |
 %[text:table]
 %[text] Read a file with various array types:
-arrays = readyaml("examples/arrays_config.yaml") %[output:03fb2519]
+arrays = readyaml("../examples/arrays_config.yaml") %[output:03fb2519]
 %%
 %[text] Numeric arrays convert to MATLAB numeric arrays:
 ports = arrays.web.ports %[output:8868c3e2]
@@ -126,7 +126,7 @@ class(settings) %[output:8a101afa]
 %%
 %[text] ### Force YAML arrays to convert to cell arrays with SequenceRule
 %[text] By default, arrays are converted based on their content (auto mode). If you want consistent behavior regardless of content, set `SequenceRule` `=` "`cell"` to always get cell arrays
-arraysCell = readyaml("examples/arrays_config.yaml", SequenceRule="cell");
+arraysCell = readyaml("../examples/arrays_config.yaml", SequenceRule="cell");
 portsCell = arraysCell.web.ports %[output:80f9ff28]
 class(portsCell) %[output:36ee49f0]
 %%
@@ -155,35 +155,35 @@ describe(arrays) %[output:86ed8348]
 %%
 %[text] ## Writing YAML Files
 %[text] After modifying configuration, write it back. Let"s read, modify, and save:
-config = readyaml("examples/basic_config.yaml");
+config = readyaml("../examples/basic_config.yaml");
 config.port = 9000;
 config.("max-connections") = 100;
-writeyaml(config, "examples/modified_config.yaml");
+writeyaml(config, "../examples/modified_config.yaml");
 disp("Configuration saved!") %[output:0e5878c8]
 %%
 %[text] View what was written:
-type("examples/modified_config.yaml") %[output:0109587c]
+type("../examples/modified_config.yaml") %[output:0109587c]
 %%
 %[text] ### Controlling YAML Output Format
 %[text] YAML supports two styles of arrays: flow (inline) and block. Use `ArrayStyle` to control how arrays are formatted:
 yml = yamldata();
 yml.ports = [8080, 8443, 9000];
 %[text] Flow style (inline):
-writeyaml(yml, "examples/flow_style.yaml", ArrayStyle="flow");
-type("examples/flow_style.yaml") %[output:5b400e05]
+writeyaml(yml, "../examples/flow_style.yaml", ArrayStyle="flow");
+type("../examples/flow_style.yaml") %[output:5b400e05]
 %%
 %[text] Block style (vertical list; default):
-writeyaml(yml, "examples/block_style.yaml", ArrayStyle="block");
-type("examples/block_style.yaml") %[output:87c06074]
+writeyaml(yml, "../examples/block_style.yaml", ArrayStyle="block");
+type("../examples/block_style.yaml") %[output:87c06074]
 %%
 %[text] Remove spacing between sections:
-writeyaml(config, "examples/compact.yaml", SectionSpacing="compact");
-type("examples/compact.yaml") %[output:14fbb691]
+writeyaml(config, "../examples/compact.yaml", SectionSpacing="compact");
+type("../examples/compact.yaml") %[output:14fbb691]
 %%
 %[text] ## Working with TOML Files
 %[text] TOML files work similarly. Data is returned as `TOMLData`, which is like `YAMLData` but specialized for TOML.
 %[text] Read a simple TOML file:
-project = readtoml("examples/simple_project.toml") %[output:5a80e9c4]
+project = readtoml("../examples/simple_project.toml") %[output:5a80e9c4]
 %%
 %[text] Access nested values:
 projectName = project.project.name %[output:56e61a72]
@@ -195,8 +195,8 @@ requires = project.("build-system").requires %[output:40eac79d]
 %[text] Modify and write back:
 project.project.version = "2.0.0";
 project.project.("new-field") = "new value";
-writetoml(project, "examples/modified_project.toml");
-type("examples/modified_project.toml") %[output:6d54641a]
+writetoml(project, "../examples/modified_project.toml");
+type("../examples/modified_project.toml") %[output:6d54641a]
 %%
 %[text] ### TOML Formatting Options
 %[text] `writetoml` offers extensive formatting control. Here are common options:
@@ -204,14 +204,14 @@ type("examples/modified_project.toml") %[output:6d54641a]
 %[text] Control array style:
 project = tomldata();
 project.dependencies = ["export_fig", "guilayout", "fsda"];
-writetoml(project, "examples/array_flow.toml", ArrayStyle="flow")
-type("examples/array_flow.toml") %[output:32f66a45]
-writetoml(project, "examples/array_block.toml", ArrayStyle="block")
-type("examples/array_block.toml") %[output:02fb2a7b]
+writetoml(project, "../examples/array_flow.toml", ArrayStyle="flow")
+type("../examples/array_flow.toml") %[output:32f66a45]
+writetoml(project, "../examples/array_block.toml", ArrayStyle="block")
+type("../examples/array_block.toml") %[output:02fb2a7b]
 %[text] TOML has multiple string styles. Use literal strings (`''`) to avoid the need to escape special characters. Control string formatting for paths (useful for Windows paths):
 project.paths.data = 'C:\Users\Data';
-writetoml(project, "examples/literal_strings.toml", StringEscapeStyle="literal")
-type("examples/literal_strings.toml") %[output:2ec04d0c]
+writetoml(project, "../examples/literal_strings.toml", StringEscapeStyle="literal")
+type("../examples/literal_strings.toml") %[output:2ec04d0c]
 %%
 %[text] ## Summary
 %[text] You've learned how to:
@@ -230,10 +230,10 @@ type("examples/literal_strings.toml") %[output:2ec04d0c]
 %[text] - `examples/writeyamlExample.m` - YAML formatting options \
 %%
 %[text] ## Cleanup
-delete("examples/modified_config.yaml", "examples/flow_style.yaml", ...
-       "examples/block_style.yaml", "examples/compact.yaml", ...
-       "examples/modified_project.toml", "examples/array_flow.toml", ...
-       "examples/array_block.toml", "examples/literal_strings.toml");
+delete("../examples/modified_config.yaml", "../examples/flow_style.yaml", ...
+       "../examples/block_style.yaml", "../examples/compact.yaml", ...
+       "../examples/modified_project.toml", "../examples/array_flow.toml", ...
+       "../examples/array_block.toml", "../examples/literal_strings.toml");
 
 %[appendix]{"version":"1.0"}
 %---
