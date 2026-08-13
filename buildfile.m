@@ -22,21 +22,20 @@ assertSuccess(results);
 end
 
 function mltbxTask(~)
-% Package toolbox/ into a .mltbx artifact.
-%
-% SKELETON: this proves toolbox/ is the ship set but is not yet wired up for
-% release. Before enabling, decide and set: toolbox identity GUID, version,
-% supported release range, and output path. See:
-% https://www.mathworks.com/help/matlab/ref/matlab.addons.toolbox.toolboxoptions.html
-
-error("buildfile:mltbxNotConfigured", ...
-    ["The mltbx packaging task is a skeleton. Configure ToolboxOptions " ...
-     "(identifier GUID, version, release compatibility) before use."]);
-
-%#ok<UNRCH> Reference implementation, intentionally after the guard:
-% opts = matlab.addons.toolbox.ToolboxOptions("toolbox", "<toolbox-guid>");
-% opts.ToolboxName = "TOML and YAML Toolbox for MATLAB";
-% opts.ToolboxVersion = "1.0.0";
-% opts.OutputFile = fullfile("release", "TomlYamlToolbox.mltbx");
-% matlab.addons.toolbox.packageToolbox(opts);
+% Package toolbox/ into a .mltbx artifact in release/.
+opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
+    "e3b8a7d2-5c14-4f6e-9a01-3d7f82c6b9e4");
+opts.ToolboxName = "TOML and YAML Toolbox for MATLAB";
+opts.ToolboxVersion = "0.1.0";
+opts.MinimumMatlabRelease = "R2022b";
+opts.OutputFile = fullfile("release", "TOML_and_YAML_Toolbox_for_MATLAB.mltbx");
+opts.Summary = "Read and write YAML and TOML configuration files with dot notation access.";
+opts.Description = "Pure MATLAB toolbox for reading and writing YAML and TOML " + ...
+    "configuration files. Includes custom data types with dot notation access, " + ...
+    "full round-trip support, and configurable formatting. No external dependencies.";
+if isfile(fullfile("images", "matlab-toml-yaml.png"))
+    opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
+end
+opts.ToolboxGettingStartedGuide = fullfile("toolbox", "GettingStarted.m");
+matlab.addons.toolbox.packageToolbox(opts);
 end

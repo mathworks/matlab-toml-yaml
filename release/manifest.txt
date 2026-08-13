@@ -14,7 +14,17 @@ LICENSE
 README.md
 CONTRIBUTING.md
 SECURITY.md
-ConfigurationFileIO.prj
+matlab-toml-yaml.prj
+.gitignore
+.gitattributes
+buildfile.m
+.github
+
+# Images (toolbox icon, README assets)
+images
+
+# MATLAB Project metadata
+resources
 
 # The toolbox itself (add toolbox/ to the MATLAB path)
 toolbox

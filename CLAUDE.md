@@ -24,7 +24,7 @@ run_matlab_test_file('tests/ConfigurationPerformanceTest.m')
 ### Setup Path
 ```matlab
 addpath('toolbox')
-% Or openProject("ConfigurationFileIO.prj")
+% Or openProject("matlab-toml-yaml.prj")
 ```
 
 ### Static Analysis

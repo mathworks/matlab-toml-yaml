@@ -1,4 +1,4 @@
-# Copilot instructions for ConfigurationFileIO
+# Copilot instructions for matlab-toml-yaml
 
 Goal: Help an AI coding assistant be immediately productive in this MATLAB toolbox.
 
@@ -20,8 +20,8 @@ Important patterns & gotchas
 
 Developer workflows (quick commands)
 - Add toolbox to MATLAB path:
-  addpath('path/to/ConfigurationFileIO/toolbox')
-- Open the project: `ConfigurationFileIO.prj` (recommended for MATLAB IDE use).
+  addpath('path/to/matlab-toml-yaml/toolbox')
+- Open the project: `matlab-toml-yaml.prj` (recommended for MATLAB IDE use).
 - Run examples interactively: open files in `examples/` (e.g. `readtomlExample.m`, `writetomlExample.m`) or run them from MATLAB.
 - Run individual tests/scripts from terminal (MATLAB must be installed):
   matlab -batch "run('tests/tomltest.m')"

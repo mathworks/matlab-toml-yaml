@@ -21,7 +21,7 @@ Add the toolbox to your MATLAB path:
 addpath('/path/to/matlab-toml-yaml/toolbox')
 ```
 
-Or open the MATLAB Project file `ConfigurationFileIO.prj`.
+Or open the MATLAB Project file `matlab-toml-yaml.prj`.
 
 ## Quick Start
 
@@ -226,11 +226,14 @@ For production use cases requiring full spec compliance (e.g. complex Kubernetes
 
 ```
 matlab-toml-yaml/
+├── buildfile.m           ← Build tasks (test, package)
+├── images/               ← Toolbox icon, README assets
 ├── toolbox/              ← Add this to path
 │   ├── readyaml.m
 │   ├── writeyaml.m
 │   ├── readtoml.m
 │   ├── writetoml.m
+│   ├── GettingStarted.m
 │   ├── doc/              ← Function and class reference
 │   ├── examples/         ← Example scripts and sample files
 │   └── +matlab/+io/+config/
