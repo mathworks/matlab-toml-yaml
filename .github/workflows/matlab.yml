@@ -52,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TOML_and_YAML_Toolbox_for_MATLAB.mltbx
-          path: TOML_and_YAML_Toolbox_for_MATLAB.mltbx
+          path: release/TOML_and_YAML_Toolbox_for_MATLAB.mltbx

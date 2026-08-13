@@ -23,7 +23,7 @@ Desktop.ini
 
 # Packaged app and toolbox files
 *.mlappinstall
-*.mltbx
+release/*.mltbx
 
 # Deployable archives
 *.ctf

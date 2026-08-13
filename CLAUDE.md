@@ -17,8 +17,6 @@ MATLAB toolbox for reading/writing YAML, TOML, JSON, and INI configuration files
 % via MCP Server
 run_matlab_test_file('tests/yamltest.m')
 run_matlab_test_file('tests/tomltest.m')
-run_matlab_test_file('tests/initest.m')
-run_matlab_test_file('tests/jsontest.m')
 run_matlab_test_file('tests/subsasgnTest.m')
 run_matlab_test_file('tests/describeTest.m')
 run_matlab_test_file('tests/configdataTest.m')
@@ -49,9 +47,7 @@ All work must be done on a branch, not on main. Create a new branch for new work
 ```
 ConfigurationData (value class, base)
 ├── YAMLData
-├── TOMLData
-├── JSONData
-└── INIData
+└── TOMLData
 ```
 
 ConfigurationData inherits from:
@@ -69,9 +65,9 @@ All internal state is stored in a single `public Hidden` struct property named `
 This design uses one reserved key name to enable tab completion.
 
 ### I/O Pattern
-Reader functions (`readyaml`, `readtoml`, `readjson`, `readini`) return subclass objects (YAMLData, TOMLData, etc.). Writer functions (`writeyaml`, `writetoml`, `writejson`, `writeini`) accept data objects or structs.
+Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
 
-Format-neutral `ConfigurationData` objects (no source format) are created via the `configdata()` wrapper. Each subclass also has a wrapper: `yamldata()`, `tomldata()`, `jsondata()`, `inidata()`. These wrappers accept no args (empty), a struct, or a dictionary.
+Format-neutral `ConfigurationData` objects (no source format) are created via the `configdata()` wrapper. Each subclass also has a wrapper: `yamldata()`, `tomldata()`. These wrappers accept no args (empty), a struct, or a dictionary.
 
 ## Critical Design Decisions
 
@@ -154,23 +150,15 @@ obj.field            % returns missing if absent (read convenience)
 | `toolbox/+matlab/+io/+config/ConfigurationData.m` | Base class with dot notation handling (~1,500 lines) |
 | `toolbox/+matlab/+io/+config/YAMLData.m` | YAML subclass; `show()` prints YAML format |
 | `toolbox/+matlab/+io/+config/TOMLData.m` | TOML subclass; `show()` prints TOML format |
-| `toolbox/+matlab/+io/+config/JSONData.m` | JSON subclass; `show()` prints JSON format |
-| `toolbox/+matlab/+io/+config/INIData.m` | INI subclass; `show()` prints INI format |
 | `toolbox/readyaml.m` | YAML parser (~400 lines) |
 | `toolbox/readtoml.m` | TOML parser (~1,250 lines, most complex) |
 | `toolbox/writeyaml.m` | YAML writer with formatting options |
 | `toolbox/writetoml.m` | TOML writer with formatting options |
-| `toolbox/readjson.m` | JSON reader (wraps jsondecode) |
-| `toolbox/writejson.m` | JSON writer (wraps jsonencode) |
 
 ## Known Limitations
 
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
 - **TOML**: Array of tables reading has bugs (writing works)
-- **JSON**: Designed for config files with usability focus; MATLAB's `5` and `[5]` are identical, so scalar vs array distinction is lossy by default
-  - Use `SequenceRule='cell'` for strict round-trip preservation (all arrays become cells)
-  - Use `ArrayKeys` parameter in `writejson` to force specific keys to be arrays (e.g., for API schemas)
-  - For strict JSON round-tripping, use built-in `jsondecode`/`jsonencode`
 - **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
 - **Reserved key**: `xInternal__` cannot be used as a configuration key (reserved for internal storage)
