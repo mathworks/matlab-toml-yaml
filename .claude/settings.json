@@ -5,14 +5,7 @@
       "mcp__matlab__check_matlab_code",
       "mcp__matlab__evaluate_matlab_code",
       "mcp__matlab__run_matlab_file",
-      "mcp__matlab__run_matlab_test_file",
-      "mcp__github__*",
-      "mcp__filesystem__read_file",
-      "mcp__filesystem__read_multiple_files",
-      "mcp__filesystem__list_directory",
-      "mcp__filesystem__search_files",
-      "mcp__filesystem__get_file_info",
-      "mcp__filesystem__list_allowed_directories"
+      "mcp__matlab__run_matlab_test_file"
     ]
   }
 }
