@@ -1,28 +1,27 @@
-# Configuration File I/O Toolbox
+# TOML and YAML Toolbox for MATLAB
 
-[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=michellehirsch/matlab-toml-yaml)
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=mathworks/matlab-toml-yaml)
 
-The Configuration File I/O Toolbox adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
+The TOML and YAML Toolbox for MATLAB adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
 
 ## Features
 
-- 📄 **YAML & TOML Support** - Read and write both formats with consistent interface
-- 🔑 **Dot Notation Access** - Natural MATLAB syntax: `config.database.host`
-- 🔤 **Special Characters** - Handle keys with hyphens, spaces: `config.("build-system")`
-- 🔄 **Full Round-Trip** - Read, modify, write back without data loss
-- 📊 **Smart Arrays** - Automatic conversion to optimal MATLAB types
-- 🎨 **Customizable Output** - Control formatting, indentation, array styles
-- 💪 **GitHub Actions Ready** - Properly handles workflow files and sequences
+- **YAML & TOML Support** - Read and write both formats with consistent interface
+- **Dot Notation Access** - Natural MATLAB syntax: `config.database.host`
+- **Special Characters** - Handle keys with hyphens, spaces: `config.("build-system")`
+- **Full Round-Trip** - Read, modify, write back without data loss
+- **Smart Arrays** - Automatic conversion to optimal MATLAB types
+- **Customizable Output** - Control formatting, indentation, array styles
 
 ## Installation
 
 Add the toolbox to your MATLAB path:
 
 ```matlab
-addpath('/path/to/ConfigurationFileIO/toolbox')
+addpath('/path/to/matlab-toml-yaml/toolbox')
 ```
 
-Or use the MATLAB Project file `ConfigurationFileIO.prj`.
+Or open the MATLAB Project file `ConfigurationFileIO.prj`.
 
 ## Quick Start
 
@@ -144,7 +143,7 @@ Convert between structs, dictionaries, and ConfigurationData:
 ```matlab
 % Create from struct
 s = struct('name', 'MyApp', 'database', struct('host', 'localhost', 'port', 5432));
-config = YAMLData(s);           % Also works with TOMLData, INIData
+config = YAMLData(s);           % Also works with TOMLData
 
 % Convert to dictionary
 d = dictionary(config);
@@ -157,20 +156,21 @@ writeyaml(d, 'config.yaml');    % Dictionaries work too
 
 ## Examples
 
-See `toolbox/GettingStarted.m` for an introductory walkthrough, or explore the `examples/` folder:
+See `toolbox/GettingStarted.m` for an introductory walkthrough, or explore the `toolbox/examples/` folder:
 
 **YAML Examples:**
-- `github-actions-ci.yaml` - GitHub Actions workflow
-- `docker-compose.yaml` - Docker Compose configuration
-- `kubernetes-deployment.yaml` - Kubernetes deployment
+- `readyamlExample.m` - Reading YAML files
+- `writeyamlExample.m` - Writing YAML files
+- `yamlWorkflowExample.m` - End-to-end read/modify/write workflow
 
 **TOML Examples:**
-- `pyproject.toml` - Python project configuration
-- `matlab_project.toml` - MATLAB project settings
+- `readtomlExample.m` - Reading TOML files
+- `writetomlExample.m` - Writing TOML files
+- `tomlPyprojectExample.m` - Working with `pyproject.toml`
 
 **Demo Scripts:**
-- `demo_yaml_examples.m` - Interactive YAML demos
-- `yamlGettingStarted.m` - YAML introduction
+- `ConfigurationDataDemo.m` - Tour of the data object API
+- `conversionExample.m` - Converting between structs, dictionaries, and data objects
 
 ## Working with GitHub Actions
 
@@ -210,7 +210,7 @@ writeyaml(workflow, 'updated-workflow.yaml');
 
 This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
 
-- **YAML**: Subset parser. See [LIMITATIONS.md](LIMITATIONS.md) for details on supported/unsupported features (anchors, tags, etc.).
+- **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.).
 - **TOML**: Array of tables bug in reading (writing works).
 - **Chained indexing**: `obj.field(i).subfield` requires extracting array first (e.g. `tmp = obj.field; val = tmp(i).subfield`).
 - **Custom tags**: Not supported.
@@ -219,42 +219,33 @@ For production use cases requiring full spec compliance (e.g. complex Kubernetes
 
 ## Requirements
 
-- MATLAB R2019b or later (for `arguments` blocks)
+- MATLAB R2022b or later (for `dictionary` with value semantics)
 - No additional toolboxes required
 
 ## Project Structure
 
 ```
-ConfigurationFileIO/
+matlab-toml-yaml/
 ├── toolbox/              ← Add this to path
 │   ├── readyaml.m
 │   ├── writeyaml.m
 │   ├── readtoml.m
 │   ├── writetoml.m
-│   ├── YAMLData.m
-│   ├── TOMLData.m
-│   └── ConfigurationData.m
-├── examples/             ← Example files and demos
-├── tests/                ← Test files
-└── Claude/               ← Development documentation
+│   ├── doc/              ← Function and class reference
+│   ├── examples/         ← Example scripts and sample files
+│   └── +matlab/+io/+config/
+│       ├── ConfigurationData.m
+│       ├── YAMLData.m
+│       └── TOMLData.m
+└── tests/                ← Test files
 ```
-
-## Development Documentation
-
-Detailed development notes, design decisions, and implementation details are in the `Claude/` folder:
-- `Claude/YAML/` - YAML implementation notes
-- `Claude/TOML/` - TOML implementation notes  
-- `Claude/ConfigurationData/` - Base class design
 
 ## License
 
-Copyright 2025 The MathWorks, Inc. See [LICENSE](LICENSE) for details.
+Copyright 2026 The MathWorks, Inc. See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
 
 ---
-
-**Version:** 1.0.0  
-**Last Updated:** December 31, 2025

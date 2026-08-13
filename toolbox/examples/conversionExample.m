@@ -3,7 +3,7 @@
 % types (struct, dictionary, containers.Map) and ConfigurationData objects.
 
 %% Creating ConfigurationData from Struct
-% Convert a MATLAB struct to YAMLData, TOMLData, or INIData
+% Convert a MATLAB struct to YAMLData or TOMLData
 
 % Create a nested struct
 s = struct();
@@ -51,10 +51,10 @@ m = containers.Map();
 m('server') = containers.Map({'host', 'port'}, {'localhost', 8080});
 m('debug') = true;
 
-% Convert to INIData
-iniConfig = inidata(m);
-disp('INIData created from containers.Map:')
-disp(iniConfig)
+% Convert to YAMLData
+yamlFromMap = yamldata(m);
+disp('YAMLData created from containers.Map:')
+disp(yamlFromMap)
 
 %% Converting ConfigurationData to Dictionary
 % Use the dictionary() method to convert back to a MATLAB dictionary

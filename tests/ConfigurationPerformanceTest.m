@@ -4,8 +4,6 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
         TempFolder
         LargeTomlFile
         LargeYamlFile
-        LargeIniFile
-        LargeJsonFile
         LargeYamlArrayFile
     end
     
@@ -31,12 +29,6 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
             
             testCase.LargeYamlFile = fullfile(testCase.TempFolder, 'large.yaml');
             generateLargeYamlFile(testCase.LargeYamlFile, testCase.NumArrayItems, testCase.NumTableKeys);
-            
-            testCase.LargeIniFile = fullfile(testCase.TempFolder, 'large.ini');
-            generateLargeIniFile(testCase.LargeIniFile, testCase.NumTableKeys);
-
-            testCase.LargeJsonFile = fullfile(testCase.TempFolder, 'large.json');
-            generateLargeJsonFile(testCase.LargeJsonFile, testCase.NumArrayItems, testCase.NumTableKeys);
 
             testCase.LargeYamlArrayFile = fullfile(testCase.TempFolder, 'large_arrays.yaml');
             generateLargeYamlArrayFile(testCase.LargeYamlArrayFile, testCase.NumArrayItems);
@@ -53,12 +45,6 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
         function testReadLargeYAML(testCase)
             testCase.startMeasuring();
             readyaml(testCase.LargeYamlFile);
-            testCase.stopMeasuring();
-        end
-        
-        function testReadLargeINI(testCase)
-            testCase.startMeasuring();
-            readini(testCase.LargeIniFile);
             testCase.stopMeasuring();
         end
         
@@ -102,28 +88,6 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
             testCase.stopMeasuring();
         end
         
-        function testWriteLargeINI(testCase)
-            data = readini(testCase.LargeIniFile);
-            outFile = fullfile(testCase.TempFolder, 'output.ini');
-            testCase.startMeasuring();
-            writeini(data, outFile);
-            testCase.stopMeasuring();
-        end
-
-        function testReadLargeJSON(testCase)
-            testCase.startMeasuring();
-            readjson(testCase.LargeJsonFile);
-            testCase.stopMeasuring();
-        end
-
-        function testWriteLargeJSON(testCase)
-            data = readjson(testCase.LargeJsonFile);
-            outFile = fullfile(testCase.TempFolder, 'output.json');
-            testCase.startMeasuring();
-            writejson(data, outFile);
-            testCase.stopMeasuring();
-        end
-
         function testYAMLArrayTypeChecking(testCase)
             % Exercises cellfun type checks in readyaml.m (allText,
             % allNumeric, allLogical)
@@ -185,48 +149,6 @@ function generateLargeYamlFile(filename, numArray, numKeys)
     for i = 1:numKeys
         fprintf(fid, '  key%d: "value_%d"\n', i, i);
     end
-    fclose(fid);
-end
-
-function generateLargeIniFile(filename, numKeys)
-    fid = fopen(filename, 'w');
-    fprintf(fid, '; Large INI Performance Test\n\n');
-    fprintf(fid, '[key_section]\n');
-    for i = 1:numKeys
-        fprintf(fid, 'key%d = value_%d\n', i, i);
-    end
-    fclose(fid);
-end
-
-function generateLargeJsonFile(filename, numArray, numKeys)
-    fid = fopen(filename, 'w');
-    fprintf(fid, '{\n');
-    fprintf(fid, '  "title": "Large JSON Performance Test",\n');
-    % Numeric array
-    fprintf(fid, '  "numbers": [');
-    fprintf(fid, '%d', 1);
-    for i = 2:numArray
-        fprintf(fid, ',%d', i);
-    end
-    fprintf(fid, '],\n');
-    % String array
-    fprintf(fid, '  "strings": [');
-    fprintf(fid, '"str_1"');
-    for i = 2:min(numArray, 1000)
-        fprintf(fid, ',"str_%d"', i);
-    end
-    fprintf(fid, '],\n');
-    % Key-value section
-    fprintf(fid, '  "key_section": {\n');
-    for i = 1:numKeys
-        fprintf(fid, '    "key%d": "value_%d"', i, i);
-        if i < numKeys
-            fprintf(fid, ',');
-        end
-        fprintf(fid, '\n');
-    end
-    fprintf(fid, '  }\n');
-    fprintf(fid, '}\n');
     fclose(fid);
 end
 

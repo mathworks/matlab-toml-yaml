@@ -169,7 +169,7 @@ summary = table(... %[output:group:6ab0ff1e] %[output:1bac20f9]
 %[text] 
 %[text] **When to use struct:** Homogeneous records (database rows, patient data)
 %[text] 
-%[text] **When to use ConfigurationData:** Config files, JSON APIs, heterogeneous event logs
+%[text] **When to use ConfigurationData:** Config files, heterogeneous event logs
 
 %[appendix]{"version":"1.0"}
 %---

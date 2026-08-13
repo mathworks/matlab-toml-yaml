@@ -208,7 +208,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferenceNumbers(testCase)
             % Test: arr.field returns numeric array when all values are numbers
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -244,7 +244,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferenceChained(testCase)
             % Test: arr.field1.field2 works for chained access
-            arr = [jsondata(), jsondata()];
+            arr = [yamldata(), yamldata()];
             arr(1).settings.enabled = true;
             arr(2).settings.enabled = false;
 
@@ -273,7 +273,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferenceTypeMismatchError(testCase)
             % Test: error when types differ across elements
-            arr = [jsondata(), jsondata()];
+            arr = [yamldata(), yamldata()];
             arr(1).value = 42;       % double
             arr(2).value = "text";   % string
 
@@ -312,7 +312,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testFilterWithIskey(testCase)
             % Test: can filter array using iskey results
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(1).score = 100;
             arr(2).name = "Bob";
@@ -331,7 +331,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
         function testArrayDotReferenceWithLogicalFilter(testCase)
             % Test: arr.field(logicalMask) pre-filters array before key check
             % This enables the pattern: arr.field(iskey(arr, "field"))
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(1).score = 100;
             arr(2).name = "Bob";
@@ -356,7 +356,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignWithLogicalFilterScalar(testCase)
             % Test: arr.field(logicalMask) = scalarValue broadcasts
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(1).active = true;
             arr(2).name = "Bob";
@@ -375,7 +375,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignWithLogicalFilterArray(testCase)
             % Test: arr.field(logicalMask) = arrayValue assigns element-wise
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(1).score = 100;
             arr(2).name = "Bob";
@@ -409,7 +409,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
         %% Numeric and partial index tests
         function testArrayDotReferenceNumericSingle(testCase)
             % Test: arr.field(1) - single numeric index
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -420,7 +420,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferenceNumericRange(testCase)
             % Test: arr.field(1:2) - numeric range
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -431,7 +431,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferenceNumericArray(testCase)
             % Test: arr.field([1 3]) - numeric array index
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).name = "Alice";
             arr(2).name = "Bob";
             arr(3).name = "Charlie";
@@ -442,7 +442,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotReferencePartialLogical(testCase)
             % Test: arr.field(partialMask) - logical mask of different size
-            arr = [jsondata(), jsondata(), jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -457,7 +457,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignNumericSingle(testCase)
             % Test: arr.field(1) = value - single numeric index assignment
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -470,7 +470,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignNumericRange(testCase)
             % Test: arr.field(1:2) = [values] - range assignment
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -483,7 +483,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignNumericBroadcast(testCase)
             % Test: arr.field([1 3]) = scalar - broadcast scalar
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).active = false;
             arr(2).active = false;
             arr(3).active = false;
@@ -496,7 +496,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignAllElements(testCase)
             % Test: arr.field = arr.field (assign to ALL elements)
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).value = 10;
             arr(2).value = 20;
             arr(3).value = 30;
@@ -510,7 +510,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
 
         function testArrayDotAssignAllElementsBroadcast(testCase)
             % Test: arr.field = scalar (broadcast to ALL elements)
-            arr = [jsondata(), jsondata(), jsondata()];
+            arr = [yamldata(), yamldata(), yamldata()];
             arr(1).status = "old";
             arr(2).status = "old";
             arr(3).status = "old";
@@ -524,12 +524,12 @@ classdef subsasgnTest < matlab.unittest.TestCase
         function testArrayDotAssignChainedWithIndex(testCase)
             % Test: arr.field(idx).subfield = value
             % This was a bug - IndexingOperation concatenation error
-            arr = [jsondata(), jsondata(), jsondata()];
-            arr(1).nested = jsondata();
+            arr = [yamldata(), yamldata(), yamldata()];
+            arr(1).nested = yamldata();
             arr(1).nested.value = 10;
-            arr(2).nested = jsondata();
+            arr(2).nested = yamldata();
             arr(2).nested.value = 20;
-            arr(3).nested = jsondata();
+            arr(3).nested = yamldata();
             arr(3).nested.value = 30;
 
             % Assign to subfield of indexed element
@@ -539,7 +539,7 @@ classdef subsasgnTest < matlab.unittest.TestCase
             testCase.verifyEqual(arr(3).nested.value, 30);  % Unchanged
 
             % Assign deeper chain
-            arr.nested(1).deep = jsondata();
+            arr.nested(1).deep = yamldata();
             arr.nested(1).deep.x = 42;
             testCase.verifyEqual(arr(1).nested.deep.x, 42);
         end

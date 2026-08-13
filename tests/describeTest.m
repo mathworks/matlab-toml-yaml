@@ -13,7 +13,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testFlatStructure(testCase)
             % All scalar types on one level
-            data = jsondata();
+            data = yamldata();
             data.name = "acme";
             data.count = 42;
             data.active = true;
@@ -21,7 +21,7 @@ classdef describeTest < matlab.unittest.TestCase
 
             output = evalc('describe(data)');
 
-            testCase.verifySubstring(output, 'JSONData with 4 keys');
+            testCase.verifySubstring(output, 'YAMLData with 4 keys');
             testCase.verifySubstring(output, '"acme" (string)');
             testCase.verifySubstring(output, '42 (double)');
             testCase.verifySubstring(output, 'true (logical)');
@@ -45,7 +45,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testNestedNoTypeAnnotationOnExpandedNodes(testCase)
             % Expanded nested objects should NOT show type annotation
-            data = jsondata();
+            data = yamldata();
             data.engines.node = ">=18";
 
             output = evalc('describe(data)');
@@ -58,7 +58,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testDepthOne(testCase)
             % Depth=1 shows (N keys) for nested objects
-            data = jsondata();
+            data = yamldata();
             data.name = "test";
             data.engines.node = ">=18";
             data.scripts.build = "tsc";
@@ -76,7 +76,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testDepthTwo(testCase)
             % Depth=2 expands one level, collapses deeper
-            data = jsondata();
+            data = yamldata();
             data.a.b.c = "deep";
 
             output = evalc('describe(data, Depth=2)');
@@ -94,8 +94,8 @@ classdef describeTest < matlab.unittest.TestCase
             % Array shows dimensions and type-only keys
             s1 = struct('name', "Alice", 'age', 30);
             s2 = struct('name', "Bob", 'age', 25);
-            data = jsondata();
-            data.users = [jsondata(s1); jsondata(s2)];
+            data = yamldata();
+            data.users = [yamldata(s1); yamldata(s2)];
 
             output = evalc('describe(data)');
 
@@ -111,8 +111,8 @@ classdef describeTest < matlab.unittest.TestCase
             % Depth-limited array shows key count
             s1 = struct('name', "Alice", 'age', 30);
             s2 = struct('name', "Bob", 'age', 25);
-            data = jsondata();
-            data.users = [jsondata(s1); jsondata(s2)];
+            data = yamldata();
+            data.users = [yamldata(s1); yamldata(s2)];
 
             output = evalc('describe(data, Depth=1)');
 
@@ -122,15 +122,15 @@ classdef describeTest < matlab.unittest.TestCase
         function testArrayChildWithNestedObject(testCase)
             % Array elements containing nested ConfigurationData
             % should show key count, not raw class name
-            elem1 = jsondata();
+            elem1 = yamldata();
             elem1.name = "ext1";
             elem1.config.host = "localhost";
             elem1.config.port = 8080;
-            elem2 = jsondata();
+            elem2 = yamldata();
             elem2.name = "ext2";
             elem2.config.host = "remote";
             elem2.config.port = 9090;
-            data = jsondata();
+            data = yamldata();
             data.items = [elem1; elem2];
 
             output = evalc('describe(data)');
@@ -142,31 +142,15 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testEmptyObject(testCase)
-            data = jsondata();
+            data = yamldata();
 
             output = evalc('describe(data)');
 
             testCase.verifySubstring(output, 'no keys');
         end
 
-        function testRealPackageJSON(testCase)
-            % Verify structure of a real sample file
-            sampleDir = fullfile(fileparts(mfilename('fullpath')), 'SampleFiles');
-            pkg = readjson(fullfile(sampleDir, '01_package.json'));
-
-            output = evalc('describe(pkg)');
-
-            testCase.verifySubstring(output, 'JSONData with 14 keys');
-            testCase.verifySubstring(output, '"acme-webapp" (string)');
-            testCase.verifySubstring(output, 'engines:');
-            testCase.verifySubstring(output, 'scripts:');
-            testCase.verifySubstring(output, 'dependencies:');
-            testCase.verifySubstring(output, 'browserslist:');
-            testCase.verifySubstring(output, 'string');
-        end
-
         function testLongStringTruncation(testCase)
-            data = jsondata();
+            data = yamldata();
             data.description = "This is a very long string that exceeds forty characters in length and should be truncated";
 
             output = evalc('describe(data)');
@@ -178,28 +162,22 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testAllSubclasses(testCase)
-            % Verify class names for all subclasses
+            % Verify class names for all shipped subclasses
             yaml = yamldata(); yaml.key = "val";
             toml = tomldata(); toml.key = "val";
-            json = jsondata(); json.key = "val";
-            ini = inidata();  ini.key = "val";
 
             outputYAML = evalc('describe(yaml)');
             outputTOML = evalc('describe(toml)');
-            outputJSON = evalc('describe(json)');
-            outputINI  = evalc('describe(ini)');
 
             testCase.verifySubstring(outputYAML, 'YAMLData');
             testCase.verifySubstring(outputTOML, 'TOMLData');
-            testCase.verifySubstring(outputJSON, 'JSONData');
-            testCase.verifySubstring(outputINI,  'INIData');
         end
 
         function testNonScalarRoot(testCase)
             % describe(arr) for a ConfigurationData array as root
             s1 = struct('name', "server1", 'host', "localhost", 'port', 8080);
             s2 = struct('name', "server2", 'host', "remote.com", 'port', 9090);
-            arr = [jsondata(s1); jsondata(s2)];
+            arr = [yamldata(s1); yamldata(s2)];
 
             output = evalc('describe(arr)');
 
@@ -209,7 +187,7 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testMissingValue(testCase)
-            data = jsondata();
+            data = yamldata();
             data.value = missing;
 
             output = evalc('describe(data)');
@@ -218,7 +196,7 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testEmptyArrayValue(testCase)
-            data = jsondata();
+            data = yamldata();
             data.items = [];
 
             output = evalc('describe(data)');
@@ -229,18 +207,18 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testNonScalarLeafValues(testCase)
             % Non-scalar leaves show size and type
-            data = jsondata();
+            data = yamldata();
             data.ports = [8080, 8443];
             data.names = ["alice"; "bob"; "carol"];
 
             output = evalc('describe(data)');
 
-            testCase.verifySubstring(output, '1x2 double');
+            testCase.verifySubstring(output, '2x1 double');
             testCase.verifySubstring(output, '3x1 string');
         end
 
         function testFalseLogical(testCase)
-            data = jsondata();
+            data = yamldata();
             data.enabled = false;
 
             output = evalc('describe(data)');
@@ -250,7 +228,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testKeyAlignment(testCase)
             % Keys at the same level should be aligned
-            data = jsondata();
+            data = yamldata();
             data.a = 1;
             data.longKeyName = 2;
 
@@ -270,24 +248,9 @@ classdef describeTest < matlab.unittest.TestCase
                 'Values at the same nesting level should be aligned');
         end
 
-        function testK8sDeployment(testCase)
-            % Deep nesting with arrays (k8s deployment)
-            sampleDir = fullfile(fileparts(mfilename('fullpath')), 'SampleFiles');
-            k8s = readjson(fullfile(sampleDir, '08_k8s_deployment.json'));
-
-            output = evalc('describe(k8s)');
-
-            testCase.verifySubstring(output, 'JSONData with 4 keys');
-            testCase.verifySubstring(output, '"apps/v1" (string)');
-            testCase.verifySubstring(output, '"Deployment" (string)');
-            testCase.verifySubstring(output, 'containers:');
-            testCase.verifySubstring(output, '2x1 array');
-            testCase.verifySubstring(output, 'livenessProbe:');
-        end
-
         function testDescribeRunsWithoutError(testCase)
             % Ensure describe doesn't error or warn for basic usage
-            data = jsondata();
+            data = yamldata();
             data.key = "value";
             testCase.verifyWarningFree(@() describe(data));
         end
@@ -296,7 +259,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableColumns(testCase)
             % Table has correct column names
-            data = jsondata();
+            data = yamldata();
             data.name = "test";
             data.count = 42;
 
@@ -308,7 +271,7 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testTableContent(testCase)
-            data = jsondata();
+            data = yamldata();
             data.name = "test";
             data.count = 42;
             data.active = true;
@@ -322,7 +285,7 @@ classdef describeTest < matlab.unittest.TestCase
         end
 
         function testTableNestedPaths(testCase)
-            data = jsondata();
+            data = yamldata();
             data.server.host = "localhost";
             data.server.port = 8080;
 
@@ -335,19 +298,19 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableShortClassName(testCase)
             % Type column should use short class names
-            data = jsondata();
-            data.nested = jsondata();
+            data = yamldata();
+            data.nested = yamldata();
             data.nested.key = "val";
 
             info = describe(data);
 
             nestedRow = info(info.Path == "nested", :);
-            testCase.verifyEqual(nestedRow.Type, "JSONData");
+            testCase.verifyEqual(nestedRow.Type, "YAMLData");
         end
 
         function testTableQueryByType(testCase)
             % UC5: Find all values of a specific type
-            data = jsondata();
+            data = yamldata();
             data.name = "test";
             data.count = 42;
             data.active = true;
@@ -361,7 +324,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableQueryByPath(testCase)
             % UC7: Find keys matching a pattern
-            data = jsondata();
+            data = yamldata();
             data.server.host = "localhost";
             data.server.port = 8080;
             data.database.host = "dbhost";
@@ -377,14 +340,14 @@ classdef describeTest < matlab.unittest.TestCase
             % ConfigurationData array in table output
             s1 = struct('name', "a", 'value', "x");
             s2 = struct('name', "b", 'value', "y");
-            data = jsondata();
-            data.env = [jsondata(s1); jsondata(s2)];
+            data = yamldata();
+            data.env = [yamldata(s1); yamldata(s2)];
 
             info = describe(data);
 
             % Should have row for the array itself
             envRow = info(info.Path == "env", :);
-            testCase.verifyEqual(envRow.Type, "JSONData");
+            testCase.verifyEqual(envRow.Type, "YAMLData");
             testCase.verifyEqual(envRow.Size, "2x1");
 
             % Should have rows for union of child keys
@@ -394,9 +357,9 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableWithMixedArrayTypes(testCase)
             % Array elements with different types for same key
-            data = jsondata();
-            elem1 = jsondata(); elem1.value = "hello";
-            elem2 = jsondata(); elem2.value = 42;
+            data = yamldata();
+            elem1 = yamldata(); elem1.value = "hello";
+            elem2 = yamldata(); elem2.value = 42;
             data.items = [elem1; elem2];
 
             info = describe(data);
@@ -411,7 +374,7 @@ classdef describeTest < matlab.unittest.TestCase
             % Table output for a root-level array
             s1 = struct('name', "a", 'port', 80);
             s2 = struct('name', "b", 'port', 443);
-            arr = [jsondata(s1); jsondata(s2)];
+            arr = [yamldata(s1); yamldata(s2)];
 
             info = describe(arr);
 
@@ -421,7 +384,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableDepthLimit(testCase)
             % Depth limit stops recursion in table output
-            data = jsondata();
+            data = yamldata();
             data.a.b.c = "deep";
 
             infoFull = describe(data);
@@ -436,7 +399,7 @@ classdef describeTest < matlab.unittest.TestCase
 
         function testTableNonScalarLeaf(testCase)
             % Non-scalar values show correct size
-            data = jsondata();
+            data = yamldata();
             data.names = ["alice"; "bob"; "carol"];
 
             info = describe(data);
