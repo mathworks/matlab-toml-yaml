@@ -44,7 +44,6 @@ Pull requests and CI hints
 
 If you need more
 - Read `README.md` for a full quickstart and options reference.
-- Inspect `Claude/` for design notes and implementation rationale.
 
 Questions for the maintainer
 - Which MATLAB versions are validated in CI? (README lists R2019b+, but exact matrix helps.)

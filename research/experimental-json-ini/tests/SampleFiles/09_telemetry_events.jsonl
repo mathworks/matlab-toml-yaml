@@ -1,3 +1,0 @@
-{"ts": "2026-02-03T18:55:00Z", "event": "page_view", "user": "u1", "path": "/", "attrs": {"ref": "ad-123", "ab": "B"}}
-{"ts": "2026-02-03T18:55:05Z", "event": "click", "user": "u1", "target": "#signup", "attrs": {"x": 120, "y": 540}}
-{"ts": "2026-02-03T18:55:12Z", "event": "api", "status": 200, "route": "/payments", "latency_ms": 83}
