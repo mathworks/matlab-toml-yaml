@@ -22,7 +22,8 @@ classdef jsontest < matlab.unittest.TestCase
     methods (TestClassSetup)
         function addToPath(testCase)
             % Add toolbox folder to path
-            testCase.applyFixture(matlab.unittest.fixtures.PathFixture('../toolbox'));
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture('../../toolbox'));
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture('..'));
         end
     end
 

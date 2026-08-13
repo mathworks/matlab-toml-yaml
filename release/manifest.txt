@@ -1,0 +1,25 @@
+# Release manifest for the public repository (github.com/mathworks/matlab-toml-yaml)
+#
+# Single source of truth for what ships to the public repo. Each non-comment,
+# non-blank line is a path (file or directory), relative to the repo root, that
+# is copied into the release tree. Everything not listed here stays internal to
+# this staging repository (Claude/, issues/, research/, presentations/, specs/,
+# experimental/, CLAUDE.md, .mcp.json, .vscode/, gitlab-ci.yml, YAML_LIMITATIONS.md,
+# and other development-only content).
+#
+# Because JSON/INI support has been extracted to experimental/ (never shipped),
+# toolbox/ is exactly the installable ship set and tests/ is TOML/YAML only;
+# no per-file exclusions are required.
+
+# Top-level community and metadata files
+LICENSE
+README.md
+CONTRIBUTING.md
+SECURITY.md
+ConfigurationFileIO.prj
+
+# The toolbox itself (add toolbox/ to the MATLAB path)
+toolbox
+
+# Test suite
+tests

@@ -158,9 +158,21 @@ All arrays are returned as column vectors for consistency.
 
 ## Limitations
 
-- Nested flow-style arrays (e.g., `[[1,2],[3,4]]`) are not fully supported.
-- Advanced YAML features like anchors, aliases, and custom tags are not supported.
-- Comments are removed during parsing and not preserved.
+`readyaml` implements a lightweight, pure-MATLAB parser for the subset of YAML
+most commonly used in configuration files. It is **not** a fully compliant YAML
+1.2 parser. The following features are not supported:
+
+- **Anchors and aliases** (`&`, `*`) are not supported and may be read as literal text.
+- **Tags** (e.g. `!!str`, `!!float`) and **directives** (e.g. `%YAML 1.2`) are not supported.
+- **Multiple documents** in one file (separated by `---`) are not supported; the entire file is treated as a single document.
+- **Complex keys** are not supported; mapping keys must be scalar strings.
+- **Flow-style mappings** (e.g. `{name: value}`) are not robustly parsed; use block style. Nested flow-style sequences (e.g. `[[1,2],[3,4]]`) are also not fully supported.
+- **Block scalars** (`|` and `>`) are not explicitly supported and may be parsed incorrectly.
+- **Timestamps** are detected with a regular expression covering a subset of ISO 8601; other date/time formats are read as strings.
+- **Comments** (`#`) are removed during parsing and not preserved when writing.
+
+For use cases requiring full spec compliance (for example, complex Kubernetes
+manifests that use anchors), consider a Java-based library such as SnakeYAML.
 
 ## See Also
 

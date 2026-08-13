@@ -8,7 +8,7 @@ classdef arrayOrientationTest < matlab.unittest.TestCase
     methods(TestMethodTeardown)
         function cleanupFiles(~)
             % Clean up any test files
-            delete('*.yaml', '*.toml', '*.json', '*.ini');
+            delete('*.yaml', '*.toml');
         end
     end
 
@@ -23,32 +23,6 @@ classdef arrayOrientationTest < matlab.unittest.TestCase
 
             testCase.verifyEqual(size(ports), [3 1], ...
                 'YAML arrays should be column vectors (3x1)');
-            testCase.verifyEqual(ports, [8080; 8443; 9000]);
-        end
-
-        function testJSONArraysAreColumns(testCase)
-            % JSON array values should be column vectors
-            jsonContent = '{"ports": [8080, 8443, 9000]}';
-            writelines(jsonContent, 'test.json');
-
-            config = readjson('test.json');
-            ports = config.ports;
-
-            testCase.verifyEqual(size(ports), [3 1], ...
-                'JSON arrays should be column vectors (3x1)');
-            testCase.verifyEqual(ports, [8080; 8443; 9000]);
-        end
-
-        function testINIArraysAreColumns(testCase)
-            % INI comma-separated values should be column vectors
-            iniContent = sprintf('[server]\nports=8080,8443,9000');
-            writelines(iniContent, 'test.ini');
-
-            config = readini('test.ini');
-            ports = config.server.ports;
-
-            testCase.verifyEqual(size(ports), [3 1], ...
-                'INI arrays should be column vectors (3x1)');
             testCase.verifyEqual(ports, [8080; 8443; 9000]);
         end
 
@@ -142,28 +116,24 @@ classdef arrayOrientationTest < matlab.unittest.TestCase
             % Arrays from different formats should all be column vectors
             % and their values should be compatible for concatenation
             yamlContent = sprintf('values:\n  - 1\n  - 2\n  - 3');
-            jsonContent = '{"values": [4, 5, 6]}';
             tomlContent = 'values = [7, 8, 9]';
 
             writelines(yamlContent, 'test.yaml');
-            writelines(jsonContent, 'test.json');
             writelines(tomlContent, 'test.toml');
 
             yamlConfig = readyaml('test.yaml');
-            jsonConfig = readjson('test.json');
             tomlConfig = readtoml('test.toml');
 
             % All should have column vectors
             testCase.verifyEqual(size(yamlConfig.values), [3 1]);
-            testCase.verifyEqual(size(jsonConfig.values), [3 1]);
             testCase.verifyEqual(size(tomlConfig.values), [3 1]);
 
             % Values can be concatenated horizontally (since they're all columns)
-            allValues = [yamlConfig.values jsonConfig.values tomlConfig.values];
+            allValues = [yamlConfig.values tomlConfig.values];
 
-            % Should produce 3x3 array of the numeric values
-            testCase.verifyEqual(size(allValues), [3 3]);
-            testCase.verifyEqual(allValues, [1 4 7; 2 5 8; 3 6 9]);
+            % Should produce 3x2 array of the numeric values
+            testCase.verifyEqual(size(allValues), [3 2]);
+            testCase.verifyEqual(allValues, [1 7; 2 8; 3 9]);
         end
 
         function testEmptyArrayOrientation(testCase)
@@ -191,31 +161,23 @@ classdef arrayOrientationTest < matlab.unittest.TestCase
             % and compatible for value concatenation
             yamlContent = sprintf('data:\n  - 1\n  - 2');
             tomlContent = 'data = [3, 4]';
-            jsonContent = '{"data": [5, 6]}';
-            iniContent = sprintf('[section]\ndata=7,8');
 
             writelines(yamlContent, 'test.yaml');
             writelines(tomlContent, 'test.toml');
-            writelines(jsonContent, 'test.json');
-            writelines(iniContent, 'test.ini');
 
             yamlCfg = readyaml('test.yaml');
             tomlCfg = readtoml('test.toml');
-            jsonCfg = readjson('test.json');
-            iniCfg = readini('test.ini');
 
             % All should have column vectors
             testCase.verifyEqual(size(yamlCfg.data), [2 1]);
             testCase.verifyEqual(size(tomlCfg.data), [2 1]);
-            testCase.verifyEqual(size(jsonCfg.data), [2 1]);
-            testCase.verifyEqual(size(iniCfg.section.data), [2 1]);
 
             % Values can be concatenated horizontally (since they're all columns)
-            allData = [yamlCfg.data tomlCfg.data jsonCfg.data iniCfg.section.data];
+            allData = [yamlCfg.data tomlCfg.data];
 
-            % Should produce 2x4 array (2 values per format, 4 formats)
-            testCase.verifyEqual(size(allData), [2 4]);
-            testCase.verifyEqual(allData, [1 3 5 7; 2 4 6 8]);
+            % Should produce 2x2 array (2 values per format, 2 formats)
+            testCase.verifyEqual(size(allData), [2 2]);
+            testCase.verifyEqual(allData, [1 3; 2 4]);
         end
 
         function testUserAssignedRowVectorNormalized(testCase)

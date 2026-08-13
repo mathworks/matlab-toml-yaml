@@ -3,7 +3,7 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         matlab.mixin.CustomDisplay
     %CONFIGURATIONDATA Base class for structured hierarchical data
     %   Can be used directly via configdata() for format-neutral data, or via
-    %   format-specific subclasses: YAMLData, TOMLData, JSONData, INIData.
+    %   format-specific subclasses: YAMLData, TOMLData.
     %   Provides dot notation access and support for special characters in keys.
     %
     %   This is a value class. Assignment creates an independent copy:
@@ -19,7 +19,8 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
     properties (Access = public, Hidden = true)
         % Consolidated internal state in a single property to minimize
         % reserved key names while preserving tab completion.
-        % See Claude/TAB_COMPLETION_DESIGN.md for rationale.
+        % A single reserved property enables tab completion while keeping
+        % almost all names available as data keys.
         xInternal__ struct = struct(...
             'Data', configureDictionary("string", "cell"), ...
             'KeyAliases', configureDictionary("string", "string"), ...
@@ -30,14 +31,14 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
     methods
         function obj = ConfigurationData()
         %CONFIGURATIONDATA Constructor for subclasses
-        %   This is an abstract class. Use YAMLData, TOMLData, or INIData.
+        %   This is an abstract class. Use YAMLData or TOMLData.
         %
         %   Subclass constructors create empty objects. To create from
         %   existing data, use the informal wrapper functions:
         %       config = tomldata(myStruct);   % from struct
         %       config = yamldata(myDict);     % from dictionary
         %
-        %   See also TOMLDATA, YAMLDATA, INIDATA
+        %   See also TOMLDATA, YAMLDATA
 
         obj.xInternal__.Data = configureDictionary("string", "cell");
         obj.xInternal__.KeyAliases = configureDictionary("string", "string");
@@ -1101,7 +1102,7 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         %
         %       % Struct array creates ConfigurationData array
         %       s = struct(A={1 2 3});  % 1x3 struct array
-        %       arr = importFrom(jsondata(), s);  % 1x3 JSONData array
+        %       arr = importFrom(yamldata(), s);  % 1x3 YAMLData array
 
         if isstruct(inputData)
             if ~isscalar(inputData)
@@ -1182,7 +1183,7 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
             return;  % OK
         end
 
-        % missing represents JSON/config null
+        % missing represents a null/absent config value
         if isa(value, 'missing')
             return;  % OK
         end
@@ -1609,7 +1610,7 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         function array = normalizeVectorOrientation(array)
         %NORMALIZEVECTORORIENTATION Normalize vectors to column orientation
         %   Ensures consistent concatenation behavior across all configuration
-        %   formats (YAML, TOML, JSON, INI).
+        %   formats (YAML, TOML).
         %
         %   Rationale: Column vector values enable natural concatenation when
         %   extracting from 1xN object arrays (the common case). For 1xN objArray:
@@ -1630,7 +1631,7 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         %     - Empty arrays (no orientation)
         %     - Multi-dimensional arrays (only true vectors - one dimension is 1)
         %
-        %   See Issue #77 and Claude/ISSUE_77_ARRAY_ORIENTATION_PLAN.md
+        %   See Issue #77.
 
         % Skip empty, scalar, char, cell arrays, and struct arrays
         if isempty(array) || isscalar(array) || ischar(array) || iscell(array) || isstruct(array)
