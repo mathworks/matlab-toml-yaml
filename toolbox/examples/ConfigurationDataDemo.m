@@ -8,7 +8,7 @@
 %[text] - Automatic key aliasing (hyphens → underscores)
 %[text] - Method calling convention (function syntax)
 %[text] - Filtering and querying heterogeneous data \
-%[text] **Source**: [https://insidelabs-git.mathworks.com/mhirsch/matlab-toml-yaml/-/issues](https://insidelabs-git.mathworks.com/mhirsch/matlab-toml-yaml/-/issues)
+%[text]
 %[text:tableOfContents]{"heading":"Table of Contents"}
 %%
 %[text] ## Show the file
