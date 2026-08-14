@@ -12,7 +12,7 @@
 %[text:tableOfContents]{"heading":"Table of Contents"}
 %%
 %[text] ## Show the file
-edit demo_application.yaml
+% edit demo_application.yaml
 %%
 %[text] ## Load Configuration
 %[text] We'll use this single object for the entire demo:

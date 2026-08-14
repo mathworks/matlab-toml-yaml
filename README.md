@@ -22,6 +22,7 @@ Add the toolbox to your MATLAB path:
 
 ```matlab
 addpath('/path/to/matlab-toml-yaml/toolbox')
+addpath('/path/to/matlab-toml-yaml/toolbox/examples')
 ```
 
 Or open the MATLAB Project file `matlab-toml-yaml.prj`.
@@ -32,45 +33,46 @@ Or open the MATLAB Project file `matlab-toml-yaml.prj`.
 
 ```matlab
 % Read YAML
-config = readyaml('config.yaml');
+config = readyaml('server_config.yaml');
 host = config.database.host;
 
 % Read TOML
-project = readtoml('pyproject.toml');
+project = readtoml('simple_project.toml');
 name = project.project.name;
 
 % Keys with special characters
-deps = config.("build-system").requires;
+deps = project.("build-system").requires;
 ```
 
 ### Writing Files
 
 ```matlab
 % Create data
-config = YAMLData;
+config = matlab.io.config.YAMLData;
 config.name = 'MyApp';
 config.database.host = 'localhost';
 config.database.port = 5432;
 
 % Write YAML
-writeyaml(config, 'config.yaml');
+writeyaml(config, 'my_config.yaml');
 
 % Write TOML
-writetoml(config, 'config.toml');
+writetoml(config, 'my_config.toml');
 ```
 
 ### Working with Arrays
 
 ```matlab
-% YAML/TOML arrays convert automatically
-config.ports = [8080, 8443, 9000];        % Numeric array
-config.servers = ["alpha", "beta"];       % String array
+% Read a file with arrays
+arrays = readyaml('arrays_config.yaml');
+arrays.web.ports          % [8080; 8443; 9000] numeric array
+arrays.web.hosts          % ["alpha"; "beta"; "gamma"] string array
 
 % Control output style
-writeyaml(config, 'config.yaml', 'ArrayStyle', 'flow');
+writeyaml(arrays, 'my_arrays.yaml', 'ArrayStyle', 'flow');
 % Output: ports: [8080, 8443, 9000]
 
-writeyaml(config, 'config.yaml', 'ArrayStyle', 'block');
+writeyaml(arrays, 'my_arrays.yaml', 'ArrayStyle', 'block');
 % Output:
 % ports:
 %   - 8080
@@ -112,13 +114,13 @@ Both extend `ConfigurationData` with format-specific features:
 
 ```matlab
 % Create and populate
-config = YAMLData;
+config = matlab.io.config.YAMLData;
 config.version = '1.0.0';
 config.database.host = 'localhost';
 
 % Access keys
-allKeys = keys(config);         % Get all keys
-exists = isfield(config, 'db'); % Check existence
+allKeys = keys(config);              % Get all keys
+exists = isfield(config, 'database'); % Check existence
 
 % Display full content
 show(config);                   % Shows formatted YAML/TOML
@@ -132,11 +134,12 @@ s = struct(config);             % Standard MATLAB struct
 Keys with hyphens, spaces, or other special characters use parentheses notation:
 
 ```matlab
-config.("build-system").requires = ["setuptools"];
-config.("my key").value = 123;
+project = readtoml('simple_project.toml');
+project.("build-system").requires    % ["setuptools>=61.0", "wheel"]
+project.("my key").value = 123;      % Create keys with spaces
 
 % Field names are automatically aliased
-config.build_system  % Also works! (uses makeValidName)
+project.build_system  % Also works! (uses makeValidName)
 ```
 
 ### Converting Data
@@ -146,15 +149,15 @@ Convert between structs, dictionaries, and ConfigurationData:
 ```matlab
 % Create from struct
 s = struct('name', 'MyApp', 'database', struct('host', 'localhost', 'port', 5432));
-config = YAMLData(s);           % Also works with TOMLData
+config = yamldata(s);           % Also works with tomldata
 
 % Convert to dictionary
 d = dictionary(config);
 d{"name"}                       % "MyApp"
 
 % Write struct or dictionary directly
-writeyaml(s, 'config.yaml');    % Structs work directly
-writeyaml(d, 'config.yaml');    % Dictionaries work too
+writeyaml(s, 'my_config.yaml');    % Structs work directly
+writeyaml(d, 'my_config.yaml');    % Dictionaries work too
 ```
 
 ## Examples
@@ -181,16 +184,17 @@ The toolbox fully supports GitHub Actions workflows:
 
 ```matlab
 % Read workflow
-workflow = readyaml('github-actions-ci.yaml');
+workflow = readyaml('ci.yaml');
 
 % Access steps (returns object array)
 steps = workflow.jobs.test.steps;
 
-% Modify a step
+% Modify a step and assign back (value semantics)
 steps(1).uses = 'actions/checkout@v5';
+workflow.jobs.test.steps = steps;
 
 % Write back
-writeyaml(workflow, 'updated-workflow.yaml');
+writeyaml(workflow, 'ci_updated.yaml');
 ```
 
 ## Supported Data Types
