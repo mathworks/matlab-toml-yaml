@@ -30,11 +30,11 @@ matlab.addons.toolbox.installToolbox("TOML_and_YAML_Toolbox_for_MATLAB.mltbx")
 
 ```matlab
 % Read YAML
-config = readyaml('server_config.yaml');
+config = readyaml("server_config.yaml");
 host = config.database.host;
 
 % Read TOML
-project = readtoml('simple_project.toml');
+project = readtoml("simple_project.toml");
 name = project.project.name;
 
 % Keys with special characters
@@ -46,30 +46,30 @@ deps = project.("build-system").requires;
 ```matlab
 % Create data
 config = matlab.io.config.YAMLData;
-config.name = 'MyApp';
-config.database.host = 'localhost';
+config.name = "MyApp";
+config.database.host = "localhost";
 config.database.port = 5432;
 
 % Write YAML
-writeyaml(config, 'my_config.yaml');
+writeyaml(config, "my_config.yaml");
 
 % Write TOML
-writetoml(config, 'my_config.toml');
+writetoml(config, "my_config.toml");
 ```
 
 ### Working with Arrays
 
 ```matlab
 % Read a file with arrays
-arrays = readyaml('arrays_config.yaml');
+arrays = readyaml("arrays_config.yaml");
 arrays.web.ports          % [8080; 8443; 9000] numeric array
 arrays.web.hosts          % ["alpha"; "beta"; "gamma"] string array
 
 % Control output style
-writeyaml(arrays, 'my_arrays.yaml', 'ArrayStyle', 'flow');
+writeyaml(arrays, "my_arrays.yaml", ArrayStyle="flow");
 % Output: ports: [8080, 8443, 9000]
 
-writeyaml(arrays, 'my_arrays.yaml', 'ArrayStyle', 'block');
+writeyaml(arrays, "my_arrays.yaml", ArrayStyle="block");
 % Output:
 % ports:
 %   - 8080
@@ -92,13 +92,13 @@ writeyaml(arrays, 'my_arrays.yaml', 'ArrayStyle', 'block');
 ### Common Options
 
 **readyaml:**
-- `'SequenceRule'` - `'auto'` (default) or `'cell'` - Control array conversion
+- `SequenceRule` - `"auto"` (default) or `"cell"` - Control array conversion
 
 **writeyaml:**
-- `'ArrayStyle'` - `'block'` (default) or `'flow'` - Array formatting
-- `'NumIndentationSpaces'` - Integer (default: 2) - Indentation
-- `'SectionSpacing'` - `'loose'` (default) or `'compact'` - Spacing
-- `'Precision'` - Integer (default: 6) - Numeric precision
+- `ArrayStyle` - `"block"` (default) or `"flow"` - Array formatting
+- `NumIndentationSpaces` - Integer (default: 2) - Indentation
+- `SectionSpacing` - `"loose"` (default) or `"compact"` - Spacing
+- `Precision` - Integer (default: 6) - Numeric precision
 
 **writetoml:**
 - Similar options available
@@ -112,12 +112,12 @@ Both extend `ConfigurationData` with format-specific features:
 ```matlab
 % Create and populate
 config = matlab.io.config.YAMLData;
-config.version = '1.0.0';
-config.database.host = 'localhost';
+config.version = "1.0.0";
+config.database.host = "localhost";
 
 % Access keys
 allKeys = keys(config);              % Get all keys
-exists = isfield(config, 'database'); % Check existence
+exists = isfield(config, "database"); % Check existence
 
 % Display full content
 show(config);                   % Shows formatted YAML/TOML
@@ -131,7 +131,7 @@ s = struct(config);             % Standard MATLAB struct
 Keys with hyphens, spaces, or other special characters use parentheses notation:
 
 ```matlab
-project = readtoml('simple_project.toml');
+project = readtoml("simple_project.toml");
 project.("build-system").requires    % ["setuptools>=61.0", "wheel"]
 project.("my key").value = 123;      % Create keys with spaces
 
@@ -145,7 +145,7 @@ Convert between structs, dictionaries, and ConfigurationData:
 
 ```matlab
 % Create from struct
-s = struct('name', 'MyApp', 'database', struct('host', 'localhost', 'port', 5432));
+s = struct("name", "MyApp", "database", struct("host", "localhost", "port", 5432));
 config = yamldata(s);           % Also works with tomldata
 
 % Convert to dictionary
@@ -153,8 +153,8 @@ d = dictionary(config);
 d{"name"}                       % "MyApp"
 
 % Write struct or dictionary directly
-writeyaml(s, 'my_config.yaml');    % Structs work directly
-writeyaml(d, 'my_config.yaml');    % Dictionaries work too
+writeyaml(s, "my_config.yaml");    % Structs work directly
+writeyaml(d, "my_config.yaml");    % Dictionaries work too
 ```
 
 ## Examples
@@ -181,17 +181,17 @@ The toolbox fully supports GitHub Actions workflows:
 
 ```matlab
 % Read workflow
-workflow = readyaml('ci.yaml');
+workflow = readyaml("ci.yaml");
 
 % Access steps (returns object array)
 steps = workflow.jobs.test.steps;
 
 % Modify a step and assign back (value semantics)
-steps(1).uses = 'actions/checkout@v5';
+steps(1).uses = "actions/checkout@v5";
 workflow.jobs.test.steps = steps;
 
 % Write back
-writeyaml(workflow, 'ci_updated.yaml');
+writeyaml(workflow, "ci_updated.yaml");
 ```
 
 ## Supported Data Types
