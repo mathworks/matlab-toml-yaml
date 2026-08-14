@@ -18,7 +18,7 @@ baseParams.optimizer = "sgd";
 runs = [];
 learningRates = [0.001, 0.01, 0.1, 0.5];
 for i = 1:numel(learningRates)
-    learningRateConfig=configdata(struct('learning_rate', learningRates(i)));
+    learningRateConfig=configdata(struct("learning_rate", learningRates(i)));
     params = merge(baseParams, learningRateConfig);
     runs = [runs, params];
 end

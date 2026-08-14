@@ -140,7 +140,7 @@ summary = table(... %[output:group:6ab0ff1e] %[output:1bac20f9]
     envs.region', ... %[output:1bac20f9]
     envs.("instance-type")', ... %[output:1bac20f9]
     sslEnabled', ... %[output:1bac20f9]
-    'VariableNames', ["Environment", "Region", "InstanceType", "SSL"]) %[output:group:6ab0ff1e] %[output:1bac20f9]
+    VariableNames=["Environment", "Region", "InstanceType", "SSL"]) %[output:group:6ab0ff1e] %[output:1bac20f9]
 %%
 %[text] ## Key Takeaways
 %[text] ConfigurationData is designed for **heterogeneous hierarchical data** where:

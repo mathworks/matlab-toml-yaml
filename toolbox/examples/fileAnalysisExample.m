@@ -7,7 +7,7 @@
 %%
 %[text] ## The Classic Struct Array Problem
 %[text] `dir()` returns a struct array. When you index into a field across all elements, MATLAB returns a comma-separated list — not an array. You have to wrap it in `{}` or `string({...})` to get something you can actually work with.
-d = dir('*.m');
+d = dir("*.m");
 % This returns a comma-separated list, not an array:
 %   d.name        % multiple outputs, not indexable
 % You have to write this instead:
@@ -20,7 +20,7 @@ string({large.name}) %[output:0b0b7dfc]
 %%
 %[text] ## The configdata Approach
 %[text] Wrap the struct array in `configdata()` and the friction disappears. Dot access on the array returns a proper string array, and logical indexing works exactly like it does on numeric arrays.
-files = configdata(dir('*.m'));
+files = configdata(dir("*.m"));
 files.name %[output:56abfc01]
 %%
 %[text] Filtering is now a one-liner. The result is a `ConfigurationData` array you can keep working with.
@@ -29,7 +29,7 @@ large.name %[output:4d5129ca]
 %%
 %[text] ## Sorting by a Field
 %[text] To find the largest files, sort on the `bytes` field and index into the result. `files.bytes` returns a numeric array, so `sort` works directly.
-[~, idx] = sort(files.bytes, 'descend');
+[~, idx] = sort(files.bytes, "descend");
 largest = files(idx(1:3));
 largest.name %[output:4ec57efa] %[output:6a26a5d4]
 %%
@@ -44,7 +44,7 @@ largest.name %[output:4ec57efa] %[output:6a26a5d4]
 %%
 %[text] ### A Prototype of Better dir()
 %[text] `exampleBuildDirectoryTree()` is a prototype showing what a hierarchical `dir()` could return. It builds a nested configdata tree where each folder is an object with a `.files` array and nested subfolder objects.
-tree = exampleBuildDirectoryTree('..', MaxDepth=3, FilePattern='*.m') %[output:34ace230]
+tree = exampleBuildDirectoryTree("..", MaxDepth=3, FilePattern="*.m") %[output:34ace230]
 %%
 %[text] ### Visualize the Hierarchy with describe()
 %[text] Before working with the data, use `describe()` to see the tree structure. This shows which folders are nested where, without printing all the values.
@@ -69,7 +69,7 @@ allFiles = exampleCollectFiles(tree);
 numel(allFiles) %[output:3782b292]
 %%
 %[text] Find the largest .m files anywhere in the project.
-[~, idx] = sort(allFiles.bytes, 'descend');
+[~, idx] = sort(allFiles.bytes, "descend");
 topFiles = allFiles(idx(1:5));
 topFiles.name %[output:25aaaf7a]
 %%

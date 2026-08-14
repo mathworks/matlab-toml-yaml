@@ -190,7 +190,7 @@ type("../examples/array_flow.toml") %[output:32f66a45]
 writetoml(project, "../examples/array_block.toml", ArrayStyle="block")
 type("../examples/array_block.toml") %[output:02fb2a7b]
 %[text] TOML has multiple string styles. Use literal strings (`''`) to avoid the need to escape special characters. Control string formatting for paths (useful for Windows paths):
-project.paths.data = 'C:\Users\Data';
+project.paths.data = "C:\Users\Data";
 writetoml(project, "../examples/literal_strings.toml", StringEscapeStyle="literal")
 type("../examples/literal_strings.toml") %[output:2ec04d0c]
 %%
