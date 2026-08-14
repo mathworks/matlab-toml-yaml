@@ -18,14 +18,11 @@ The TOML and YAML Toolbox for MATLAB adds support for reading and writing YAML a
 
 ## Installation
 
-Add the toolbox to your MATLAB path:
+Download the latest `.mltbx` file from [Releases](https://github.com/mathworks/matlab-toml-yaml/releases) and double-click it in MATLAB, or install programmatically:
 
 ```matlab
-addpath('/path/to/matlab-toml-yaml/toolbox')
-addpath('/path/to/matlab-toml-yaml/toolbox/examples')
+matlab.addons.toolbox.installToolbox("TOML_and_YAML_Toolbox_for_MATLAB.mltbx")
 ```
-
-Or open the MATLAB Project file `matlab-toml-yaml.prj`.
 
 ## Quick Start
 
