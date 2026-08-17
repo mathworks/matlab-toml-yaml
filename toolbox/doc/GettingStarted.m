@@ -52,7 +52,7 @@ type("my_settings.toml") %[output:8beb5f62]
 %[text] - `writeyamlExample.m` — YAML formatting options (`ArrayStyle`, `SectionSpacing`)
 %[text] - `readtomlExample.m` — TOML reading and data types
 %[text] - `writetomlExample.m` — TOML formatting options (`ArrayStyle`, `StringEscapeStyle`)
-%[text] - `yamlWorkflowExample.m` — End-to-end read/modify/write workflow
+%[text] - `yamlWorkflowExample.m` — End-to-end read/modify/write workflow \
 %%
 %[text] ## Cleanup
 delete("my_config.yaml", "my_settings.toml");
