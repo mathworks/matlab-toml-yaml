@@ -179,9 +179,12 @@ keys(ghActions) %[output:8097bbab]
 %[text] Check for specific keys
 iskey(ghActions, "jobs") %[output:788cfd40]
 %%
-%[text] ## Use show for formatted display
+%[text] ## Use show and describe for formatted display
 %[text] Database configuration structure:
 show(dbConfig) %[output:5360cd8e]
+%%
+%[text] Use `describe` for a compact structural overview showing types and sizes:
+describe(dbConfig)
 %%
 %[text] ## Data Types in YAML
 %[text] YAML supports various data types
