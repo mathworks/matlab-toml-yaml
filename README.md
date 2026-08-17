@@ -57,26 +57,6 @@ writeyaml(config, "my_config.yaml");
 writetoml(config, "my_config.toml");
 ```
 
-### Working with Arrays
-
-```matlab
-% Read a file with arrays
-arrays = readyaml("arrays_config.yaml");
-arrays.web.ports          % [8080; 8443; 9000] numeric array
-arrays.web.hosts          % ["alpha"; "beta"; "gamma"] string array
-
-% Control output style
-writeyaml(arrays, "my_arrays.yaml", ArrayStyle="flow");
-% Output: ports: [8080, 8443, 9000]
-
-writeyaml(arrays, "my_arrays.yaml", ArrayStyle="block");
-% Output:
-% ports:
-%   - 8080
-%   - 8443
-%   - 9000
-```
-
 ## Main Functions
 
 ### YAML
@@ -88,74 +68,6 @@ writeyaml(arrays, "my_arrays.yaml", ArrayStyle="block");
 - `readtoml(filename)` - Read TOML file, returns TOMLData object
 - `writetoml(data, filename)` - Write TOML file
 - `TOMLData` - Create TOML data object
-
-### Common Options
-
-**readyaml:**
-- `SequenceRule` - `"auto"` (default) or `"cell"` - Control array conversion
-
-**writeyaml:**
-- `ArrayStyle` - `"block"` (default) or `"flow"` - Array formatting
-- `NumIndentationSpaces` - Integer (default: 2) - Indentation
-- `SectionSpacing` - `"loose"` (default) or `"compact"` - Spacing
-- `Precision` - Integer (default: 6) - Numeric precision
-
-**writetoml:**
-- Similar options available
-
-## Data Objects
-
-### YAMLData and TOMLData
-
-Both extend `ConfigurationData` with format-specific features:
-
-```matlab
-% Create and populate
-config = matlab.io.config.YAMLData;
-config.version = "1.0.0";
-config.database.host = "localhost";
-
-% Access keys
-allKeys = keys(config);              % Get all keys
-exists = isfield(config, "database"); % Check existence
-
-% Display full content
-show(config);                   % Shows formatted YAML/TOML
-
-% Convert to struct
-s = struct(config);             % Standard MATLAB struct
-```
-
-### Handling Special Characters
-
-Keys with hyphens, spaces, or other special characters use parentheses notation:
-
-```matlab
-project = readtoml("simple_project.toml");
-project.("build-system").requires    % ["setuptools>=61.0", "wheel"]
-project.("my key").value = 123;      % Create keys with spaces
-
-% Field names are automatically aliased
-project.build_system  % Also works! (uses makeValidName)
-```
-
-### Converting Data
-
-Convert between structs, dictionaries, and ConfigurationData:
-
-```matlab
-% Create from struct
-s = struct("name", "MyApp", "database", struct("host", "localhost", "port", 5432));
-config = yamldata(s);           % Also works with tomldata
-
-% Convert to dictionary
-d = dictionary(config);
-d{"name"}                       % "MyApp"
-
-% Write struct or dictionary directly
-writeyaml(s, "my_config.yaml");    % Structs work directly
-writeyaml(d, "my_config.yaml");    % Dictionaries work too
-```
 
 ## Examples
 
@@ -174,22 +86,6 @@ See `toolbox/doc/GettingStarted.m` for an introductory walkthrough, or explore t
 **Demo Scripts:**
 - `conversionExample.m` - Converting between structs, dictionaries, and data objects
 
-## Supported Data Types
-
-### Reading
-- **Strings** → char or string
-- **Numbers** → double
-- **Booleans** → logical
-- **Arrays** → numeric, string, or cell arrays (auto-detected)
-- **Objects** → YAMLData/TOMLData with nested fields
-- **Dates** → datetime objects (TOML)
-
-### Writing
-- All MATLAB types: numeric, string, char, logical, datetime
-- Nested structures
-- Arrays (with formatting control)
-- Object arrays
-
 ## Limitations
 
 This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
@@ -205,26 +101,6 @@ For production use cases requiring full spec compliance (e.g. complex Kubernetes
 
 - MATLAB R2022b or later (for `dictionary` with value semantics)
 - No additional toolboxes required
-
-## Project Structure
-
-```
-matlab-toml-yaml/
-├── buildfile.m           ← Build tasks (test, package)
-├── images/               ← Toolbox icon, README assets
-├── toolbox/              ← Add this to path
-│   ├── readyaml.m
-│   ├── writeyaml.m
-│   ├── readtoml.m
-│   ├── writetoml.m
-│   ├── doc/              ← GettingStarted + function reference
-│   ├── examples/         ← Example scripts and sample files
-│   └── +matlab/+io/+config/
-│       ├── ConfigurationData.m
-│       ├── YAMLData.m
-│       └── TOMLData.m
-└── tests/                ← Test files
-```
 
 ## License
 
