@@ -30,7 +30,7 @@ function result = merge(base, override)
 %       config.database.host      % "prod-db" (from userConfig)
 %       config.database.port      % 5432 (from defaults)
 %
-%   See also: configdata, select
+%   See also: yamldata, tomldata, select
 
     arguments
         base matlab.io.config.ConfigurationData

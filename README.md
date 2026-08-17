@@ -13,8 +13,8 @@ The TOML and YAML Toolbox for MATLAB adds support for reading and writing YAML a
 - **Dot Notation Access** - Natural MATLAB syntax: `config.database.host`
 - **Special Characters** - Handle keys with hyphens, spaces: `config.("build-system")`
 - **Full Round-Trip** - Read, modify, write back without data loss
-- **Smart Arrays** - Automatic conversion to optimal MATLAB types
-- **Customizable Output** - Control formatting, indentation, array styles
+- **Implicit Type Conversion** - Automatic conversion to optimal MATLAB types
+- **Flexible File Writing** - Control formatting, indentation, array styles
 
 ## Installation
 
@@ -172,27 +172,7 @@ See `toolbox/doc/GettingStarted.m` for an introductory walkthrough, or explore t
 - `tomlPyprojectExample.m` - Working with `pyproject.toml`
 
 **Demo Scripts:**
-- `ConfigurationDataDemo.m` - Tour of the data object API
 - `conversionExample.m` - Converting between structs, dictionaries, and data objects
-
-## Working with GitHub Actions
-
-The toolbox fully supports GitHub Actions workflows:
-
-```matlab
-% Read workflow
-workflow = readyaml("ci.yaml");
-
-% Access steps (returns object array)
-steps = workflow.jobs.test.steps;
-
-% Modify a step and assign back (value semantics)
-steps(1).uses = "actions/checkout@v5";
-workflow.jobs.test.steps = steps;
-
-% Write back
-writeyaml(workflow, "ci_updated.yaml");
-```
 
 ## Supported Data Types
 

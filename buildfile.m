@@ -24,15 +24,13 @@ end
 function mltbxTask(~)
 % Package toolbox/ into a .mltbx artifact.
 opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
-    "1dd978f7-c76b-4b6c-a0f6-b1bf82118978");
-opts.ToolboxName = "TOML and YAML Toolbox for MATLAB";
+    "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
+    ToolboxName="TOML and YAML Toolbox for MATLAB");
 opts.ToolboxVersion = "0.1.0";
 opts.MinimumMatlabRelease = "R2022b";
 opts.OutputFile = fullfile("release", "TOML_and_YAML_Toolbox_for_MATLAB.mltbx");
 opts.Summary = "Read and write YAML and TOML configuration files with dot notation access.";
-opts.Description = "Pure MATLAB toolbox for reading and writing YAML and TOML " + ...
-    "configuration files. Includes custom data types with dot notation access, " + ...
-    "full round-trip support, and configurable formatting. No external dependencies.";
+opts.Description = fileread("README.md");
 if isfile(fullfile("images", "matlab-toml-yaml.png"))
     opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
 end
