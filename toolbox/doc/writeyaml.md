@@ -2,7 +2,7 @@
 
 **Write data to YAML file**
 
-The `writeyaml` function writes MATLAB data to a YAML file with customizable formatting options.
+The `writeyaml` function writes MATLAB&reg; data to a YAML file with customizable formatting options.
 
 ## Syntax
 

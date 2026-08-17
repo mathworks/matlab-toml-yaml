@@ -1,4 +1,4 @@
-# TOML and YAML Toolbox for MATLAB
+# TOML and YAML Toolbox for MATLAB&reg;
 
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=mathworks/matlab-toml-yaml)
 

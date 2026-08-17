@@ -13,7 +13,7 @@ data = readyaml(filename,SequenceRule=rule)
 
 ## Description
 
-`data = readyaml(filename)` reads the YAML file specified by `filename` and returns the data as a [YAMLData](YAMLData.md) object. YAML sequences (arrays) are automatically converted to the most appropriate MATLAB array type.
+`data = readyaml(filename)` reads the YAML file specified by `filename` and returns the data as a [YAMLData](YAMLData.md) object. YAML sequences (arrays) are automatically converted to the most appropriate MATLAB&reg; array type.
 
 `data = readyaml(filename,SequenceRule=rule)` controls how YAML flow-style sequences `[item1, item2, ...]` are converted to MATLAB arrays.
 
