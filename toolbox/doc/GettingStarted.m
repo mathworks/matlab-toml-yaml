@@ -59,3 +59,9 @@ type("my_settings.toml")
 %%
 %[text] ## Cleanup
 delete("my_config.yaml", "my_settings.toml");
+
+%[appendix]{"version":"1.0"}
+%---
+%[metadata:view]
+%   data: {"layout":"inline"}
+%---
