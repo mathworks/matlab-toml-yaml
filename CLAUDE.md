@@ -44,7 +44,7 @@ All work must be done on a branch, not on main. Create a new branch for new work
 
 ### Class Hierarchy
 ```
-ConfigurationData (value class, base)
+ConfigurationData (abstract value class, base)
 ├── YAMLData
 └── TOMLData
 ```
@@ -146,10 +146,10 @@ obj.field            % returns missing if absent (read convenience)
 
 | File | Purpose |
 |------|---------|
-| `toolbox/+matlab/+io/+config/ConfigurationData.m` | Base class with dot notation handling (~1,500 lines) |
+| `toolbox/+matlab/+io/+config/ConfigurationData.m` | Abstract base class with dot notation handling (~1,700 lines) |
 | `toolbox/+matlab/+io/+config/YAMLData.m` | YAML subclass; `show()` prints YAML format |
 | `toolbox/+matlab/+io/+config/TOMLData.m` | TOML subclass; `show()` prints TOML format |
-| `toolbox/readyaml.m` | YAML parser (~400 lines) |
+| `toolbox/readyaml.m` | YAML parser (~500 lines) |
 | `toolbox/readtoml.m` | TOML parser (~1,250 lines, most complex) |
 | `toolbox/writeyaml.m` | YAML writer with formatting options |
 | `toolbox/writetoml.m` | TOML writer with formatting options |

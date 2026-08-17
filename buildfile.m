@@ -2,10 +2,6 @@ function plan = buildfile
 %BUILDFILE Build tasks for the TOML and YAML Toolbox for MATLAB.
 %   Run with `buildtool` from the repo root. See `buildtool -tasks` for the
 %   available tasks.
-%
-%   Because JSON/INI support lives in experimental/ (never shipped), the
-%   toolbox/ folder is exactly the installable ship set: the packaging task
-%   below needs no per-file exclusion logic.
 
 plan = buildplan(localfunctions);
 

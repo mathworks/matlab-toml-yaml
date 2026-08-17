@@ -1143,10 +1143,9 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         %   Subclasses can override to add format-specific type handling.
         %   Returns the (possibly converted) value, or throws an error.
         %
-        %   Format-neutral objects (SourceFormat "unknown") accept all MATLAB
-        %   types since they are not constrained by serialization requirements.
+        %   Objects with SourceFormat "unknown" accept all MATLAB types
+        %   since they are not constrained by serialization requirements.
 
-        % Format-neutral objects accept any MATLAB type
         if obj.xInternal__.SourceFormat == "unknown"
             return;
         end
