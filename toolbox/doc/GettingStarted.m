@@ -7,45 +7,42 @@ examplesFolder = fileparts(which("readyamlExample"));
 %%
 %[text] ## Reading TOML and YAML Files
 %[text] Read a YAML file:
-server = readyaml(fullfile(examplesFolder, "server_config.yaml"))
+config = readyaml(fullfile(examplesFolder, "basic_config.yaml"))
 %%
 %[text] Read a TOML file:
-project = readtoml(fullfile(examplesFolder, "simple_project.toml"))
+settings = readtoml(fullfile(examplesFolder, "basic_settings.toml"))
 %%
 %[text] ## Accessing Data with Dot Notation
 %[text] Use dot notation to access values — works the same for both formats:
-server.database.host
-project.project.name
+config.port
+settings.port
 %%
 %[text] Keys with hyphens use parentheses notation:
-project.("build-system").requires
+config.("app-name")
+settings.("max-connections")
 %%
 %[text] As a convenience, hyphenated keys also work with underscores:
-project.build_system.requires
+config.app_name
+settings.max_connections
 %%
 %[text] ## Modifying Configuration Data
-%[text] Change values, add new keys, or build nested structure:
-server.database.port = 3306;
-server.cache.enabled = true;
-project.project.version = "2.0.0";
-project.project.("new-field") = "new value";
+%[text] Change values and add new keys:
+config.port = 9000;
+config.debug = false;
+settings.port = 3000;
+settings.("max-connections") = 200;
 %%
-%[text] Build new data objects from scratch:
-config = yamldata();
-config.name = "MyApp";
+%[text] Build nested structure from scratch:
 config.database.host = "localhost";
 config.database.port = 5432;
-
-settings = tomldata();
-settings.owner.name = "Alice";
-settings.owner.email = "alice@example.com";
+config
 %%
 %[text] ## Writing TOML and YAML Files
-%[text] Write YAML:
+%[text] Write back to YAML:
 writeyaml(config, "my_config.yaml");
 type("my_config.yaml")
 %%
-%[text] Write TOML:
+%[text] Write back to TOML:
 writetoml(settings, "my_settings.toml");
 type("my_settings.toml")
 %%
