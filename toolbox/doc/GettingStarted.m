@@ -5,14 +5,14 @@
 %[text] Locate the sample files shipped with the toolbox.
 examplesFolder = fileparts(which("readyamlExample"));
 %%
-%[text] ## Reading Files
+%[text] ## Reading TOML and YAML Files
 %[text] Read a YAML file:
 server = readyaml(fullfile(examplesFolder, "server_config.yaml"))
 %%
 %[text] Read a TOML file:
 project = readtoml(fullfile(examplesFolder, "simple_project.toml"))
 %%
-%[text] ## Accessing Data
+%[text] ## Accessing Data with Dot Notation
 %[text] Use dot notation to access values — works the same for both formats:
 server.database.host
 project.project.name
@@ -23,7 +23,7 @@ project.("build-system").requires
 %[text] As a convenience, hyphenated keys also work with underscores:
 project.build_system.requires
 %%
-%[text] ## Modifying Data
+%[text] ## Modifying Configuration Data
 %[text] Change values, add new keys, or build nested structure:
 server.database.port = 3306;
 server.cache.enabled = true;
@@ -40,7 +40,7 @@ settings = tomldata();
 settings.owner.name = "Alice";
 settings.owner.email = "alice@example.com";
 %%
-%[text] ## Writing Files
+%[text] ## Writing TOML and YAML Files
 %[text] Write YAML:
 writeyaml(config, "my_config.yaml");
 type("my_config.yaml")
