@@ -50,25 +50,12 @@ classdef exampleScriptsTest < matlab.unittest.TestCase
             testCase.runInTempCopy(testCase.ExamplesPath, 'tomlPyprojectExample');
         end
 
-        function testConfigurationDataDemo(testCase)
-            testCase.runInTempCopy(testCase.ExamplesPath, 'ConfigurationDataDemo');
-        end
-
         function testConversionExample(testCase)
             testCase.runInTempCopy(testCase.ExamplesPath, 'conversionExample');
         end
 
         function testGettingStarted(testCase)
-            % GettingStarted uses relative paths to ../examples/, so we
-            % need a temp tree that preserves the doc/examples relationship.
-            f = testCase.applyFixture( ...
-                matlab.unittest.fixtures.TemporaryFolderFixture);
-            copyfile(testCase.DocPath, fullfile(f.Folder, 'doc'));
-            copyfile(testCase.ExamplesPath, fullfile(f.Folder, 'examples'));
-            testCase.applyFixture( ...
-                matlab.unittest.fixtures.CurrentFolderFixture( ...
-                fullfile(f.Folder, 'doc')));
-            GettingStarted;
+            testCase.runInTempCopy(testCase.DocPath, 'GettingStarted');
         end
     end
 

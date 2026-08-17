@@ -8,7 +8,7 @@ This project uses the [MATLAB Agentic Toolkit](https://github.com/matlab/matlab-
 
 ## Project Overview
 
-MATLAB toolbox for reading/writing YAML, TOML, JSON, and INI configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
+MATLAB toolbox for reading/writing YAML and TOML configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
 
 ## Commands
 
@@ -19,7 +19,6 @@ run_matlab_test_file('tests/yamltest.m')
 run_matlab_test_file('tests/tomltest.m')
 run_matlab_test_file('tests/subsasgnTest.m')
 run_matlab_test_file('tests/describeTest.m')
-run_matlab_test_file('tests/configdataTest.m')
 run_matlab_test_file('tests/ConfigurationPerformanceTest.m')
 ```
 
@@ -60,14 +59,14 @@ All internal state is stored in a single `public Hidden` struct property named `
 - `xInternal__.Data` - dictionary<string, cell> storing values wrapped in cells
 - `xInternal__.KeyAliases` - dictionary<string, string> mapping valid MATLAB names to original keys
 - `xInternal__.OriginalKeys` - string array preserving insertion order
-- `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml", "json", "ini")
+- `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml")
 
 This design uses one reserved key name to enable tab completion.
 
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
 
-Format-neutral `ConfigurationData` objects (no source format) are created via the `configdata()` wrapper. Each subclass also has a wrapper: `yamldata()`, `tomldata()`. These wrappers accept no args (empty), a struct, or a dictionary.
+`ConfigurationData` is abstract. Subclass wrappers: `yamldata()`, `tomldata()`. These accept no args (empty), a struct, or a dictionary.
 
 ## Critical Design Decisions
 
@@ -121,7 +120,7 @@ getData(obj(j), key)
 ```
 
 ### show() vs describe()
-- `show(obj)` — value viewer; displays actual data. Format-specific subclasses emit native format (YAML/TOML/JSON/INI). Format-neutral `ConfigurationData` emits an indented tree with values and no type annotations. Arrays use ND-array style (`varname(i) =`).
+- `show(obj)` — value viewer; displays actual data in native format (YAML or TOML). Arrays use ND-array style (`varname(i) =`).
 - `describe(obj)` — schema inspector; shows key hierarchy with MATLAB types and sizes. Supports `Depth=N` limiting and returns a queryable table when called with an output argument.
 
 ### Missing Key Behavior (Issue #74)
