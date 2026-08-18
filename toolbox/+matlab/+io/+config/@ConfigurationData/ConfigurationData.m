@@ -21,10 +21,6 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         Data dictionary = configureDictionary("string", "cell")
     end
 
-    properties (Abstract, Constant, Access = protected)
-        SourceFormat matlab.io.config.internal.SourceFormat
-    end
-
     methods
         function obj = ConfigurationData()
         %CONFIGURATIONDATA Constructor for subclasses

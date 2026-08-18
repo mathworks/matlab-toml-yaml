@@ -15,10 +15,6 @@ classdef YAMLData < matlab.io.config.ConfigurationData
     %
     %   See also: YAMLDATA, READYAML, WRITEYAML
 
-    properties (Constant, Access = protected)
-        SourceFormat = matlab.io.config.internal.SourceFormat.YAML
-    end
-
     methods
         function obj = YAMLData()
             %YAMLDATA Construct empty YAML configuration data object

@@ -3,13 +3,6 @@ function value = validateAndConvertValue(obj, value, key)
 %   Subclasses can override to add format-specific type handling.
 %   Returns the (possibly converted) value, or throws an error.
 %
-%   Objects with SourceFormat "unknown" accept all MATLAB types
-%   since they are not constrained by serialization requirements.
-
-if obj.SourceFormat == matlab.io.config.internal.SourceFormat.Unknown
-    return;
-end
-
 % Handle cell arrays recursively
 if iscell(value)
     for i = 1:numel(value)
