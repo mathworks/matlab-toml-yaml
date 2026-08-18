@@ -98,10 +98,6 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
 
         obj = setData(obj, key, value)
 
-        obj = addKey(obj, key)
-
-        obj = setKeyAlias(obj, alias, originalKey)
-
         obj = importFrom(obj, inputData)
     end
 
