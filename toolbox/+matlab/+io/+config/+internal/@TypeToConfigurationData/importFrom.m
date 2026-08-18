@@ -18,9 +18,9 @@ if isstruct(inputData)
     if ~isscalar(inputData)
         % Struct array -> array of ConfigurationData
         % Create array with same size as input
-        arr(numel(inputData)) = feval(class(obj));
+        arr(numel(inputData)) = createArray(class(obj));
         for i = 1:numel(inputData)
-            arr(i) = importFrom(feval(class(obj)), inputData(i));
+            arr(i) = importFrom(createArray(class(obj)), inputData(i));
         end
         obj = reshape(arr, size(inputData));
         return;

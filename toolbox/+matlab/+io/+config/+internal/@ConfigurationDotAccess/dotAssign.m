@@ -45,14 +45,14 @@ if isKey(obj.Data, key)
     value = obj.getData(key);
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Dot ...
             && ~isa(value, 'matlab.io.config.ConfigurationData')
-        value = feval(class(obj));
+        value = createArray(class(obj));
     end
 else
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Paren
         error('ConfigurationData:InvalidIndex', ...
             'Cannot index into non-existent field ''%s''', key);
     end
-    value = feval(class(obj));
+    value = createArray(class(obj));
 end
 
 [value.(indexOp(2:end))] = varargin{:};

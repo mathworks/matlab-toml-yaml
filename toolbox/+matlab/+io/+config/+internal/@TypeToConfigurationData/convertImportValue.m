@@ -5,12 +5,12 @@ function value = convertImportValue(obj, value)
 if isstruct(value)
     if isscalar(value)
         % Scalar struct -> ConfigurationData of same class
-        nested = feval(class(obj));
+        nested = createArray(class(obj));
         nested = importFrom(nested, value);
         value = nested;
     else
         % Struct array -> array of ConfigurationData
-        arr(numel(value)) = feval(class(obj));
+        arr(numel(value)) = createArray(class(obj));
         for iVal = 1:numel(value)
             arr(iVal) = obj.convertImportValue(value(iVal));
         end
@@ -18,7 +18,7 @@ if isstruct(value)
     end
 elseif isa(value, 'dictionary')
     % Dictionary -> ConfigurationData of same class
-    nested = feval(class(obj));
+    nested = createArray(class(obj));
     nested = importFrom(nested, value);
     value = nested;
 end
