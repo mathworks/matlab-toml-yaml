@@ -238,7 +238,7 @@ YAMLData maintains insertion order internally, ensuring consistent YAML output w
 
 ## See Also
 
-[readyaml](readyaml.md), [writeyaml](writeyaml.md), [TOMLData](TOMLData.md), [ConfigurationData](ConfigurationData.md), [containers.Map](https://www.mathworks.com/help/matlab/ref/containers.map.html)
+[readyaml](readyaml.md), [writeyaml](writeyaml.md), [TOMLData](TOMLData.md), [containers.Map](https://www.mathworks.com/help/matlab/ref/containers.map.html)
 
 ## Version History
 

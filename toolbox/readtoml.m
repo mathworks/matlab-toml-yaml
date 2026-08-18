@@ -23,7 +23,7 @@ function data = readtoml(filename, options)
 %   Convert to struct
 %       s = struct(config);
 %
-% See also WRITETOML, TOMLData, ConfigurationData
+% See also WRITETOML, TOMLData
 
     arguments
         filename (1,1) string {mustBeFile}

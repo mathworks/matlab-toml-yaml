@@ -157,7 +157,6 @@ obj.field            % returns missing if absent (read convenience)
 ## Known Limitations
 
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
-- **TOML**: Array of tables reading has bugs (writing works)
 - **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
 - **Reserved key**: `xInternal__` cannot be used as a configuration key (reserved for internal storage)

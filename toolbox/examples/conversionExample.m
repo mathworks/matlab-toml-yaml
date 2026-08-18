@@ -1,8 +1,8 @@
-%% conversionExample - Converting between struct, dictionary, and ConfigurationData
+%% conversionExample - Converting between struct, dictionary, and data objects
 % This example demonstrates how to convert data between MATLAB's native
-% types (struct, dictionary, containers.Map) and ConfigurationData objects.
+% types (struct, dictionary, containers.Map) and YAMLData/TOMLData objects.
 
-%% Creating ConfigurationData from Struct
+%% Creating a Data Object from Struct
 % Convert a MATLAB struct to YAMLData or TOMLData
 
 % Create a nested struct
@@ -24,13 +24,13 @@ tomlConfig = tomldata(s);
 disp("TOMLData created from struct:")
 disp(tomlConfig)
 
-% Nested structs become nested ConfigurationData objects
+% Nested structs become nested data objects of the same class
 disp("Nested data preserves class type:")
 disp("  database type: " + class(yamlConfig.database))
 disp("  credentials type: " + class(yamlConfig.database.credentials))
 
-%% Creating ConfigurationData from Dictionary
-% Convert a MATLAB dictionary to ConfigurationData
+%% Creating a Data Object from Dictionary
+% Convert a MATLAB dictionary to a YAMLData or TOMLData object
 
 % Create a dictionary (requires R2022b+)
 d = configureDictionary("string", "cell");
@@ -43,7 +43,7 @@ config = tomldata(d);
 disp("TOMLData created from dictionary:")
 disp(config)
 
-%% Creating ConfigurationData Programmatically
+%% Creating a Data Object Programmatically
 % Build nested configuration from scratch
 
 fresh = yamldata();
@@ -53,7 +53,7 @@ fresh.debug = true;
 disp("YAMLData created programmatically:")
 disp(fresh)
 
-%% Converting ConfigurationData to Dictionary
+%% Converting a Data Object to Dictionary
 % Use the dictionary() method to convert back to a MATLAB dictionary
 
 % Read a configuration file
@@ -71,7 +71,7 @@ disp(d)
 % Access dictionary values
 disp("Project name: " + d{"project"}{"name"})
 
-%% Converting ConfigurationData to Struct
+%% Converting a Data Object to Struct
 % Use the struct() method to convert to a standard MATLAB struct
 
 configStruct = struct(config);
@@ -136,8 +136,8 @@ disp("  Round-tripped name: " + roundTripped.name)
 disp("  Values match: " + mat2str(isequal(original.values, roundTripped.values)))
 disp("  Nested key: " + roundTripped.nested.key)
 
-%% Struct Array to ConfigurationData Array
-% Convert arrays of structs to arrays of ConfigurationData
+%% Struct Array to Data Object Array
+% Convert arrays of structs to arrays of data objects
 
 clear steps
 steps(1).name = "Checkout";
@@ -170,5 +170,5 @@ end
 %    writetoml(myDict, "file.toml")
 %
 % 4. Nested data is converted recursively:
-%    Nested structs become nested ConfigurationData objects
-%    Nested dicts become nested ConfigurationData objects
+%    Nested structs become nested data objects of the same class
+%    Nested dicts become nested data objects of the same class

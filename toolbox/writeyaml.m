@@ -4,8 +4,7 @@ function writeyaml(data, filename, options)
 %
 %   WRITEYAML(DATA, FILENAME) writes to the specified file.
 %
-%   DATA can be a YAMLData object, ConfigurationData, struct, dictionary,
-%   containers.Map, cell array, or other MATLAB data type.
+%   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
 %
 %   WRITEYAML(..., Name, Value) specifies additional options using
 %   name-value pairs:

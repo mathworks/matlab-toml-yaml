@@ -1,10 +1,8 @@
 classdef YAMLData < matlab.io.config.ConfigurationData
     %YAMLDATA YAML-specific configuration data
-    %   Subclass of ConfigurationData with YAML-specific features.
-    %
-    %   YAMLData provides the same interface as ConfigurationData but is
-    %   specifically designed for YAML files. Future versions may include
-    %   YAML-specific features such as:
+    %   Struct-like data type for YAML files, providing dot notation access,
+    %   support for special characters in keys, and value semantics.
+    %   Future versions may include YAML-specific features such as:
     %   - Preserving comments
     %   - Handling YAML anchors and aliases
     %   - YAML-specific type conversions
@@ -15,7 +13,7 @@ classdef YAMLData < matlab.io.config.ConfigurationData
     %       data = yamldata();           % empty
     %       data = yamldata(myStruct);   % from struct
     %
-    %   See also: YAMLDATA, matlab.io.config.ConfigurationData, READYAML, WRITEYAML
+    %   See also: YAMLDATA, READYAML, WRITEYAML
 
     methods
         function obj = YAMLData()

@@ -1,7 +1,7 @@
 function result = select(obj, selectedKeys)
 %SELECT Return a new object containing only the specified keys
-%   result = SELECT(obj, keys) returns a new ConfigurationData object of
-%   the same class containing only the keys listed in selectedKeys.
+%   result = SELECT(obj, keys) returns a new object of the same class as
+%   obj containing only the keys listed in selectedKeys.
 %   Key order in the result matches the order in selectedKeys.
 %
 %   This is a non-destructive operation — obj is not modified.

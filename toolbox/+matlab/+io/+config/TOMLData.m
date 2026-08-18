@@ -1,8 +1,8 @@
 classdef TOMLData < matlab.io.config.ConfigurationData
     %TOMLDATA TOML configuration data with dot notation access
-    %   TOMLData extends ConfigurationData to provide TOML-specific functionality
-    %   including preservation of key order and support for special characters
-    %   in field names (like hyphens).
+    %   Struct-like data type for TOML files, providing dot notation access,
+    %   preservation of key order, and support for special characters in
+    %   field names (like hyphens).
     %
     %   This is a value class. Assignment creates an independent copy.
     %
@@ -16,7 +16,7 @@ classdef TOMLData < matlab.io.config.ConfigurationData
     %       deps = data.("build-system").requires;
     %       show(data);  % Display as TOML
     %
-    %   See also TOMLDATA, READTOML, WRITETOML, matlab.io.config.ConfigurationData
+    %   See also TOMLDATA, READTOML, WRITETOML
 
     methods
         function obj = TOMLData()

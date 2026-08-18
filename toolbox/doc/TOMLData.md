@@ -264,7 +264,7 @@ config.logging.level = "INFO";
 
 ## See Also
 
-[readtoml](readtoml.md), [writetoml](writetoml.md), [YAMLData](YAMLData.md), [ConfigurationData](ConfigurationData.md)
+[readtoml](readtoml.md), [writetoml](writetoml.md), [YAMLData](YAMLData.md)
 
 ## Version History
 

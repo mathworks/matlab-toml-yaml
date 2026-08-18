@@ -5,7 +5,7 @@
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=mathworks/matlab-toml-yaml)
 [![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/XXXXX-toml-and-yaml-toolbox-for-matlab)
 
-The MATLAB Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
+The MATLAB&reg; Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
 
 ## Features
 
@@ -18,7 +18,7 @@ The MATLAB Toolbox for TOML and YAML adds support for reading and writing YAML a
 
 ## Installation
 
-Download the latest `.mltbx` file from [Releases](https://github.com/mathworks/matlab-toml-yaml/releases) and double-click it in MATLAB, or install programmatically:
+Download the latest `.mltbx` file from [Releases](https://github.com/mathworks/matlab-toml-yaml/releases). Open the file, or install programmatically:
 
 ```matlab
 matlab.addons.toolbox.installToolbox("MATLAB_Toolbox_for_TOML_and_YAML.mltbx")
@@ -60,42 +60,38 @@ writetoml(config, "my_config.toml");
 ## Main Functions
 
 ### YAML
-- `readyaml(filename)` - Read YAML file, returns YAMLData object
-- `writeyaml(data, filename)` - Write YAML file
-- `YAMLData` - Create YAML data object
+- [`readyaml`](toolbox/doc/readyaml.md) - Read YAML file 
+- [`writeyaml`](toolbox/doc/writeyaml.md) - Write YAML file
+- [`matlab.io.config.YAMLData`](toolbox/doc/YAMLData.md) - Struct-like datatype for YAML 
 
 ### TOML
-- `readtoml(filename)` - Read TOML file, returns TOMLData object
-- `writetoml(data, filename)` - Write TOML file
-- `TOMLData` - Create TOML data object
+- [`readtoml`](toolbox/doc/readtoml.md) - Read TOML file
+- [`writetoml`](toolbox/doc/writetoml.md) - Write TOML file
+- [`matlab.io.config.TOMLData`](toolbox/doc/TOMLData.md) - Struct-like datatype for TOML
 
 ## Examples
 
-See `toolbox/doc/GettingStarted.m` for an introductory walkthrough, or explore the `toolbox/examples/` folder:
+See [`toolbox/doc/GettingStarted.m`](toolbox/doc/GettingStarted.m) for an introductory walkthrough, or explore the `toolbox/examples/` folder:
 
 **YAML Examples:**
-- `readyamlExample.m` - Reading YAML files
-- `writeyamlExample.m` - Writing YAML files
-- `yamlWorkflowExample.m` - End-to-end read/modify/write workflow
+- [`readyamlExample.m`](toolbox/examples/readyamlExample.m) - Reading YAML files
+- [`writeyamlExample.m`](toolbox/examples/writeyamlExample.m) - Writing YAML files
+- [`yamlWorkflowExample.m`](toolbox/examples/yamlWorkflowExample.m) - End-to-end read/modify/write workflow
 
 **TOML Examples:**
-- `readtomlExample.m` - Reading TOML files
-- `writetomlExample.m` - Writing TOML files
-- `tomlPyprojectExample.m` - Working with `pyproject.toml`
+- [`readtomlExample.m`](toolbox/examples/readtomlExample.m) - Reading TOML files
+- [`writetomlExample.m`](toolbox/examples/writetomlExample.m) - Writing TOML files
+- [`tomlPyprojectExample.m`](toolbox/examples/tomlPyprojectExample.m) - Working with `pyproject.toml`
 
 **Demo Scripts:**
-- `conversionExample.m` - Converting between structs, dictionaries, and data objects
+- [`conversionExample.m`](toolbox/examples/conversionExample.m) - Converting between structs, dictionaries, and data objects
 
 ## Limitations
 
 This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
 
 - **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.).
-- **TOML**: Array of tables bug in reading (writing works).
 - **Chained indexing**: `obj.field(i).subfield` requires extracting array first (e.g. `tmp = obj.field; val = tmp(i).subfield`).
-- **Custom tags**: Not supported.
-
-For production use cases requiring full spec compliance (e.g. complex Kubernetes manifests with anchors), consider Java-based libraries.
 
 ## Requirements
 

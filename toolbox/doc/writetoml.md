@@ -24,7 +24,7 @@ writetoml(___,Name=Value)
 
 ### data
 Data to write to file.
-*Type:* [TOMLData](TOMLData.md), [ConfigurationData](ConfigurationData.md), struct, dictionary, or containers.Map
+*Type:* [TOMLData](TOMLData.md), struct, dictionary, or containers.Map
 
 ### filename
 Output file path.
