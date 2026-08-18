@@ -25,11 +25,11 @@ opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
 opts.ToolboxVersion = "0.1.0";
 opts.MinimumMatlabRelease = "R2022b";
 opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
-opts.Summary = "Read and write YAML and TOML configuration files with dot notation access.";
+opts.Summary = "Read and write TOML and YAML configuration files with dot notation access.";
 opts.Description = fileread("README.md");
 if isfile(fullfile("images", "matlab-toml-yaml.png"))
     opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
 end
-opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.m");
+opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.mlx");
 matlab.addons.toolbox.packageToolbox(opts);
 end
