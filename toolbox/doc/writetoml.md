@@ -2,7 +2,7 @@
 
 **Write data to TOML file**
 
-The `writetoml` function writes MATLAB data to a TOML file with extensive formatting options to control output style.
+The `writetoml` function writes MATLAB&reg; data to a TOML file with extensive formatting options to control output style.
 
 ## Syntax
 

@@ -38,7 +38,7 @@ data = readyaml(filename)
 - [`properties`](#properties) — Get list of dynamic properties
 
 ### Data Conversion
-- [`struct`](#struct) — Convert to standard MATLAB struct
+- [`struct`](#struct) — Convert to standard MATLAB&reg; struct
 - [`dictionary`](#dictionary) — Convert to MATLAB dictionary
 - [`map`](#map) — Convert to containers.Map
 

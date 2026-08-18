@@ -13,7 +13,7 @@ data = readtoml(filename,Name=Value)
 
 ## Description
 
-`data = readtoml(filename)` reads the TOML file specified by `filename` and returns the data as a [TOMLData](TOMLData.md) object. Dates and datetimes are automatically converted to MATLAB `datetime` objects.
+`data = readtoml(filename)` reads the TOML file specified by `filename` and returns the data as a [TOMLData](TOMLData.md) object. Dates and datetimes are automatically converted to MATLAB&reg; `datetime` objects.
 
 `data = readtoml(filename,Name=Value)` specifies how to represent date and datetime values.
 
