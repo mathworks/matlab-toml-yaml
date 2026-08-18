@@ -1,5 +1,5 @@
 function plan = buildfile
-%BUILDFILE Build tasks for the TOML and YAML Toolbox for MATLAB.
+%BUILDFILE Build tasks for the MATLAB Toolbox for TOML and YAML.
 %   Run with `buildtool` from the repo root. See `buildtool -tasks` for the
 %   available tasks.
 
@@ -21,10 +21,10 @@ function mltbxTask(~)
 % Package toolbox/ into a .mltbx artifact.
 opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
     "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
-    ToolboxName="TOML and YAML Toolbox for MATLAB");
+    ToolboxName="MATLAB Toolbox for TOML and YAML");
 opts.ToolboxVersion = "0.1.0";
 opts.MinimumMatlabRelease = "R2022b";
-opts.OutputFile = fullfile("release", "TOML_and_YAML_Toolbox_for_MATLAB.mltbx");
+opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
 opts.Summary = "Read and write YAML and TOML configuration files with dot notation access.";
 opts.Description = fileread("README.md");
 if isfile(fullfile("images", "matlab-toml-yaml.png"))

@@ -1,11 +1,11 @@
-# TOML and YAML Toolbox for MATLAB
+# MATLAB Toolbox for TOML and YAML
 
-<img src="images/matlab-toml-yaml.png" alt="TOML and YAML Toolbox for MATLAB" width="200"/>
+<img src="images/matlab-toml-yaml.png" alt="MATLAB Toolbox for TOML and YAML" width="200"/>
 
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=mathworks/matlab-toml-yaml)
 [![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/XXXXX-toml-and-yaml-toolbox-for-matlab)
 
-The TOML and YAML Toolbox for MATLAB adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
+The MATLAB Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
 
 ## Features
 
@@ -21,7 +21,7 @@ The TOML and YAML Toolbox for MATLAB adds support for reading and writing YAML a
 Download the latest `.mltbx` file from [Releases](https://github.com/mathworks/matlab-toml-yaml/releases) and double-click it in MATLAB, or install programmatically:
 
 ```matlab
-matlab.addons.toolbox.installToolbox("TOML_and_YAML_Toolbox_for_MATLAB.mltbx")
+matlab.addons.toolbox.installToolbox("MATLAB_Toolbox_for_TOML_and_YAML.mltbx")
 ```
 
 ## Quick Start
