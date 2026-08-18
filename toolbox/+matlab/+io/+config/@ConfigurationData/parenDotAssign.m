@@ -29,24 +29,7 @@ else
     % Pattern: obj.methodName = value (method name conflict)
     key = indexOp(1).Name;
 
-    % Block assignment to reserved internal property name
-    if key == "xInternal__"
-        error('ConfigurationData:ReservedKey', ...
-            'Key "xInternal__" is reserved for internal use.');
-    end
-
     % Store directly using setData to bypass method resolution
     obj = obj.setData(key, value);
-
-    % Track order
-    if ~any(obj.xInternal__.OriginalKeys == key)
-        obj.xInternal__.OriginalKeys(end+1) = key;
-    end
-
-    % Create alias if needed
-    validKey = matlab.lang.makeValidName(key);
-    if ~strcmp(validKey, key)
-        obj.xInternal__.KeyAliases(validKey) = key;
-    end
 end
 end

@@ -26,7 +26,7 @@ classdef YAMLData < matlab.io.config.ConfigurationData
             %   See also YAMLDATA
 
             obj@matlab.io.config.ConfigurationData();
-            obj.xInternal__.SourceFormat = "yaml";
+            obj.SourceFormat = "yaml";
         end
 
         function show(obj)

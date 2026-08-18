@@ -9,7 +9,7 @@ if isa(value, 'matlab.io.config.ConfigurationData')
         str = sprintf('[%s %s]', sizeStr, shortName);
     else
         % Scalar ConfigurationData - show actual subclass name
-        nFields = length(value.xInternal__.OriginalKeys);
+        nFields = numEntries(value.Data);
         shortName = matlab.io.config.ConfigurationData.shortClassName(class(value));
         str = sprintf('[1x1 %s with %d %s]', shortName, nFields, matlab.io.config.ConfigurationData.pluralize("key", nFields));
     end

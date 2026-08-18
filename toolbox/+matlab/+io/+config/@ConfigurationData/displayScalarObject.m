@@ -2,14 +2,15 @@ function displayScalarObject(obj)
 header = getHeader(obj);
 disp(header);
 
-if length(obj.xInternal__.OriginalKeys) == 0
+originalKeys = keys(obj.Data);
+if isempty(originalKeys)
     return;
 end
 
 % Check if there's nested hierarchy
 hasHierarchy = false;
-for i = 1:length(obj.xInternal__.OriginalKeys)
-    value = obj.getData(obj.xInternal__.OriginalKeys(i));
+for i = 1:length(originalKeys)
+    value = obj.getData(originalKeys(i));
     if isa(value, 'matlab.io.config.ConfigurationData') || isa(value, 'dictionary')
         hasHierarchy = true;
         break;
@@ -17,8 +18,8 @@ for i = 1:length(obj.xInternal__.OriginalKeys)
 end
 
 % Display each field
-for i = 1:length(obj.xInternal__.OriginalKeys)
-    key = obj.xInternal__.OriginalKeys(i);
+for i = 1:length(originalKeys)
+    key = originalKeys(i);
     value = obj.getData(key);
 
     % Format the value for display

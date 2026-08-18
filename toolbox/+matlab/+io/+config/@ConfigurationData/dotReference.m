@@ -10,12 +10,6 @@ function varargout = dotReference(obj, indexOp, ~)
 if ~isscalar(obj)
     fieldName = indexOp(1).Name;
 
-    % Block reserved key
-    if fieldName == "xInternal__"
-        error('ConfigurationData:ReservedKey', ...
-            'Key "xInternal__" is reserved for internal use.');
-    end
-
     % Check if next operation is Paren - pre-filter array by any valid index
     % This enables patterns: arr.field(1), arr.field(1:5), arr.field(logicalMask)
     remainingIndexOp = indexOp(2:end);
@@ -87,12 +81,6 @@ end
 if indexOp(1).Type == "Dot"
     % Dot notation: obj.key
     key = indexOp(1).Name;
-
-    % Block access to reserved internal property name
-    if key == "xInternal__"
-        error('ConfigurationData:ReservedKey', ...
-            'Key "xInternal__" is reserved for internal use.');
-    end
 
     % PRIORITY 1: Check if key exists in data (allows "keys", "isfield", etc.)
     resolvedKey = obj.resolveKey(key);

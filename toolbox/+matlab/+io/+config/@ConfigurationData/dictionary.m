@@ -14,8 +14,9 @@ function d = dictionary(obj)
 %   See also STRUCT, MAP
 
 d = configureDictionary("string", "cell");
-for i = 1:length(obj.xInternal__.OriginalKeys)
-    key = obj.xInternal__.OriginalKeys(i);
+originalKeys = keys(obj.Data);
+for i = 1:length(originalKeys)
+    key = originalKeys(i);
     value = obj.getData(key);
 
     if isa(value, 'matlab.io.config.ConfigurationData')

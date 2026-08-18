@@ -10,7 +10,7 @@ if ~isscalar(obj)
     end
     return;
 end
-k = obj.xInternal__.OriginalKeys;
+k = keys(obj.Data)';  % Row vector for compatibility
 if nargout > 1
     perElementKeys = {k};
 end

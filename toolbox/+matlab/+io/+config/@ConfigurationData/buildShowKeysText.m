@@ -2,7 +2,7 @@ function lines = buildShowKeysText(obj, indent, currentDepth, maxDepth)
 %BUILDSHOWKEYSTEXT Build value tree lines for show() — no type annotations,
 %   arrays expanded with ND-array style key(i) = headers
 lines = {};
-originalKeys = obj.xInternal__.OriginalKeys;
+originalKeys = keys(obj.Data);
 
 if isempty(originalKeys)
     return;

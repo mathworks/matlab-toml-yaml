@@ -1,6 +1,6 @@
 function [paths, types, sizes] = collectRows(obj, prefix, paths, types, sizes, currentDepth, maxDepth)
 %COLLECTROWS Collect table rows for a scalar ConfigurationData
-originalKeys = obj.xInternal__.OriginalKeys;
+originalKeys = keys(obj.Data);
 
 for i = 1:length(originalKeys)
     key = originalKeys(i);

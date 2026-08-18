@@ -15,7 +15,7 @@ if ~isscalar(obj)
 else
     % Scalar: header then indented key-value tree
     className = matlab.io.config.ConfigurationData.shortClassName(class(obj));
-    nKeys = length(obj.xInternal__.OriginalKeys);
+    nKeys = numEntries(obj.Data);
     if nKeys == 0
         lines{end+1} = sprintf('\n  %s with no keys\n\n', className);
     else

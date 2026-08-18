@@ -543,5 +543,50 @@ classdef subsasgnTest < matlab.unittest.TestCase
             arr.nested(1).deep.x = 42;
             testCase.verifyEqual(arr(1).nested.deep.x, 42);
         end
+
+        %% No reserved key names
+        function testDataAsKey(testCase)
+            % "Data" should be usable as a configuration key
+            config = yamldata();
+            config.Data = "my value";
+            testCase.verifyEqual(config.Data, "my value");
+            testCase.verifyTrue(iskey(config, "Data"));
+            testCase.verifyEqual(keys(config), "Data");
+        end
+
+        function testSourceFormatAsKey(testCase)
+            % "SourceFormat" should be usable as a configuration key
+            config = tomldata();
+            config.SourceFormat = "custom";
+            testCase.verifyEqual(config.SourceFormat, "custom");
+            testCase.verifyTrue(iskey(config, "SourceFormat"));
+        end
+
+        function testDataAsNestedKey(testCase)
+            % "Data" as a nested section key
+            config = yamldata();
+            config.Data.host = "localhost";
+            config.Data.port = 5432;
+            testCase.verifyEqual(config.Data.host, "localhost");
+            testCase.verifyEqual(config.Data.port, 5432);
+        end
+
+        function testNoReservedNamesRoundTrip(testCase)
+            % Keys named after internal properties survive write/read
+            tempDir = testCase.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+
+            config = yamldata();
+            config.Data = "payload";
+            config.SourceFormat = "original";
+            config.keys = "skeleton";
+
+            tempFile = fullfile(tempDir, "test.yaml");
+            writeyaml(config, tempFile);
+            loaded = readyaml(tempFile);
+
+            testCase.verifyEqual(loaded.Data, "payload");
+            testCase.verifyEqual(loaded.SourceFormat, "original");
+            testCase.verifyEqual(loaded.keys, "skeleton");
+        end
     end
 end

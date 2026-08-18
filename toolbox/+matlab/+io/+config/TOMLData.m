@@ -29,7 +29,7 @@ classdef TOMLData < matlab.io.config.ConfigurationData
             %   See also TOMLDATA
 
             obj@matlab.io.config.ConfigurationData();
-            obj.xInternal__.SourceFormat = "toml";
+            obj.SourceFormat = "toml";
         end
 
         function show(obj)

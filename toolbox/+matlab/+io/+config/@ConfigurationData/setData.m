@@ -5,5 +5,5 @@ function obj = setData(obj, key, value)
 key = string(key);
 value = obj.validateAndConvertValue(value, key);
 value = obj.normalizeVectorOrientation(value);
-obj.xInternal__.Data(key) = {value};
+obj.Data(key) = {value};
 end

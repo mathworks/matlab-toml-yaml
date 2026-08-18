@@ -1,7 +1,7 @@
 function lines = buildKeysText(obj, indent, currentDepth, maxDepth)
 %BUILDKEYSTEXT Build visual tree lines for a scalar object's keys
 lines = {};
-originalKeys = obj.xInternal__.OriginalKeys;
+originalKeys = keys(obj.Data);
 
 if isempty(originalKeys)
     return;

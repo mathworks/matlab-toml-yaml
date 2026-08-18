@@ -15,16 +15,11 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
     %   name collisions. Users can have keys named "keys", "isfield" etc.
     %   To call methods, use function syntax: keys(obj), isfield(obj, key)
 
-    properties (Access = public, Hidden = true)
-        % Consolidated internal state in a single property to minimize
-        % reserved key names while preserving tab completion.
-        % A single reserved property enables tab completion while keeping
-        % almost all names available as data keys.
-        xInternal__ struct = struct(...
-            'Data', configureDictionary("string", "cell"), ...
-            'KeyAliases', configureDictionary("string", "string"), ...
-            'OriginalKeys', string.empty, ...
-            'SourceFormat', "unknown")
+    properties (Access = protected)
+        % Internal storage: string->cell dictionary preserving insertion order.
+        % Key aliases are computed on the fly in resolveKey.
+        Data dictionary = configureDictionary("string", "cell")
+        SourceFormat string = "unknown"
     end
 
     methods
@@ -39,9 +34,7 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         %
         %   See also TOMLDATA, YAMLDATA
 
-        obj.xInternal__.Data = configureDictionary("string", "cell");
-        obj.xInternal__.KeyAliases = configureDictionary("string", "string");
-        obj.xInternal__.OriginalKeys = string.empty;
+        obj.Data = configureDictionary("string", "cell");
         end
 
         show(obj)

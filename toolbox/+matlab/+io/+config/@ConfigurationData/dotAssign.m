@@ -1,12 +1,6 @@
 function obj = dotAssign(obj, indexOp, varargin)
 key = indexOp(1).Name;
 
-% Block assignment to reserved internal property name
-if key == "xInternal__"
-    error('ConfigurationData:ReservedKey', ...
-        'Key "xInternal__" is reserved for internal use.');
-end
-
 % Handle non-scalar array assignment
 if ~isscalar(obj)
     value = varargin{end};
@@ -104,7 +98,7 @@ if length(indexOp) > 1
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Paren
         % Pattern: obj.field(idx)... = value
         % Get the array
-        if ~isKey(obj.xInternal__.Data, key)
+        if ~isKey(obj.Data, key)
             error('ConfigurationData:InvalidIndex', ...
                 'Cannot index into non-existent field ''%s''', key);
         end
@@ -133,7 +127,7 @@ if length(indexOp) > 1
     else
         % Pattern: obj.field.subfield = value (next op is Dot)
         % Get or create the nested object
-        if isKey(obj.xInternal__.Data, key)
+        if isKey(obj.Data, key)
             nested = obj.getData(key);
             if ~isa(nested, 'matlab.io.config.ConfigurationData')
                 % Scalar value exists - replace with same class as parent
@@ -153,32 +147,9 @@ if length(indexOp) > 1
         obj = obj.setData(key, nested);
     end
 
-    % Track order
-    if ~any(obj.xInternal__.OriginalKeys == key)
-        obj.xInternal__.OriginalKeys(end+1) = key;
-    end
-
-    % Create alias if needed
-    validKey = matlab.lang.makeValidName(key);
-    if ~strcmp(validKey, key)
-        obj.xInternal__.KeyAliases(validKey) = key;
-    end
 else
     % Simple assignment: obj.key = value
     value = varargin{end};
-
-    % Create alias if needed
-    validKey = matlab.lang.makeValidName(key);
-    if ~strcmp(validKey, key)
-        obj.xInternal__.KeyAliases(validKey) = key;
-    end
-
-    % Store
     obj = obj.setData(key, value);
-
-    % Track order
-    if ~any(obj.xInternal__.OriginalKeys == key)
-        obj.xInternal__.OriginalKeys(end+1) = key;
-    end
 end
 end

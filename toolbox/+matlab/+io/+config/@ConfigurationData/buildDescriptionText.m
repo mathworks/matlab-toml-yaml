@@ -12,7 +12,7 @@ if ~isscalar(obj)
 else
     % Scalar object header
     className = matlab.io.config.ConfigurationData.shortClassName(class(obj));
-    nKeys = length(obj.xInternal__.OriginalKeys);
+    nKeys = numEntries(obj.Data);
     if nKeys == 0
         lines{end+1} = sprintf('\n  %s with no keys\n\n', className);
     else
