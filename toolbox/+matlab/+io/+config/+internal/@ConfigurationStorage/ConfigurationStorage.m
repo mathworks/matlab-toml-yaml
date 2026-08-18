@@ -22,6 +22,8 @@ classdef (Abstract) ConfigurationStorage
             value = obj.normalizeVectorOrientation(value);
             obj.Data(key) = {value};
         end
+
+        resolvedKeys = resolveKey(obj, key)
     end
 
     methods (Access = protected)

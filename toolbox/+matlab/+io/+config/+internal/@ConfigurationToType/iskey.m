@@ -12,9 +12,5 @@ function tf = iskey(obj, key)
 %
 %   See also ISFIELD, KEYS
 
-tf = false(size(obj));
-for i = 1:numel(obj)
-    resolvedKey = matlab.io.config.internal.resolveKey(obj(i).Data, key);
-    tf(i) = ~isempty(resolvedKey);
-end
+tf = ~ismissing(resolveKey(obj, key));
 end

@@ -11,22 +11,19 @@ end
 
 % Resolve the first dot to a value
 fieldName = indexOp(1).Name;
+resolvedKeys = resolveKey(obj, fieldName);
+found = ~ismissing(resolvedKeys);
+if ~any(found)
+    error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
+end
+
 if isscalar(obj)
-    resolvedKey = matlab.io.config.internal.resolveKey(obj.Data, fieldName);
-    if isempty(resolvedKey)
-        error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
-    end
-    value = obj.getData(resolvedKey);
+    value = obj.getData(resolvedKeys);
 else
-    hasKey = iskey(obj, fieldName);
-    if ~any(hasKey)
-        error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
-    end
     values = cell(size(obj));
     for i = 1:numel(obj)
-        if hasKey(i)
-            resolvedKey = matlab.io.config.internal.resolveKey(obj(i).Data, fieldName);
-            values{i} = obj(i).getData(resolvedKey);
+        if found(i)
+            values{i} = obj(i).getData(resolvedKeys(i));
         else
             values{i} = missing;
         end
