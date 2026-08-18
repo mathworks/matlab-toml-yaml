@@ -1,11 +1,7 @@
 function plan = buildfile
-%BUILDFILE Build tasks for the TOML and YAML Toolbox for MATLAB.
+%BUILDFILE Build tasks for the MATLAB Toolbox for TOML and YAML.
 %   Run with `buildtool` from the repo root. See `buildtool -tasks` for the
 %   available tasks.
-%
-%   Because JSON/INI support lives in experimental/ (never shipped), the
-%   toolbox/ folder is exactly the installable ship set: the packaging task
-%   below needs no per-file exclusion logic.
 
 plan = buildplan(localfunctions);
 
@@ -23,20 +19,17 @@ end
 
 function mltbxTask(~)
 % Package toolbox/ into a .mltbx artifact.
-%
-% SKELETON: this proves toolbox/ is the ship set but is not yet wired up for
-% release. Before enabling, decide and set: toolbox identity GUID, version,
-% supported release range, and output path. See:
-% https://www.mathworks.com/help/matlab/ref/matlab.addons.toolbox.toolboxoptions.html
-
-error("buildfile:mltbxNotConfigured", ...
-    ["The mltbx packaging task is a skeleton. Configure ToolboxOptions " ...
-     "(identifier GUID, version, release compatibility) before use."]);
-
-%#ok<UNRCH> Reference implementation, intentionally after the guard:
-% opts = matlab.addons.toolbox.ToolboxOptions("toolbox", "<toolbox-guid>");
-% opts.ToolboxName = "TOML and YAML Toolbox for MATLAB";
-% opts.ToolboxVersion = "1.0.0";
-% opts.OutputFile = fullfile("release", "TomlYamlToolbox.mltbx");
-% matlab.addons.toolbox.packageToolbox(opts);
+opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
+    "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
+    ToolboxName="MATLAB Toolbox for TOML and YAML");
+opts.ToolboxVersion = "0.1.0";
+opts.MinimumMatlabRelease = "R2022b";
+opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
+opts.Summary = "Read and write TOML and YAML configuration files with dot notation access.";
+opts.Description = fileread("README.md");
+if isfile(fullfile("images", "matlab-toml-yaml.png"))
+    opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
+end
+opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.mlx");
+matlab.addons.toolbox.packageToolbox(opts);
 end

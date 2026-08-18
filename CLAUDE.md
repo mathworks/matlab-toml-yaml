@@ -2,9 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## MATLAB Agentic Toolkit
+
+This project uses the [MATLAB Agentic Toolkit](https://github.com/matlab/matlab-agentic-toolkit) for MATLAB skills (code authoring, testing, modernization, documentation) and the MATLAB MCP Server for code execution and static analysis. Install the toolkit for the full set of MATLAB skills rather than maintaining local copies.
+
 ## Project Overview
 
-MATLAB toolbox for reading/writing YAML, TOML, JSON, and INI configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
+MATLAB toolbox for reading/writing YAML and TOML configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
 
 ## Commands
 
@@ -13,18 +17,15 @@ MATLAB toolbox for reading/writing YAML, TOML, JSON, and INI configuration files
 % via MCP Server
 run_matlab_test_file('tests/yamltest.m')
 run_matlab_test_file('tests/tomltest.m')
-run_matlab_test_file('tests/initest.m')
-run_matlab_test_file('tests/jsontest.m')
 run_matlab_test_file('tests/subsasgnTest.m')
 run_matlab_test_file('tests/describeTest.m')
-run_matlab_test_file('tests/configdataTest.m')
 run_matlab_test_file('tests/ConfigurationPerformanceTest.m')
 ```
 
 ### Setup Path
 ```matlab
 addpath('toolbox')
-% Or openProject("ConfigurationFileIO.prj")
+% Or openProject("matlab-toml-yaml.prj")
 ```
 
 ### Static Analysis
@@ -43,11 +44,9 @@ All work must be done on a branch, not on main. Create a new branch for new work
 
 ### Class Hierarchy
 ```
-ConfigurationData (value class, base)
+ConfigurationData (abstract value class, base)
 ├── YAMLData
-├── TOMLData
-├── JSONData
-└── INIData
+└── TOMLData
 ```
 
 ConfigurationData inherits from:
@@ -60,14 +59,14 @@ All internal state is stored in a single `public Hidden` struct property named `
 - `xInternal__.Data` - dictionary<string, cell> storing values wrapped in cells
 - `xInternal__.KeyAliases` - dictionary<string, string> mapping valid MATLAB names to original keys
 - `xInternal__.OriginalKeys` - string array preserving insertion order
-- `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml", "json", "ini")
+- `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml")
 
 This design uses one reserved key name to enable tab completion.
 
 ### I/O Pattern
-Reader functions (`readyaml`, `readtoml`, `readjson`, `readini`) return subclass objects (YAMLData, TOMLData, etc.). Writer functions (`writeyaml`, `writetoml`, `writejson`, `writeini`) accept data objects or structs.
+Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
 
-Format-neutral `ConfigurationData` objects (no source format) are created via the `configdata()` wrapper. Each subclass also has a wrapper: `yamldata()`, `tomldata()`, `jsondata()`, `inidata()`. These wrappers accept no args (empty), a struct, or a dictionary.
+`ConfigurationData` is abstract. Subclass wrappers: `yamldata()`, `tomldata()`. These accept no args (empty), a struct, or a dictionary.
 
 ## Critical Design Decisions
 
@@ -121,7 +120,7 @@ getData(obj(j), key)
 ```
 
 ### show() vs describe()
-- `show(obj)` — value viewer; displays actual data. Format-specific subclasses emit native format (YAML/TOML/JSON/INI). Format-neutral `ConfigurationData` emits an indented tree with values and no type annotations. Arrays use ND-array style (`varname(i) =`).
+- `show(obj)` — value viewer; displays actual data in native format (YAML or TOML). Arrays use ND-array style (`varname(i) =`).
 - `describe(obj)` — schema inspector; shows key hierarchy with MATLAB types and sizes. Supports `Depth=N` limiting and returns a queryable table when called with an output argument.
 
 ### Missing Key Behavior (Issue #74)
@@ -147,26 +146,17 @@ obj.field            % returns missing if absent (read convenience)
 
 | File | Purpose |
 |------|---------|
-| `toolbox/+matlab/+io/+config/ConfigurationData.m` | Base class with dot notation handling (~1,500 lines) |
+| `toolbox/+matlab/+io/+config/ConfigurationData.m` | Abstract base class with dot notation handling (~1,700 lines) |
 | `toolbox/+matlab/+io/+config/YAMLData.m` | YAML subclass; `show()` prints YAML format |
 | `toolbox/+matlab/+io/+config/TOMLData.m` | TOML subclass; `show()` prints TOML format |
-| `toolbox/+matlab/+io/+config/JSONData.m` | JSON subclass; `show()` prints JSON format |
-| `toolbox/+matlab/+io/+config/INIData.m` | INI subclass; `show()` prints INI format |
-| `toolbox/readyaml.m` | YAML parser (~400 lines) |
+| `toolbox/readyaml.m` | YAML parser (~500 lines) |
 | `toolbox/readtoml.m` | TOML parser (~1,250 lines, most complex) |
 | `toolbox/writeyaml.m` | YAML writer with formatting options |
 | `toolbox/writetoml.m` | TOML writer with formatting options |
-| `toolbox/readjson.m` | JSON reader (wraps jsondecode) |
-| `toolbox/writejson.m` | JSON writer (wraps jsonencode) |
 
 ## Known Limitations
 
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
-- **TOML**: Array of tables reading has bugs (writing works)
-- **JSON**: Designed for config files with usability focus; MATLAB's `5` and `[5]` are identical, so scalar vs array distinction is lossy by default
-  - Use `SequenceRule='cell'` for strict round-trip preservation (all arrays become cells)
-  - Use `ArrayKeys` parameter in `writejson` to force specific keys to be arrays (e.g., for API schemas)
-  - For strict JSON round-tripping, use built-in `jsondecode`/`jsonencode`
 - **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
 - **Reserved key**: `xInternal__` cannot be used as a configuration key (reserved for internal storage)

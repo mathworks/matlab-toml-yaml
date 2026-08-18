@@ -1,14 +1,14 @@
 function result = merge(base, override)
-%MERGE Recursively merge two ConfigurationData objects
+%MERGE Recursively merge two configuration data objects
 %   result = MERGE(base, override) returns a new object with all keys from
 %   base, with any keys present in override taking the override value.
-%   Nested ConfigurationData objects are merged recursively.
+%   Nested objects are merged recursively.
 %   Keys present only in override are added to the result.
 %   The result has the same class as base.
 %
 %   Merge semantics:
 %     - Override wins for any key present in both objects
-%     - Nested ConfigurationData: merged recursively (deep merge)
+%     - Nested objects: merged recursively (deep merge)
 %     - Arrays, strings, numbers: override wins atomically (no concatenation)
 %     - Keys only in base: kept as-is
 %     - Keys only in override: added to result
@@ -30,7 +30,7 @@ function result = merge(base, override)
 %       config.database.host      % "prod-db" (from userConfig)
 %       config.database.port      % 5432 (from defaults)
 %
-%   See also: configdata, select
+%   See also: yamldata, tomldata, select
 
     arguments
         base matlab.io.config.ConfigurationData

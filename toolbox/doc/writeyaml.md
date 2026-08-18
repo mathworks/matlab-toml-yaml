@@ -24,7 +24,7 @@ writeyaml(___,Name=Value)
 
 ### data
 Data to write to file.
-*Type:* [YAMLData](YAMLData.md), [ConfigurationData](ConfigurationData.md), struct, dictionary, containers.Map, cell array, or other MATLAB data types
+*Type:* [YAMLData](YAMLData.md), struct, dictionary, or containers.Map
 
 ### filename
 Output file path.

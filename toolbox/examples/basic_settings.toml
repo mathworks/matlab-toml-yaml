@@ -1,0 +1,5 @@
+title = "My Application"
+version = "2.0.0"
+port = 9090
+debug = false
+max-connections = 100

@@ -1,5 +1,5 @@
 # Multi-environment application configuration
-# Demonstrates ConfigurationData features: heterogeneous arrays, vectorized extraction, key aliasing
+# Demonstrates YAMLData features: heterogeneous arrays, vectorized extraction, key aliasing
 
 app-name: DataPipeline
 version: 3.2.1

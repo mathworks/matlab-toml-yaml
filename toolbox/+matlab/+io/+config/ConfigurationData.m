@@ -1,9 +1,8 @@
-classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
+classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         matlab.mixin.indexing.OverridesPublicDotMethodCall & ...
         matlab.mixin.CustomDisplay
-    %CONFIGURATIONDATA Base class for structured hierarchical data
-    %   Can be used directly via configdata() for format-neutral data, or via
-    %   format-specific subclasses: YAMLData, TOMLData.
+    %CONFIGURATIONDATA Abstract base class for structured hierarchical data
+    %   Use format-specific subclasses: YAMLData, TOMLData.
     %   Provides dot notation access and support for special characters in keys.
     %
     %   This is a value class. Assignment creates an independent copy:
@@ -54,10 +53,8 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
 
         function show(obj)
         %SHOW Display all values as an indented tree
-        %   For format-specific subclasses (YAMLData, TOMLData, etc.), show()
-        %   displays in the native file format. For format-neutral ConfigurationData
-        %   objects created via configdata(), show() displays an indented tree
-        %   with actual values (not type annotations).
+        %   For format-specific subclasses (YAMLData, TOMLData), show()
+        %   displays in the native file format.
         %
         %   Arrays are displayed using the same style as MATLAB's ND array
         %   display, with each element labeled varname(i) =
@@ -1146,10 +1143,9 @@ classdef ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         %   Subclasses can override to add format-specific type handling.
         %   Returns the (possibly converted) value, or throws an error.
         %
-        %   Format-neutral objects (SourceFormat "unknown") accept all MATLAB
-        %   types since they are not constrained by serialization requirements.
+        %   Objects with SourceFormat "unknown" accept all MATLAB types
+        %   since they are not constrained by serialization requirements.
 
-        % Format-neutral objects accept any MATLAB type
         if obj.xInternal__.SourceFormat == "unknown"
             return;
         end

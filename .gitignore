@@ -23,7 +23,7 @@ Desktop.ini
 
 # Packaged app and toolbox files
 *.mlappinstall
-*.mltbx
+release/*.mltbx
 
 # Deployable archives
 *.ctf
@@ -52,6 +52,9 @@ codegen/
 # Test artifacts (roundtrip temp files)
 tests/roundtrip_*
 tests/test_*.ini
+
+# Editor settings (personal, not shared)
+.vscode/
 
 # Claude Code local settings (personal permissions, not shared)
 .claude/settings.local.json

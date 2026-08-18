@@ -179,21 +179,12 @@ keys(ghActions) %[output:8097bbab]
 %[text] Check for specific keys
 iskey(ghActions, "jobs") %[output:788cfd40]
 %%
-%[text] ## Use show for formatted display
+%[text] ## Use show and describe for formatted display
 %[text] Database configuration structure:
 show(dbConfig) %[output:5360cd8e]
 %%
-%[text] ### Reading Potentially Missing Keys
-%[text] You can read keys directly without checking existence first — missing keys return `missing`:
-value = ghActions.nonexistent 
-%%
-%[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
-%[text] ```
-%[text] % Filter array by optional field value
-%[text] filtered = items(items.optional_field == "value")
-%[text] % Elements without optional_field return missing, and missing == "value" is false
-%[text] ```
-%[text] Use `iskey()` when you need to distinguish "missing" from "exists but doesn't match."
+%[text] Use `describe` for a compact structural overview showing types and sizes:
+describe(dbConfig)
 %%
 %[text] ## Data Types in YAML
 %[text] YAML supports various data types

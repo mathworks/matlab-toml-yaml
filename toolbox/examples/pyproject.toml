@@ -1,0 +1,22 @@
+[project]
+name = "matlab-py-bridge"
+version = "0.3.0"
+description = "Utilities for calling MATLAB from Python"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+[[project.authors]]
+name = "Alice Chen"
+email = "achen@university.edu"
+
+[[project.authors]]
+name = "Bob Martinez"
+email = "bmartinez@company.com"
+
+[[project.authors]]
+name = "Carol Singh"
+email = "csingh@university.edu"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

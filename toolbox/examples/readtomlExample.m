@@ -107,21 +107,12 @@ if isfield(project, "project") %[output:group:94bc2248]
     end
 end %[output:group:94bc2248]
 %%
-%[text] Use show for formatted display (function syntax required)
+%[text] Use show and describe for formatted display (function syntax required)
 %[text] Project structure:
 show(project) %[output:82e03ecb]
 %%
-%[text] ### Reading Potentially Missing Keys
-%[text] You can read keys directly without checking existence first — missing keys return `missing`:
-value = project.nonexistent 
-%%
-%[text] This is useful for filtering and comparisons, especially with arrays. Elements without optional fields are excluded naturally:
-%[text] ```
-%[text] % Filter array by optional field value
-%[text] filtered = items(items.optional_field == "value")
-%[text] % Elements without optional_field return missing, and missing == "value" is false
-%[text] ```
-%[text] Use `iskey()` when you need to distinguish "missing" from "exists but doesn't match."
+%[text] Use `describe` for a compact structural overview showing types and sizes:
+describe(project)
 %%
 %[text] ## Data Types in TOML
 %[text] TOML supports various data types
