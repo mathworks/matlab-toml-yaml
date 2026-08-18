@@ -19,7 +19,10 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
         % Internal storage: string->cell dictionary preserving insertion order.
         % Key aliases are computed on the fly in resolveKey.
         Data dictionary = configureDictionary("string", "cell")
-        SourceFormat string = "unknown"
+    end
+
+    properties (Abstract, Constant, Access = protected)
+        SourceFormat matlab.io.config.internal.SourceFormat
     end
 
     methods
@@ -107,8 +110,6 @@ classdef (Abstract) ConfigurationData < matlab.mixin.indexing.RedefinesDot & ...
     end
 
     methods (Access = private)
-        target = copySourceFormat(obj, target)
-
         text = buildDescriptionText(obj, maxDepth)
 
         text = buildDescriptionTable(obj, maxDepth)

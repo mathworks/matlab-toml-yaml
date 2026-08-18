@@ -132,12 +132,10 @@ if length(indexOp) > 1
             if ~isa(nested, 'matlab.io.config.ConfigurationData')
                 % Scalar value exists - replace with same class as parent
                 nested = feval(class(obj));
-                nested = copySourceFormat(obj, nested);
             end
         else
             % Create new nested object of same class as parent
             nested = feval(class(obj));
-            nested = copySourceFormat(obj, nested);
         end
 
         % Recursively assign to nested object

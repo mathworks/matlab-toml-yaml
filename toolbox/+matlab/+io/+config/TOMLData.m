@@ -18,6 +18,10 @@ classdef TOMLData < matlab.io.config.ConfigurationData
     %
     %   See also TOMLDATA, READTOML, WRITETOML
 
+    properties (Constant, Access = protected)
+        SourceFormat = matlab.io.config.internal.SourceFormat.TOML
+    end
+
     methods
         function obj = TOMLData()
             %TOMLDATA Construct empty TOMLData object
@@ -29,7 +33,6 @@ classdef TOMLData < matlab.io.config.ConfigurationData
             %   See also TOMLDATA
 
             obj@matlab.io.config.ConfigurationData();
-            obj.SourceFormat = "toml";
         end
 
         function show(obj)

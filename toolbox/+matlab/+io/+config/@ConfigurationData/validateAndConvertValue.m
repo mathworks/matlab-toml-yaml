@@ -6,7 +6,7 @@ function value = validateAndConvertValue(obj, value, key)
 %   Objects with SourceFormat "unknown" accept all MATLAB types
 %   since they are not constrained by serialization requirements.
 
-if obj.SourceFormat == "unknown"
+if obj.SourceFormat == matlab.io.config.internal.SourceFormat.Unknown
     return;
 end
 
