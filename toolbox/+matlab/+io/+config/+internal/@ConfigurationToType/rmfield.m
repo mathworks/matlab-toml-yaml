@@ -1,6 +1,6 @@
 function obj = rmfield(obj, key)
 %RMFIELD Remove a field
-resolvedKey = obj.resolveKey(key);
+resolvedKey = matlab.io.config.internal.resolveKey(obj.Data, key);
 if isempty(resolvedKey)
     error('ConfigurationData:InvalidKey', ...
         'Key "%s" does not exist.', key);

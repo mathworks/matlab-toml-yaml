@@ -50,7 +50,7 @@ if ~isscalar(obj)
     values = cell(size(obj));
     for i = 1:numel(obj)
         if hasKey(i)
-            resolvedKey = obj(i).resolveKey(fieldName);
+            resolvedKey = matlab.io.config.internal.resolveKey(obj(i).Data, fieldName);
             values{i} = obj(i).getData(resolvedKey);
         else
             values{i} = missing;
@@ -58,7 +58,7 @@ if ~isscalar(obj)
     end
 
     % Try to concatenate homogeneously
-    result = obj.tryConcatenate(values, fieldName);
+    result = tryConcatenate(obj, values, fieldName);
 
     % Handle chained indexing on the result
     if ~isempty(remainingIndexOp)
@@ -83,7 +83,7 @@ if indexOp(1).Type == "Dot"
     key = indexOp(1).Name;
 
     % PRIORITY 1: Check if key exists in data (allows "keys", "isfield", etc.)
-    resolvedKey = obj.resolveKey(key);
+    resolvedKey = matlab.io.config.internal.resolveKey(obj.Data, key);
     if ~isempty(resolvedKey)
         value = obj.getData(resolvedKey);
 

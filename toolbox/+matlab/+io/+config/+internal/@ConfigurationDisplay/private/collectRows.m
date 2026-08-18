@@ -1,10 +1,10 @@
 function [paths, types, sizes] = collectRows(obj, prefix, paths, types, sizes, currentDepth, maxDepth)
 %COLLECTROWS Collect table rows for a scalar ConfigurationData
-originalKeys = keys(obj.Data);
+originalKeys = keys(obj);
 
 for i = 1:length(originalKeys)
     key = originalKeys(i);
-    value = getData(obj, key);
+    value = obj.getData(key);
 
     if prefix == ""
         fullPath = key;
@@ -14,7 +14,7 @@ for i = 1:length(originalKeys)
 
     % Get size and type strings
     sizeStr = join(string(size(value)), "x");
-    typeName = string(matlab.io.config.ConfigurationData.shortClassName(class(value)));
+    typeName = string(shortClassName(class(value)));
 
     % Add row for this key
     paths(end+1,1) = fullPath; %#ok<AGROW>

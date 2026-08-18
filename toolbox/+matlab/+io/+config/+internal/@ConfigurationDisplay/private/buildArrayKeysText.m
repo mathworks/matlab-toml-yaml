@@ -18,19 +18,19 @@ for i = 1:length(uniqueKeys)
     typeDisplay = "";
     for j = 1:numel(obj)
         if iskey(obj(j), key)
-            value = getData(obj(j), key);
+            value = obj(j).getData(key);
             if isa(value, 'matlab.io.config.ConfigurationData')
                 if isscalar(value)
                     nKeys = length(keys(value));
                     typeDisplay = sprintf("(%d %s)", nKeys, ...
-                        matlab.io.config.ConfigurationData.pluralize("key", nKeys));
+                        pluralize("key", nKeys));
                 else
                     dims = size(value);
                     dimStr = join(string(dims), "x");
                     childKeys = collectUnionOfKeys(value);
                     nKeys = length(childKeys);
                     typeDisplay = sprintf("%s array (%d %s each)", dimStr, nKeys, ...
-                        matlab.io.config.ConfigurationData.pluralize("key", nKeys));
+                        pluralize("key", nKeys));
                 end
             else
                 typeDisplay = string(class(value));

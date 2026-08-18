@@ -16,8 +16,8 @@ for i = 1:length(uniqueKeys)
     firstSize = "";
     for j = 1:numel(obj)
         if iskey(obj(j), key)
-            val = getData(obj(j), key);
-            typeName = string(matlab.io.config.ConfigurationData.shortClassName(class(val)));
+            val = obj(j).getData(key);
+            typeName = string(shortClassName(class(val)));
             if ~any(foundTypes == typeName)
                 foundTypes(end+1,1) = typeName; %#ok<AGROW>
             end

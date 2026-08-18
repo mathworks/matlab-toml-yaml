@@ -14,13 +14,13 @@ if ~isscalar(obj)
     end
 else
     % Scalar: header then indented key-value tree
-    className = matlab.io.config.ConfigurationData.shortClassName(class(obj));
-    nKeys = numEntries(obj.Data);
+    className = shortClassName(class(obj));
+    nKeys = numel(keys(obj));
     if nKeys == 0
         lines{end+1} = sprintf('\n  %s with no keys\n\n', className);
     else
         lines{end+1} = sprintf('\n  %s with %d %s\n\n', className, nKeys, ...
-            matlab.io.config.ConfigurationData.pluralize("key", nKeys));
+            pluralize("key", nKeys));
         lines = [lines, buildShowKeysText(obj, "    ", 1, Inf)];
         lines{end+1} = newline;
     end

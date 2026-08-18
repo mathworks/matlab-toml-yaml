@@ -5,17 +5,17 @@ if isa(value, 'matlab.io.config.ConfigurationData')
         % Array of ConfigurationData
         sizeStr = sprintf('%dx', size(value));
         sizeStr = sizeStr(1:end-1);
-        shortName = matlab.io.config.ConfigurationData.shortClassName(class(value));
+        shortName = shortClassName(class(value));
         str = sprintf('[%s %s]', sizeStr, shortName);
     else
         % Scalar ConfigurationData - show actual subclass name
         nFields = numEntries(value.Data);
-        shortName = matlab.io.config.ConfigurationData.shortClassName(class(value));
-        str = sprintf('[1x1 %s with %d %s]', shortName, nFields, matlab.io.config.ConfigurationData.pluralize("key", nFields));
+        shortName = shortClassName(class(value));
+        str = sprintf('[1x1 %s with %d %s]', shortName, nFields, pluralize("key", nFields));
     end
 elseif isa(value, 'dictionary')
     nKeys = numEntries(value);
-    str = sprintf('[1x1 dictionary with %d %s]', nKeys, matlab.io.config.ConfigurationData.pluralize("entry", nKeys));
+    str = sprintf('[1x1 dictionary with %d %s]', nKeys, pluralize("entry", nKeys));
 elseif ischar(value)
     if length(value) > 50
         str = sprintf('''%s...'' [1x%d char]', value(1:50), length(value));

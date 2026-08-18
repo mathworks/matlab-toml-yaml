@@ -30,7 +30,7 @@ if numel(obj) > 1
 end
 
 % Display header
-shortName = matlab.io.config.ConfigurationData.shortClassName(class(obj));
+shortName = shortClassName(class(obj));
 fprintf('  %s <a href="matlab:helpPopup %s">%s</a> array with keys:\n\n', ...
     dimStr, class(obj), shortName);
 

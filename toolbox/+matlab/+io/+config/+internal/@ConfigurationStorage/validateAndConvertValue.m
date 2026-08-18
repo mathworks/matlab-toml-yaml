@@ -2,7 +2,7 @@ function value = validateAndConvertValue(obj, value, key)
 %VALIDATEANDCONVERTVALUE Validate and optionally convert a value
 %   Subclasses can override to add format-specific type handling.
 %   Returns the (possibly converted) value, or throws an error.
-%
+
 % Handle cell arrays recursively
 if iscell(value)
     for i = 1:numel(value)

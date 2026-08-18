@@ -14,7 +14,7 @@ function tf = iskey(obj, key)
 
 tf = false(size(obj));
 for i = 1:numel(obj)
-    resolvedKey = obj(i).resolveKey(key);
+    resolvedKey = matlab.io.config.internal.resolveKey(obj(i).Data, key);
     tf(i) = ~isempty(resolvedKey);
 end
 end
