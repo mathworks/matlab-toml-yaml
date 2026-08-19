@@ -1,25 +1,31 @@
-function str = formatLeafValue(value)
-%FORMATLEAFVALUE Format a scalar leaf value for describe() display
+function str = formatLeafValue(value, includeType)
+%FORMATLEAFVALUE Format a scalar leaf value for display
+%   formatLeafValue(value, true)  — with type annotation: "hello" (string)
+%   formatLeafValue(value, false) — without: "hello"
 if isstring(value)
     if strlength(value) > 40
-        str = sprintf('"%s..." (string)', extractBefore(value, 41));
+        str = sprintf('"%s..."', extractBefore(value, 41));
     else
-        str = sprintf('"%s" (string)', value);
+        str = sprintf('"%s"', value);
     end
+    if includeType, str = str + " (string)"; end
 elseif ischar(value)
     if length(value) > 40
-        str = sprintf('''%s...'' (char)', value(1:40));
+        str = sprintf('''%s...''', value(1:40));
     else
-        str = sprintf('''%s'' (char)', value);
+        str = sprintf('''%s''', value);
     end
+    if includeType, str = str + " (char)"; end
 elseif isnumeric(value)
-    str = sprintf('%g (%s)', value, class(value));
+    str = sprintf('%g', value);
+    if includeType, str = sprintf('%s (%s)', str, class(value)); end
 elseif islogical(value)
     if value
-        str = "true (logical)";
+        str = "true";
     else
-        str = "false (logical)";
+        str = "false";
     end
+    if includeType, str = str + " (logical)"; end
 else
     str = sprintf('%s', class(value));
 end

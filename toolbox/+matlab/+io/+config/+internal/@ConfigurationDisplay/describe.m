@@ -21,7 +21,7 @@ arguments
     options.Depth (1,1) double {mustBePositive} = Inf
 end
 if nargout == 0
-    text = buildDescriptionText(obj, options.Depth);
+    text = buildDescriptionText(obj, options.Depth, true);
     fprintf('%s', text);
 else
     result = buildDescriptionTable(obj, options.Depth);

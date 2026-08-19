@@ -11,6 +11,6 @@ varName = inputname(1);
 if isempty(varName)
     varName = 'ans';
 end
-text = buildShowText(obj, varName);
+text = buildDescriptionText(obj, Inf, false, varName);
 fprintf('%s', text);
 end
