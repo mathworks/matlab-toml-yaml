@@ -18,7 +18,7 @@ classdef (Abstract) ConfigurationStorage
             %   Validates the value type before storing.
             %   Normalizes array orientation for consistent concatenation.
             key = string(key);
-            value = obj.validateAndConvertValue(value, key);
+            value = matlab.io.config.internal.validateValue(obj, value, key);
             value = obj.normalizeVectorOrientation(value);
             obj.Data(key) = {value};
         end
@@ -27,8 +27,6 @@ classdef (Abstract) ConfigurationStorage
     end
 
     methods (Access = protected)
-        value = validateAndConvertValue(obj, value, key)
-
         result = tryConcatenate(obj, values, fieldName)
     end
 

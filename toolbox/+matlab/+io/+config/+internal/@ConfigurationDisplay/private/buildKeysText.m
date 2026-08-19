@@ -59,7 +59,7 @@ for i = 1:length(originalKeys)
         paddedKey = pad(key + ":", keyColumnWidth);
         sizeStr = join(string(size(value)), "x");
         lines{end+1} = sprintf('%s%s%s %s\n', indent, paddedKey, sizeStr, class(value)); %#ok<AGROW>
-    elseif ischar(value) || (isscalar(value) && (isstring(value) || isnumeric(value) || islogical(value)))
+    elseif isscalar(value) && (isstring(value) || isnumeric(value) || islogical(value))
         paddedKey = pad(key + ":", keyColumnWidth);
         lines{end+1} = sprintf('%s%s%s\n', indent, paddedKey, ...
             formatLeafValue(value, includeTypes)); %#ok<AGROW>

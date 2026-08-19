@@ -17,7 +17,7 @@ classdef describeTest < matlab.unittest.TestCase
             data.name = "acme";
             data.count = 42;
             data.active = true;
-            data.tag = 'v1';
+            data.tag = "v1";
 
             output = evalc('describe(data)');
 
@@ -25,7 +25,7 @@ classdef describeTest < matlab.unittest.TestCase
             testCase.verifySubstring(output, '"acme" (string)');
             testCase.verifySubstring(output, '42 (double)');
             testCase.verifySubstring(output, 'true (logical)');
-            testCase.verifySubstring(output, '''v1'' (char)');
+            testCase.verifySubstring(output, '"v1" (string)');
         end
 
         function testNestedStructure(testCase)

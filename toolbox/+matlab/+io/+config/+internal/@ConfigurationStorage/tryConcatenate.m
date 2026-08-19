@@ -1,62 +1,40 @@
 function result = tryConcatenate(~, values, fieldName)
-%TRYCONCATENATE Attempt to concatenate cell array of values into typed array
+%TRYCONCATENATE Concatenate per-element values into a typed array
 %   Returns typed array if all values have same type, otherwise errors.
-%   This implements the "strict homogeneous" policy: no surprise cells.
-%
-%   Handles missing values: if an element lacks the key, missing is inserted.
-%   MATLAB's concatenation coerces missing to NaN for double/single, keeps it
-%   for string, but errors for integer/logical types.
-%
-%   The shape of the result matches the shape of the values cell array.
-%   If values is Nx1, result is Nx1. If values is 1xN, result is 1xN.
+%   Missing values coerce to NaN (double/single) or <missing> (string).
 
 if isempty(values)
-    % Return empty double array (MATLAB-idiomatic "nothing")
-    % This occurs when pre-filtering selects no elements
     result = [];
     return;
 end
 
-% Remember input shape to preserve it
 inputShape = size(values);
 
-% Get types of all values
-types = cellfun(@class, values, 'UniformOutput', false);
+% Identify missing values
+isMissing = cellfun(@(v) isa(v, 'missing'), values);
 
-% Check for missing values
-isMissingValue = strcmp(types, 'missing');
-
-if all(isMissingValue)
-    % All values are missing - return missing array with correct shape
+if all(isMissing)
     result = repmat(missing, inputShape);
     return;
 end
 
-% Filter out missing when checking type homogeneity
-nonMissingTypes = types(~isMissingValue);
-uniqueTypes = unique(nonMissingTypes);
+% Check type homogeneity (ignoring missing)
+nonMissingIdx = find(~isMissing);
+firstValue = values{nonMissingIdx(1)};
+theType = class(firstValue);
 
-if numel(uniqueTypes) > 1
-    % Find first mismatch to report helpful error (ignoring missing)
-    firstType = nonMissingTypes{1};
-    firstIdx = find(~isMissingValue, 1, 'first');
-    for i = 1:numel(types)
-        if ~isMissingValue(i) && ~strcmp(types{i}, firstType)
-            error('ConfigurationData:TypeMismatch', ...
-                ['Cannot concatenate values for key "%s": types differ.\n' ...
-                'Element %d is %s, element %d is %s.\n' ...
-                'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for heterogeneous values.'], ...
-                fieldName, firstIdx, firstType, i, types{i}, fieldName);
-        end
+for i = nonMissingIdx(2:end)
+    if ~strcmp(class(values{i}), theType)
+        error('ConfigurationData:TypeMismatch', ...
+            ['Cannot concatenate values for key "%s": types differ.\n' ...
+            'Element %d is %s, element %d is %s.\n' ...
+            'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for heterogeneous values.'], ...
+            fieldName, nonMissingIdx(1), theType, i, class(values{i}), fieldName);
     end
 end
 
-% All non-missing values have same type
-theType = uniqueTypes{1};
-
-% Check for integer or logical types with missing values
-if any(isMissingValue) && ...
-        (startsWith(theType, 'int') || startsWith(theType, 'uint') || strcmp(theType, 'logical'))
+% Integer/logical cannot represent missing
+if any(isMissing) && (isinteger(firstValue) || islogical(firstValue))
     error('ConfigurationData:MissingNotSupported', ...
         ['Cannot concatenate values for key "%s": field has missing values.\n' ...
         'Type %s cannot represent missing in MATLAB.\n' ...
@@ -65,70 +43,25 @@ if any(isMissingValue) && ...
         fieldName, theType, fieldName, fieldName);
 end
 
-% Handle different types appropriately
-if strcmp(theType, 'char')
-    % char arrays -> convert to string array, preserve shape
-    result = reshape(string(values), inputShape);
-elseif contains(theType, 'ConfigurationData') || ...
-        startsWith(theType, 'matlab.io.config.')
-    % ConfigurationData objects -> concatenate into array
-    try
-        result = reshape([values{:}], inputShape);
-    catch
-        % Different sizes or incompatible - error
-        error('ConfigurationData:ConcatenationFailed', ...
-            ['Cannot concatenate ConfigurationData values for key "%s".\n' ...
-            'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
-            fieldName, fieldName);
-    end
-elseif isnumeric(values{1}) || islogical(values{1}) || isstring(values{1})
-    % Numeric, logical, string - try direct concatenation
-    try
-        % Check if all values are scalars
-        allScalars = all(cellfun(@isscalar, values));
-        if allScalars
-            result = reshape([values{:}], inputShape);
-        else
-            % Non-scalar values - need to verify compatibility
-            % Check all have same size
-            sizes = cellfun(@size, values, 'UniformOutput', false);
-            if all(cellfun(@(s) isequal(s, sizes{1}), sizes))
-                % Same size - concatenate based on input shape
-                % For 1xN inputs (row vectors), use horizontal cat (cat(2, ...))
-                % For Nx1 inputs (column vectors), use vertical cat (cat(1, ...))
-                % This enables natural concatenation: 1xN arrays with column values -> MxN result
-                if inputShape(1) == 1 && inputShape(2) > 1
-                    % Row input -> horizontal concatenation
-                    result = cat(2, values{:});
-                else
-                    % Column or other shape -> vertical concatenation
-                    result = cat(1, values{:});
-                end
-            else
-                error('ConfigurationData:SizeMismatch', ...
-                    ['Cannot concatenate values for key "%s": sizes differ.\n' ...
-                    'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
-                    fieldName, fieldName);
-            end
-        end
-    catch ME
-        if contains(ME.identifier, 'ConfigurationData:')
-            rethrow(ME);
-        end
-        error('ConfigurationData:ConcatenationFailed', ...
-            ['Cannot concatenate values for key "%s".\n' ...
-            'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
-            fieldName, fieldName);
-    end
+% ConfigurationData or scalar values → reshape([values{:}])
+if isa(firstValue, 'matlab.io.config.ConfigurationData') ...
+        || all(cellfun(@isscalar, values))
+    result = reshape([values{:}], inputShape);
+    return;
+end
+
+% Non-scalar values: verify size compatibility then directional cat
+sizes = cellfun(@size, values, 'UniformOutput', false);
+if ~all(cellfun(@(s) isequal(s, sizes{1}), sizes))
+    error('ConfigurationData:SizeMismatch', ...
+        ['Cannot concatenate values for key "%s": sizes differ.\n' ...
+        'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
+        fieldName, fieldName);
+end
+
+if inputShape(1) == 1 && inputShape(2) > 1
+    result = cat(2, values{:});
 else
-    % Other types - try generic concatenation
-    try
-        result = reshape([values{:}], inputShape);
-    catch
-        error('ConfigurationData:ConcatenationFailed', ...
-            ['Cannot concatenate values for key "%s" of type %s.\n' ...
-            'Use arrayfun(@(x) x.%s, arr, ''UniformOutput'', false) for cell output.'], ...
-            fieldName, theType, fieldName);
-    end
+    result = cat(1, values{:});
 end
 end

@@ -15,7 +15,6 @@ function array = normalizeVectorOrientation(array)
 %     - ConfigurationData object arrays
 %
 %   What does NOT get normalized:
-%     - Char arrays (represent strings, not value arrays)
 %     - Cell arrays (no clear orientation semantics)
 %     - Struct arrays (complex semantics)
 %     - Scalar values (orientation-neutral)
@@ -24,8 +23,8 @@ function array = normalizeVectorOrientation(array)
 %
 %   See Issue #77.
 
-% Skip empty, scalar, char, cell arrays, and struct arrays
-if isempty(array) || isscalar(array) || ischar(array) || iscell(array) || isstruct(array)
+% Skip empty, scalar, cell arrays, and struct arrays
+if isempty(array) || isscalar(array) || iscell(array) || isstruct(array)
     return;
 end
 

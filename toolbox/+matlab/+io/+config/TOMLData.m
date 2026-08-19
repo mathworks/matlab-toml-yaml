@@ -69,18 +69,4 @@ classdef TOMLData < matlab.io.config.ConfigurationData
         end
     end
 
-    methods (Access = protected)
-        function value = validateAndConvertValue(obj, value, key)
-            %VALIDATEANDCONVERTVALUE TOML-specific type validation
-            %   TOML natively supports datetime, so keep it as-is.
-
-            % TOML supports datetime natively - don't convert
-            if isa(value, 'datetime')
-                return;  % Keep as datetime
-            end
-
-            % For all other types, use base class validation
-            value = validateAndConvertValue@matlab.io.config.ConfigurationData(obj, value, key);
-        end
-    end
 end

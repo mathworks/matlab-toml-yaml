@@ -9,13 +9,6 @@ if isstring(value)
         str = sprintf('"%s"', value);
     end
     if includeType, str = str + " (string)"; end
-elseif ischar(value)
-    if length(value) > 40
-        str = sprintf('''%s...''', value(1:40));
-    else
-        str = sprintf('''%s''', value);
-    end
-    if includeType, str = str + " (char)"; end
 elseif isnumeric(value)
     str = sprintf('%g', value);
     if includeType, str = sprintf('%s (%s)', str, class(value)); end
