@@ -5,10 +5,6 @@ classdef (Abstract) ConfigurationDisplay < ...
     %CONFIGURATIONDISPLAY Custom display for configuration data
 
     methods
-        show(obj)
-
-        result = describe(obj, options)
-
         rep = compactRepresentationForSingleLine(obj, displayConfiguration, width)
     end
 

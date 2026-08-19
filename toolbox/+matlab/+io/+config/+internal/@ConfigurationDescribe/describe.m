@@ -14,14 +14,14 @@ function result = describe(obj, options)
 %       info = describe(config);
 %       info(info.Type == "string", :)
 %
-%   See also keys, show
+%   See also keys
 
 arguments
     obj
     options.Depth (1,1) double {mustBePositive} = Inf
 end
 if nargout == 0
-    text = buildDescriptionText(obj, options.Depth, true);
+    text = buildDescriptionText(obj, options.Depth);
     fprintf('%s', text);
 else
     result = buildDescriptionTable(obj, options.Depth);

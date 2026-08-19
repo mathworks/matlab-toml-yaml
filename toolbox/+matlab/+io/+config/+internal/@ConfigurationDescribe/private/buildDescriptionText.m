@@ -1,0 +1,24 @@
+function text = buildDescriptionText(obj, maxDepth)
+%BUILDDESCRIPTIONTEXT Build visual tree string with type annotations
+lines = {};
+
+if ~isscalar(obj)
+    dims = size(obj);
+    dimStr = join(string(dims), "x");
+    lines{end+1} = sprintf('\n  %s array\n\n', dimStr);
+    lines = [lines, buildArrayKeysText(obj, "    ")];
+else
+    className = shortClassName(class(obj));
+    nKeys = numel(keys(obj));
+    if nKeys == 0
+        lines{end+1} = sprintf('\n  %s with no keys\n\n', className);
+    else
+        lines{end+1} = sprintf('\n  %s with %d %s\n\n', className, nKeys, ...
+            pluralize("key", nKeys));
+        lines = [lines, buildKeysText(obj, "    ", 1, maxDepth)];
+        lines{end+1} = newline;
+    end
+end
+
+text = strjoin(lines, '');
+end
