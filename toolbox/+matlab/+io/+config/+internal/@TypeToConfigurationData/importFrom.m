@@ -1,23 +1,13 @@
 function obj = importFrom(obj, inputData)
 %IMPORTFROM Import data from struct or dictionary
-%   This method handles conversion from external data types.
-%   It preserves the class type for nested objects.
+%   Converts a struct or dictionary into a ConfigurationData object,
+%   preserving the subclass type (YAMLData stays YAMLData, etc.).
 %
 %   For struct arrays, returns an array of ConfigurationData objects
 %   with the same shape as the input struct array.
-%
-%   Example:
-%       obj = tomldata();
-%       obj = importFrom(obj, myStruct);
-%
-%       % Struct array creates ConfigurationData array
-%       s = struct(A={1 2 3});  % 1x3 struct array
-%       arr = importFrom(yamldata(), s);  % 1x3 YAMLData array
 
 if isstruct(inputData)
     if ~isscalar(inputData)
-        % Struct array -> array of ConfigurationData
-        % Create array with same size as input
         arr(numel(inputData)) = createArray(class(obj));
         for i = 1:numel(inputData)
             arr(i) = importFrom(createArray(class(obj)), inputData(i));
@@ -26,22 +16,17 @@ if isstruct(inputData)
         return;
     end
 
-    % Scalar struct handling
     fields = fieldnames(inputData);
     for i = 1:numel(fields)
         key = fields{i};
-        value = inputData.(key);
-        value = obj.convertImportValue(value);
-        obj.(key) = value;
+        obj.(key) = inputData.(key);
     end
 elseif isa(inputData, 'dictionary')
     keyList = keys(inputData);
     for i = 1:numel(keyList)
         key = keyList(i);
         val = inputData(key);
-        value = val{1};  % Unwrap from cell
-        value = obj.convertImportValue(value);
-        obj.(key) = value;
+        obj.(key) = val{1};
     end
 else
     error('ConfigurationData:InvalidInput', ...
