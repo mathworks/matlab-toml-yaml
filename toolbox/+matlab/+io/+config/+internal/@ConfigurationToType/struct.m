@@ -23,7 +23,7 @@ v = matlab.io.config.internal.FunctionHandleVisitor( ...
 s = traverse(obj, v);
 end
 
-function s = toStruct(keys, values)
+function s = toStruct(keys, values, ~)
 s = struct();
 for i = 1:numel(keys)
     fieldName = matlab.lang.makeValidName(keys(i));

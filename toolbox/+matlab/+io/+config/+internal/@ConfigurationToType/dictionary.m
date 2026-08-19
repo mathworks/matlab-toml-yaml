@@ -19,7 +19,7 @@ v = matlab.io.config.internal.FunctionHandleVisitor( ...
 d = traverse(obj, v);
 end
 
-function d = toDictionary(keys, values)
+function d = toDictionary(keys, values, ~)
 d = configureDictionary("string", "cell");
 for i = 1:numel(keys)
     d(keys(i)) = values(i);

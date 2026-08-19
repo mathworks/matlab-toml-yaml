@@ -20,10 +20,12 @@ arguments
     obj
     options.Depth (1,1) double {mustBePositive} = Inf
 end
+
 if nargout == 0
-    text = buildDescriptionText(obj, options.Depth);
-    fprintf('%s', text);
+    v = matlab.io.config.internal.DescribeTextVisitor(options.Depth);
+    fprintf('%s', describeRoot(v, obj));
 else
-    result = buildDescriptionTable(obj, options.Depth);
+    v = matlab.io.config.internal.DescribeTableVisitor(options.Depth);
+    result = describeRoot(v, obj);
 end
 end

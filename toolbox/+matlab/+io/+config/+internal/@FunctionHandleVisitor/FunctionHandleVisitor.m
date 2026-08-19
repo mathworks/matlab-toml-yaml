@@ -37,8 +37,8 @@ classdef FunctionHandleVisitor < matlab.io.config.internal.ConfigurationVisitor
             result = obj.LeafFcn(key, value, depth);
         end
 
-        function result = combine(obj, keys, values)
-            result = obj.CombineFcn(keys, values);
+        function result = combine(obj, keys, values, depth)
+            result = obj.CombineFcn(keys, values, depth);
         end
     end
 end

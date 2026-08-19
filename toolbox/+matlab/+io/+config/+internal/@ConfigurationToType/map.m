@@ -7,7 +7,7 @@ v = matlab.io.config.internal.FunctionHandleVisitor( ...
 m = traverse(obj, v);
 end
 
-function m = toMap(keys, values)
+function m = toMap(keys, values, ~)
 m = containers.Map('KeyType', 'char', 'ValueType', 'any');
 for i = 1:numel(keys)
     m(char(keys(i))) = values{i};
