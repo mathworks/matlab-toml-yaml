@@ -1,5 +1,11 @@
 function s = struct(obj)
-% Handle non-scalar array: convert each element
+%STRUCT Convert to MATLAB struct
+%   s = struct(obj) converts the ConfigurationData to a struct.
+%   Nested ConfigurationData objects are recursively converted.
+%   ConfigurationData arrays become struct arrays.
+%   Keys are converted to valid MATLAB identifiers.
+
+% Handle non-scalar: convert each element, concatenate into struct array
 if ~isscalar(obj)
     structCell = cell(size(obj));
     for i = 1:numel(obj)
@@ -9,29 +15,22 @@ if ~isscalar(obj)
     return;
 end
 
-s = struct;
-originalKeys = keys(obj.Data);
-for i = 1:length(originalKeys)
-    key = originalKeys(i);
-    value = obj.getData(key);
+v = matlab.io.config.internal.FunctionHandleVisitor( ...
+    @(~, value, ~) value, ...
+    @toStruct, ...
+    @(~, child, ~) struct(child) ...
+);
+s = traverse(obj, v);
+end
 
-    if isa(value, 'matlab.io.config.ConfigurationData')
-        if isscalar(value)
-            value = struct(value);
-        else
-            % Handle array of ConfigurationData objects
-            structCell = cell(1, numel(value));
-            for iVal = 1:numel(value)
-                structCell{iVal} = struct(value(iVal));
-            end
-            value = [structCell{:}];
-        end
-    elseif isa(value, 'dictionary')
-        % Recursively convert dictionary to struct
-        value = obj.dictToStruct(value);
+function s = toStruct(keys, values)
+s = struct();
+for i = 1:numel(keys)
+    fieldName = matlab.lang.makeValidName(keys(i));
+    value = values{i};
+    if iscell(value) && ~isempty(value) && isstruct(value{1})
+        value = [value{:}];
     end
-
-    fieldName = matlab.lang.makeValidName(key);
     s.(fieldName) = value;
 end
 end

@@ -12,26 +12,16 @@ function d = dictionary(obj)
 %       value = d{"keyName"};
 %
 %   See also STRUCT, MAP
+v = matlab.io.config.internal.FunctionHandleVisitor( ...
+    @(~, value, ~) value, ...
+    @toDictionary ...
+);
+d = traverse(obj, v);
+end
 
+function d = toDictionary(keys, values)
 d = configureDictionary("string", "cell");
-originalKeys = keys(obj.Data);
-for i = 1:length(originalKeys)
-    key = originalKeys(i);
-    value = obj.getData(key);
-
-    if isa(value, 'matlab.io.config.ConfigurationData')
-        if isscalar(value)
-            value = dictionary(value);  % Recursive
-        else
-            % Array of ConfigurationData -> cell array of dictionaries
-            tmpCell = cell(1, numel(value));
-            for iVal = 1:numel(value)
-                tmpCell{iVal} = dictionary(value(iVal));
-            end
-            value = tmpCell;
-        end
-    end
-
-    d(key) = {value};
+for i = 1:numel(keys)
+    d(keys(i)) = values(i);
 end
 end

@@ -21,7 +21,4 @@ classdef (Abstract) ConfigurationToType < matlab.io.config.internal.Configuratio
         obj = remove(obj, key)
     end
 
-    methods (Access = protected)
-        s = dictToStruct(obj, d)
-    end
 end

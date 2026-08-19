@@ -24,6 +24,8 @@ classdef (Abstract) ConfigurationStorage
         end
 
         resolvedKeys = resolveKey(obj, key)
+
+        result = traverse(obj, visitor, depth)
     end
 
     methods (Access = protected)
