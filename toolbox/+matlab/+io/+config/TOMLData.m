@@ -33,39 +33,8 @@ classdef TOMLData < matlab.io.config.ConfigurationData
 
         function show(obj)
             %SHOW Display the data in TOML format
-            %   show(data) writes the TOMLData to a temporary file and
-            %   displays the TOML content in the command window.
-            %
-            %   For arrays, displays each element as an array of tables
-            %   using [[item]] syntax.
-            %
-            %   This is useful for viewing the TOML representation of the data.
-
-            if isscalar(obj)
-                % Scalar case - write directly
-                try
-                    tempFile = tempname;
-                    writetoml(obj, tempFile);
-                    content = fileread(tempFile);
-                    fprintf('%s\n', content);
-                    delete(tempFile);
-                catch
-                    disp(obj);
-                end
-            else
-                % Array case - wrap in container and write as array of tables
-                try
-                    wrapper = matlab.io.config.TOMLData;
-                    wrapper.item = obj;
-                    tempFile = tempname;
-                    writetoml(wrapper, tempFile, TableArrayStyle="expanded");
-                    content = fileread(tempFile);
-                    fprintf('%s\n', content);
-                    delete(tempFile);
-                catch
-                    disp(obj);
-                end
-            end
+            matlab.io.config.internal.showAsFormat(obj, @writetoml, ...
+                {"TableArrayStyle", "expanded"});
         end
     end
 
