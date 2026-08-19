@@ -1,5 +1,8 @@
 function text = buildDescriptionText(obj, maxDepth)
 %BUILDDESCRIPTIONTEXT Build visual tree string with type annotations
+import matlab.io.config.internal.shortClassName
+import matlab.io.config.internal.pluralize
+
 lines = {};
 
 if ~isscalar(obj)

@@ -1,5 +1,7 @@
 function [paths, types, sizes] = collectRows(obj, prefix, paths, types, sizes, currentDepth, maxDepth)
 %COLLECTROWS Collect table rows for a scalar ConfigurationData
+import matlab.io.config.internal.shortClassName
+
 originalKeys = keys(obj);
 
 for i = 1:length(originalKeys)

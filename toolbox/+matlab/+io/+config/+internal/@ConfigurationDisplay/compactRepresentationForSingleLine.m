@@ -2,6 +2,9 @@ function rep = compactRepresentationForSingleLine(obj, displayConfiguration, ~)
 %COMPACTREPRESENTATIONFORSINGLELINE Compact display when nested in another object
 %   Shows "[1x1 YAMLData with 3 keys]" instead of "[1×1 matlab.io.config.YAMLData]"
 
+import matlab.io.config.internal.shortClassName
+import matlab.io.config.internal.pluralize
+
 className = shortClassName(class(obj));
 
 if isscalar(obj)

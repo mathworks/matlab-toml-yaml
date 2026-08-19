@@ -1,5 +1,8 @@
 function lines = buildKeysText(obj, indent, currentDepth, maxDepth)
 %BUILDKEYSTEXT Build visual tree lines with type annotations
+import matlab.io.config.internal.collectUnionOfKeys
+import matlab.io.config.internal.pluralize
+
 lines = {};
 originalKeys = keys(obj);
 

@@ -1,5 +1,8 @@
 function [paths, types, sizes] = collectArrayRows(obj, prefix, paths, types, sizes, ~, ~)
 %COLLECTARRAYROWS Collect table rows for a ConfigurationData array
+import matlab.io.config.internal.collectUnionOfKeys
+import matlab.io.config.internal.shortClassName
+
 uniqueKeys = collectUnionOfKeys(obj);
 
 for i = 1:length(uniqueKeys)

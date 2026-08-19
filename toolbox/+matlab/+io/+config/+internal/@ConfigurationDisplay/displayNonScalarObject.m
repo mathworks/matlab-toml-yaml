@@ -1,4 +1,6 @@
 function displayNonScalarObject(obj)
+import matlab.io.config.internal.collectUnionOfKeys
+
 fprintf('%s', getHeader(obj));
 
 displayKeys(obj, collectUnionOfKeys(obj));

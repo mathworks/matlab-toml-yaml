@@ -1,5 +1,8 @@
 function lines = buildArrayKeysText(obj, indent)
 %BUILDARRAYKEYSTEXT Build type-only display for ConfigurationData array keys
+import matlab.io.config.internal.collectUnionOfKeys
+import matlab.io.config.internal.pluralize
+
 lines = {};
 
 uniqueKeys = collectUnionOfKeys(obj);
