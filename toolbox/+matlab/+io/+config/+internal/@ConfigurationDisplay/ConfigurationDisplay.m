@@ -15,7 +15,5 @@ classdef (Abstract) ConfigurationDisplay < ...
         displayScalarObject(obj)
 
         displayNonScalarObject(obj)
-
-        str = formatValue(obj, value)
     end
 end

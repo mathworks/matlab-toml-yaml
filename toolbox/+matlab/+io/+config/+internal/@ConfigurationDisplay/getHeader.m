@@ -1,7 +1,7 @@
 function header = getHeader(obj)
 %GETHEADER Customize header to use "keys" instead of "properties"
+className = matlab.mixin.CustomDisplay.getClassNameForHeader(obj);
 if isscalar(obj)
-    className = matlab.mixin.CustomDisplay.getClassNameForHeader(obj);
     nKeys = numEntries(obj.Data);
     if nKeys == 0
         header = sprintf('  %s with no keys\n', className);
@@ -9,7 +9,7 @@ if isscalar(obj)
         header = sprintf('  %s with keys:\n', className);
     end
 else
-    % Non-scalar handled by displayNonScalarObject
-    header = getHeader@matlab.mixin.CustomDisplay(obj);
+    dimStr = matlab.mixin.CustomDisplay.convertDimensionsToString(obj);
+    header = sprintf('  %s %s array with keys:\n', dimStr, className);
 end
 end

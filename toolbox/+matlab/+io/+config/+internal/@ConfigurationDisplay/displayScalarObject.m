@@ -1,37 +1,24 @@
 function displayScalarObject(obj)
-header = getHeader(obj);
-disp(header);
+fprintf('%s', getHeader(obj));
 
-originalKeys = keys(obj.Data);
-if isempty(originalKeys)
+k = keys(obj);
+if isempty(k)
     return;
 end
 
-% Check if there's nested hierarchy
+displayKeys(obj, k);
+
+% Show link if there's nested hierarchy
 hasHierarchy = false;
-for i = 1:length(originalKeys)
-    value = obj.getData(originalKeys(i));
-    if isa(value, 'matlab.io.config.ConfigurationData') || isa(value, 'dictionary')
+for i = 1:numel(k)
+    if isa(getData(obj, k(i)), 'matlab.io.config.ConfigurationData')
         hasHierarchy = true;
         break;
     end
 end
-
-% Display each field
-for i = 1:length(originalKeys)
-    key = originalKeys(i);
-    value = obj.getData(key);
-
-    % Format the value for display
-    valueStr = obj.formatValue(value);
-
-    fprintf('    %s: %s\n', key, valueStr);
-end
-
-% Add footer with show link if there's hierarchy
 if hasHierarchy
-    fprintf('\n    <a href="matlab:show(%s)">Show all values</a>\n', inputname(1));
+    showAllValuesLink(inputname(1));
+else
+    fprintf('\n');
 end
-
-fprintf('\n');
 end
