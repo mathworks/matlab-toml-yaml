@@ -22,6 +22,7 @@ function mltbxTask(~)
 opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
     "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
     ToolboxName="MATLAB Toolbox for TOML and YAML");
+opts.PackageName = "tomlyaml";
 opts.ToolboxVersion = "0.1.0";
 opts.MinimumMatlabRelease = "R2022b";
 opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
