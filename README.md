@@ -71,7 +71,7 @@ writetoml(config, "my_config.toml");
 
 ## Examples
 
-See [`toolbox/doc/GettingStarted.m`](toolbox/doc/GettingStarted.m) for an introductory walkthrough, or explore the `toolbox/examples/` folder:
+See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an introductory walkthrough, or explore the `toolbox/examples/` folder:
 
 **YAML Examples:**
 - [`readyamlExample.m`](toolbox/examples/readyamlExample.m) - Reading YAML files
