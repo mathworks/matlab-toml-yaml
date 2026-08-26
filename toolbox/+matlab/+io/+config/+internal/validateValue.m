@@ -22,7 +22,7 @@ end
 % --- Converted types: accepted as input, auto-converted to storage type ---
 
 if isstruct(value)
-    value = obj.importFrom(value);
+    value = importFrom(obj, value);
     return;
 end
 
@@ -45,7 +45,7 @@ if isa(value, 'duration')
 end
 
 if isa(value, 'dictionary')
-    value = obj.importFrom(value);
+    value = importFrom(obj, value);
     return;
 end
 
