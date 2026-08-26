@@ -231,7 +231,7 @@ serverStruct %[output:26964a0f]
 delete("basic_config.yaml", "nested_config.yaml", "flow_arrays.yaml", ... %[output:group:702a57a9] %[output:0e15cbfb]
     "block_arrays.yaml", "mixed_array.yaml", "array_types.yaml", ... %[output:0e15cbfb]
     "workflow_steps.yaml", "github_workflow.yaml", "special_keys.yaml", ... %[output:0e15cbfb]
-    "types.yaml", "server.yaml", "docker-compose.yaml"); %[output:group:702a57a9] %[output:0e15cbfb]
+    "types.yaml", "server.yaml"); %[output:group:702a57a9] %[output:0e15cbfb]
 
 %[appendix]{"version":"1.0"}
 %---
@@ -321,7 +321,4 @@ delete("basic_config.yaml", "nested_config.yaml", "flow_arrays.yaml", ... %[outp
 %---
 %[output:26964a0f]
 %   data: {"dataType":"textualVariable","outputData":{"header":"struct with fields:","name":"serverStruct","value":"    server: [1×1 struct]\n"}}
-%---
-%[output:0e15cbfb]
-%   data: {"dataType":"warning","outputData":{"text":"Warning: File 'docker-compose.yaml' not found."}}
 %---
