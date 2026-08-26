@@ -18,7 +18,7 @@ k = keys(obj);
 transformedValues = cell(size(k));
 
 for i = 1:numel(k)
-    value = obj.getData(k(i));
+    value = obj.Data{k(i)};
     transformedValues{i} = applyVisitor(visitor, k(i), value, depth);
 end
 

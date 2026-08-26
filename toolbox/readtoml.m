@@ -466,18 +466,7 @@ function [rootData, tableRef] = parseKeyValue(rootData, tableRef, tablePath, arr
         end
         tableRef = getDataPath(rootData, tablePath);
     else
-        % Simple assignment using dot notation
-        % Some keys conflict with method names (e.g., 'empty'), so use try-catch
-        try
-            tableRef.(key) = value;
-        catch ME
-            if contains(ME.message, 'temporary value') || contains(ME.message, 'method')
-                % Method name conflict - store directly using setData
-                tableRef = tableRef.setData(char(key), value);
-            else
-                rethrow(ME);
-            end
-        end
+        tableRef.(key) = value;
 
         % Update in rootData (value semantics require explicit write-back)
         if arrayIndex > 0 && (strcmp(tablePath, arrayPath) || startsWith(tablePath, arrayPath + "."))

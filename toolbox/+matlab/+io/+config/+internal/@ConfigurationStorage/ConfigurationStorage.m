@@ -5,14 +5,7 @@ classdef (Abstract) ConfigurationStorage
         Data dictionary
     end
 
-    methods (Hidden)
-        function value = getData(obj, key)
-            %GETDATA Get value from Data dictionary (unwraps cell)
-            key = string(key);
-            val = obj.Data(key);
-            value = val{1};
-        end
-
+    methods (Access = protected)
         function obj = setData(obj, key, value)
             %SETDATA Set value in Data dictionary (wraps in cell)
             %   Validates the value type before storing.
@@ -25,11 +18,12 @@ classdef (Abstract) ConfigurationStorage
 
         resolvedKeys = resolveKey(obj, key)
 
-        result = traverse(obj, visitor, depth)
+        result = tryConcatenate(obj, values, fieldName)
     end
 
-    methods (Access = protected)
-        result = tryConcatenate(obj, values, fieldName)
+    methods (Access = {?matlab.io.config.internal.ConfigurationStorage, ...
+            ?matlab.io.config.internal.ConfigurationVisitor})
+        result = traverse(obj, visitor, depth)
     end
 
     methods (Static, Access = protected)

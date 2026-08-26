@@ -42,7 +42,7 @@ end
 
 % Scalar: chained assignment — get or create, forward, store back
 if isKey(obj.Data, key)
-    value = obj.getData(key);
+    value = obj.Data{key};
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Dot ...
             && ~isa(value, 'matlab.io.config.ConfigurationData')
         value = createArray(class(obj));

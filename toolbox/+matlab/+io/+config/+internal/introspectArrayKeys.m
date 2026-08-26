@@ -23,7 +23,7 @@ for i = 1:nKeys
 
     for j = 1:numel(objArray)
         if iskey(objArray(j), key)
-            val = getData(objArray(j), key);
+            val = objArray(j).(key);
             typeName = string(shortClassName(class(val)));
             if ~any(foundTypes == typeName)
                 foundTypes(end+1, 1) = typeName; %#ok<AGROW>
