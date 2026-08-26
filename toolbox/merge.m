@@ -43,10 +43,10 @@ function result = merge(base, override)
     overrideKeys = keys(override);
     for i = 1:numel(overrideKeys)
         k = overrideKeys(i);
-        overrideValue = getData(override, k);
+        overrideValue = override.(k);
 
         if iskey(result, k)
-            baseValue = getData(result, k);
+            baseValue = result.(k);
             % Recurse into nested ConfigurationData objects
             if isa(baseValue, 'matlab.io.config.ConfigurationData') && ...
                isa(overrideValue, 'matlab.io.config.ConfigurationData') && ...

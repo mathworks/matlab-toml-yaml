@@ -6,7 +6,7 @@ if isscalar(obj)
     s = struct();
     for i = 1:numel(originalKeys)
         fieldName = char(matlab.lang.makeValidName(originalKeys(i)));
-        s.(fieldName) = getData(obj, originalKeys(i));
+        s.(fieldName) = obj.Data{originalKeys(i)};
     end
     groups = matlab.mixin.util.PropertyGroup(s);
 else

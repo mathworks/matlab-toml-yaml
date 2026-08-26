@@ -140,17 +140,16 @@ classdef subsasgnTest < matlab.unittest.TestCase
             testCase.verifyEqual(s.struct, "struct value");
         end
 
-        function testKeyNamedCopy(testCase)
-            % Test: user can create a key named "copy"
+        function testKeyNamedIskey(testCase)
+            % Test: user can create a key named "iskey"
             data = yamldata();
-            data.copy = "copy value";
+            data.iskey = "iskey value";
 
             % Dot notation returns the data key
-            testCase.verifyEqual(data.copy, "copy value");
+            testCase.verifyEqual(data.iskey, "iskey value");
 
-            % Function syntax still works for the method
-            dataCopy = copy(data);
-            testCase.verifyEqual(dataCopy.copy, "copy value");
+            % Function syntax still calls the method, not the key
+            testCase.verifyTrue(iskey(data, "iskey"));
         end
 
         function testMultipleReservedNames(testCase)

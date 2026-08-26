@@ -11,7 +11,7 @@ displayKeys(obj, k);
 % Show link if there's nested hierarchy
 hasHierarchy = false;
 for i = 1:numel(k)
-    if isa(getData(obj, k(i)), 'matlab.io.config.ConfigurationData')
+    if isa(obj.Data{k(i)}, 'matlab.io.config.ConfigurationData')
         hasHierarchy = true;
         break;
     end

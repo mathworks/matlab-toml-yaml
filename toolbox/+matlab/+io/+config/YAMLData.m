@@ -16,18 +16,6 @@ classdef YAMLData < matlab.io.config.ConfigurationData
     %   See also: YAMLDATA, READYAML, WRITEYAML
 
     methods
-        function obj = YAMLData()
-            %YAMLDATA Construct empty YAML configuration data object
-            %   obj = YAMLData() creates an empty YAMLData object
-            %
-            %   To create from existing data, use the yamldata() function:
-            %       config = yamldata(myStruct);
-            %
-            %   See also YAMLDATA
-
-            obj@matlab.io.config.ConfigurationData();
-        end
-
         function show(obj)
             %SHOW Display contents as YAML
             %   show(obj) displays the YAMLData object as YAML text.

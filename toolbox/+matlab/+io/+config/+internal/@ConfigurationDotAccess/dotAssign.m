@@ -36,13 +36,13 @@ end
 
 % Scalar: simple assignment
 if numel(indexOp) == 1
-    obj = obj.setData(key, varargin{end});
+    obj = storeValue(obj, key, varargin{end});
     return;
 end
 
 % Scalar: chained assignment — get or create, forward, store back
 if isKey(obj.Data, key)
-    value = obj.getData(key);
+    value = obj.Data{key};
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Dot ...
             && ~isa(value, 'matlab.io.config.ConfigurationData')
         value = createArray(class(obj));
@@ -56,5 +56,11 @@ else
 end
 
 [value.(indexOp(2:end))] = varargin{:};
-obj = obj.setData(key, value);
+obj = storeValue(obj, key, value);
+end
+
+function obj = storeValue(obj, key, value)
+value = matlab.io.config.internal.validateValue(obj, value, key);
+value = obj.normalizeVectorOrientation(value);
+obj.Data(key) = {value};
 end

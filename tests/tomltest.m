@@ -540,8 +540,8 @@ classdef tomltest < matlab.unittest.TestCase
 
             for i = 1:length(origKeys)
                 key = origKeys(i);
-                origVal = getData(original, char(key));
-                restVal = getData(restored, char(key));
+                origVal = original.(key);
+                restVal = restored.(key);
 
                 keyContext = sprintf('%s.%s', context, key);
 
