@@ -12,7 +12,7 @@ try
     if isscalar(obj)
         writeFcn(obj, tempFile);
     else
-        wrapper = createArray(class(obj));
+        wrapper = matlab.io.config.internal.createArray(obj);
         wrapper.item = obj;
         writeFcn(wrapper, tempFile, writerArgs{:});
     end

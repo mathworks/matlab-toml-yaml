@@ -2,7 +2,10 @@ classdef (Abstract) ConfigurationStorage
     %CONFIGURATIONSTORAGE Abstract base declaring Data storage and accessors
 
     properties (Abstract, Access = protected)
-        Data dictionary
+        % No type annotation here — R2022b errors with
+        % 'PropTypeMultipleAbstractValidations' when the same typed
+        % abstract property is inherited through multiple superclass paths.
+        Data
     end
 
     methods (Access = protected)

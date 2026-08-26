@@ -42,17 +42,17 @@ end
 
 % Scalar: chained assignment — get or create, forward, store back
 if isKey(obj.Data, key)
-    value = obj.Data{key};
+    value = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, key);
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Dot ...
             && ~isa(value, 'matlab.io.config.ConfigurationData')
-        value = createArray(class(obj));
+        value = matlab.io.config.internal.createArray(obj);
     end
 else
     if indexOp(2).Type == matlab.indexing.IndexingOperationType.Paren
         error('ConfigurationData:InvalidIndex', ...
             'Cannot index into non-existent field ''%s''', key);
     end
-    value = createArray(class(obj));
+    value = matlab.io.config.internal.createArray(obj);
 end
 
 [value.(indexOp(2:end))] = varargin{:};

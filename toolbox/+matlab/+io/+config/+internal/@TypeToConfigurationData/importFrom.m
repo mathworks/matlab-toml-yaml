@@ -8,9 +8,9 @@ function obj = importFrom(obj, inputData)
 
 if isstruct(inputData)
     if ~isscalar(inputData)
-        arr(numel(inputData)) = createArray(class(obj));
+        arr(numel(inputData)) = matlab.io.config.internal.createArray(obj);
         for i = 1:numel(inputData)
-            arr(i) = importFrom(createArray(class(obj)), inputData(i));
+            arr(i) = importFrom(matlab.io.config.internal.createArray(obj), inputData(i));
         end
         obj = reshape(arr, size(inputData));
         return;

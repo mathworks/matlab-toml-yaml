@@ -18,12 +18,12 @@ if ~any(found)
 end
 
 if isscalar(obj)
-    value = obj.Data{resolvedKeys};
+    value = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolvedKeys);
 else
     values = cell(size(obj));
     for i = 1:numel(obj)
         if found(i)
-            values{i} = obj(i).Data{resolvedKeys(i)};
+            values{i} = matlab.io.config.internal.lookupCellDictionaryKey(obj(i).Data, resolvedKeys(i));
         else
             values{i} = missing;
         end
