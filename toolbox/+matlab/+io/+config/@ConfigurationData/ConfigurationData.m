@@ -16,7 +16,7 @@ classdef (Abstract) ConfigurationData < ...
     %   To call methods, use function syntax: keys(obj), isfield(obj, key)
 
     properties (Access = protected)
-        Data dictionary = configureDictionary("string", "cell")
+        Data = dictionary(string.empty, cell.empty)
     end
 
     methods
@@ -31,7 +31,7 @@ classdef (Abstract) ConfigurationData < ...
         %
         %   See also TOMLDATA, YAMLDATA
 
-        obj.Data = configureDictionary("string", "cell");
+        obj.Data = dictionary(string.empty, cell.empty);
         end
     end
 

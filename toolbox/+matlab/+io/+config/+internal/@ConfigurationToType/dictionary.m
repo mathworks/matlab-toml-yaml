@@ -20,7 +20,7 @@ d = traverse(obj, v);
 end
 
 function d = toDictionary(keys, values, ~)
-d = configureDictionary("string", "cell");
+d = dictionary(string.empty, cell.empty);
 for i = 1:numel(keys)
     d(keys(i)) = values(i);
 end
