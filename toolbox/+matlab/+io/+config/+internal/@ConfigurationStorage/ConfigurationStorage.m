@@ -6,16 +6,6 @@ classdef (Abstract) ConfigurationStorage
     end
 
     methods (Access = protected)
-        function obj = setData(obj, key, value)
-            %SETDATA Set value in Data dictionary (wraps in cell)
-            %   Validates the value type before storing.
-            %   Normalizes array orientation for consistent concatenation.
-            key = string(key);
-            value = matlab.io.config.internal.validateValue(obj, value, key);
-            value = obj.normalizeVectorOrientation(value);
-            obj.Data(key) = {value};
-        end
-
         resolvedKeys = resolveKey(obj, key)
 
         result = tryConcatenate(obj, values, fieldName)

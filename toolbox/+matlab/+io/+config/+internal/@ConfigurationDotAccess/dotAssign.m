@@ -36,7 +36,7 @@ end
 
 % Scalar: simple assignment
 if numel(indexOp) == 1
-    obj = obj.setData(key, varargin{end});
+    obj = storeValue(obj, key, varargin{end});
     return;
 end
 
@@ -56,5 +56,11 @@ else
 end
 
 [value.(indexOp(2:end))] = varargin{:};
-obj = obj.setData(key, value);
+obj = storeValue(obj, key, value);
+end
+
+function obj = storeValue(obj, key, value)
+value = matlab.io.config.internal.validateValue(obj, value, key);
+value = obj.normalizeVectorOrientation(value);
+obj.Data(key) = {value};
 end
