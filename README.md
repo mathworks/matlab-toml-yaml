@@ -62,11 +62,13 @@ writetoml(config, "my_config.toml");
 ### YAML
 - [`readyaml`](toolbox/doc/readyaml.md) - Read YAML file 
 - [`writeyaml`](toolbox/doc/writeyaml.md) - Write YAML file
+- [`yamldata`](toolbox/doc/YAMLData.md) - Create `matlab.io.config.YAMLData` datatype
 - [`matlab.io.config.YAMLData`](toolbox/doc/YAMLData.md) - Struct-like datatype for YAML 
 
 ### TOML
 - [`readtoml`](toolbox/doc/readtoml.md) - Read TOML file
 - [`writetoml`](toolbox/doc/writetoml.md) - Write TOML file
+- [`tomldata`](toolbox/doc/TOMLData.md) - Create `matlab.io.config.TOMLData` datatype
 - [`matlab.io.config.TOMLData`](toolbox/doc/TOMLData.md) - Struct-like datatype for TOML
 
 ## Examples
