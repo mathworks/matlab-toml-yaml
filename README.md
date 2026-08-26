@@ -45,7 +45,7 @@ deps = project.("build-system").requires;
 
 ```matlab
 % Create data
-config = matlab.io.config.YAMLData;
+config = yamldata();
 config.name = "MyApp";
 config.database.host = "localhost";
 config.database.port = 5432;
