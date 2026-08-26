@@ -26,44 +26,12 @@ classdef YAMLData < matlab.io.config.ConfigurationData
             %   See also YAMLDATA
 
             obj@matlab.io.config.ConfigurationData();
-            obj.xInternal__.SourceFormat = "yaml";
         end
 
         function show(obj)
             %SHOW Display contents as YAML
             %   show(obj) displays the YAMLData object as YAML text.
-            %   This is useful for viewing deeply nested structures at the
-            %   command line.
-            %
-            %   For arrays, displays each element as a YAML list item.
-            %
-            %   Example:
-            %       show(data)
-            %
-            %   See also writeyaml
-
-            tempFile = [tempname '.yaml'];
-            try
-                if isscalar(obj)
-                    % Scalar case - write directly
-                    writeyaml(obj, tempFile);
-                else
-                    % Array case - wrap in container and write as list
-                    wrapper = matlab.io.config.YAMLData;
-                    wrapper.item = obj;
-                    writeyaml(wrapper, tempFile);
-                end
-                yamlText = fileread(tempFile);
-                fprintf('%s\n', yamlText);
-            catch
-                % If writeyaml fails, fall back to default display
-                disp(obj);
-            end
-
-            % Clean up
-            if isfile(tempFile)
-                delete(tempFile);
-            end
+            matlab.io.config.internal.showAsFormat(obj, @writeyaml);
         end
     end
 end

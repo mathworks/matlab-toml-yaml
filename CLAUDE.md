@@ -55,13 +55,11 @@ ConfigurationData inherits from:
 - `matlab.mixin.CustomDisplay` - custom disp/display
 
 ### Internal Storage (ConfigurationData)
-All internal state is stored in a single `public Hidden` struct property named `xInternal__`:
-- `xInternal__.Data` - dictionary<string, cell> storing values wrapped in cells
-- `xInternal__.KeyAliases` - dictionary<string, string> mapping valid MATLAB names to original keys
-- `xInternal__.OriginalKeys` - string array preserving insertion order
-- `xInternal__.SourceFormat` - string identifying the file format ("yaml", "toml")
+Two protected properties:
+- `Data` - dictionary<string, cell> storing values wrapped in cells (insertion order preserved)
+- `SourceFormat` - string identifying the file format ("yaml", "toml")
 
-This design uses one reserved key name to enable tab completion.
+Key aliases (e.g. `build_system` -> `build-system`) are computed on the fly in `resolveKey`. There are no reserved key names — users can have keys named "Data", "SourceFormat", etc.
 
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
@@ -107,11 +105,11 @@ config = YAMLData;
 config.new.section.value = 42;  % creates nested YAMLData objects
 ```
 
-### Accessing xInternal__ on Array Elements
-`obj.xInternal__` works when `obj` is the direct `self` parameter (bypasses RedefinesDot). But `obj(j).xInternal__` on array elements goes through `dotReference` and is blocked. Inside methods that iterate over arrays, use the public API instead:
+### Accessing Protected Properties on Array Elements
+`obj.Data` works when `obj` is the direct `self` parameter (bypasses RedefinesDot). But `obj(j).Data` on array elements goes through `dotReference` and treats "Data" as a user key. Inside methods that iterate over arrays, use the public API instead:
 ```matlab
 % WRONG inside a method iterating obj array
-obj(j).xInternal__.OriginalKeys
+obj(j).Data
 
 % CORRECT
 keys(obj(j))
@@ -159,7 +157,6 @@ obj.field            % returns missing if absent (read convenience)
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
 - **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
-- **Reserved key**: `xInternal__` cannot be used as a configuration key (reserved for internal storage)
 - **Tab completion**: IDE shows data keys and methods together; methods require function syntax to call
 
 ## Test Files Location

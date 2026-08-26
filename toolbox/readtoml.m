@@ -474,11 +474,6 @@ function [rootData, tableRef] = parseKeyValue(rootData, tableRef, tablePath, arr
             if contains(ME.message, 'temporary value') || contains(ME.message, 'method')
                 % Method name conflict - store directly using setData
                 tableRef = tableRef.setData(char(key), value);
-                tableRef = tableRef.addKey(key);
-                validKey = matlab.lang.makeValidName(key);
-                if validKey ~= key
-                    tableRef = tableRef.setKeyAlias(validKey, key);
-                end
             else
                 rethrow(ME);
             end

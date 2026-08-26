@@ -39,7 +39,7 @@ function result = select(obj, selectedKeys)
     end
 
     % Build result with same class as input
-    result = feval(class(obj));
+    result = createArray(class(obj));
 
     for i = 1:numel(selectedKeys)
         k = selectedKeys(i);

@@ -29,59 +29,13 @@ classdef TOMLData < matlab.io.config.ConfigurationData
             %   See also TOMLDATA
 
             obj@matlab.io.config.ConfigurationData();
-            obj.xInternal__.SourceFormat = "toml";
         end
 
         function show(obj)
             %SHOW Display the data in TOML format
-            %   show(data) writes the TOMLData to a temporary file and
-            %   displays the TOML content in the command window.
-            %
-            %   For arrays, displays each element as an array of tables
-            %   using [[item]] syntax.
-            %
-            %   This is useful for viewing the TOML representation of the data.
-
-            if isscalar(obj)
-                % Scalar case - write directly
-                try
-                    tempFile = tempname;
-                    writetoml(obj, tempFile);
-                    content = fileread(tempFile);
-                    fprintf('%s\n', content);
-                    delete(tempFile);
-                catch
-                    disp(obj);
-                end
-            else
-                % Array case - wrap in container and write as array of tables
-                try
-                    wrapper = matlab.io.config.TOMLData;
-                    wrapper.item = obj;
-                    tempFile = tempname;
-                    writetoml(wrapper, tempFile, TableArrayStyle="expanded");
-                    content = fileread(tempFile);
-                    fprintf('%s\n', content);
-                    delete(tempFile);
-                catch
-                    disp(obj);
-                end
-            end
+            matlab.io.config.internal.showAsFormat(obj, @writetoml, ...
+                {"TableArrayStyle", "expanded"});
         end
     end
 
-    methods (Access = protected)
-        function value = validateAndConvertValue(obj, value, key)
-            %VALIDATEANDCONVERTVALUE TOML-specific type validation
-            %   TOML natively supports datetime, so keep it as-is.
-
-            % TOML supports datetime natively - don't convert
-            if isa(value, 'datetime')
-                return;  % Keep as datetime
-            end
-
-            % For all other types, use base class validation
-            value = validateAndConvertValue@matlab.io.config.ConfigurationData(obj, value, key);
-        end
-    end
 end
