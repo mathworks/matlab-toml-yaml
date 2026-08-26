@@ -19,7 +19,7 @@ if all(isMissing)
 end
 
 % Check type homogeneity (ignoring missing)
-nonMissingIdx = find(~isMissing);
+nonMissingIdx = reshape(find(~isMissing), 1, []);
 firstValue = values{nonMissingIdx(1)};
 theType = class(firstValue);
 
