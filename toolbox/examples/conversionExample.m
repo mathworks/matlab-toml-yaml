@@ -32,8 +32,8 @@ disp("  credentials type: " + class(yamlConfig.database.credentials))
 %% Creating a Data Object from Dictionary
 % Convert a MATLAB dictionary to a YAMLData or TOMLData object
 
-% Create a dictionary (requires R2022b+)
-d = configureDictionary("string", "cell");
+% Create a dictionary (R2022b+; use configureDictionary("string","cell") in R2023b+)
+d = dictionary(string.empty, cell.empty);
 d("title") = {"My Project"};
 d("version") = {"2.0.0"};
 d("ports") = {[8080, 8443, 9000]};
@@ -68,8 +68,10 @@ d = dictionary(config);
 disp("Converted to dictionary:")
 disp(d)
 
-% Access dictionary values
-disp("Project name: " + d{"project"}{"name"})
+% Access dictionary values (use d{"project"}{"name"} in R2023a+)
+project = d("project"); project = project{1};
+name = project("name"); name = name{1};
+disp("Project name: " + name)
 
 %% Converting a Data Object to Struct
 % Use the struct() method to convert to a standard MATLAB struct
@@ -104,7 +106,7 @@ delete(tempToml)
 %% Writing Dictionary Directly
 % You can also pass dictionaries directly to write functions
 
-d = configureDictionary("string", "cell");
+d = dictionary(string.empty, cell.empty);
 d("title") = {"Dictionary Example"};
 d("count") = {42};
 
