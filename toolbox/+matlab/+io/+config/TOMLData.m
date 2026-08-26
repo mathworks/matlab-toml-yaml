@@ -19,18 +19,6 @@ classdef TOMLData < matlab.io.config.ConfigurationData
     %   See also TOMLDATA, READTOML, WRITETOML
 
     methods
-        function obj = TOMLData()
-            %TOMLDATA Construct empty TOMLData object
-            %   obj = TOMLData() creates an empty TOMLData object
-            %
-            %   To create from existing data, use the tomldata() function:
-            %       config = tomldata(myStruct);
-            %
-            %   See also TOMLDATA
-
-            obj@matlab.io.config.ConfigurationData();
-        end
-
         function show(obj)
             %SHOW Display the data in TOML format
             matlab.io.config.internal.showAsFormat(obj, @writetoml, ...
