@@ -45,6 +45,9 @@ codegen/
 # buildtool cache folder
 .buildtool/
 
+# Generated code coverage reports
+coverage/
+
 # SimBiology backup files
 *.sbproj.backup
 *.sbproj.bak
