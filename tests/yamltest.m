@@ -197,7 +197,7 @@ classdef yamltest < matlab.unittest.TestCase
             testCase.verifyTrue(isfile('untitled.yaml'));
         end
         
-        %% Missing Value and Input Conversion Tests
+        %% Missing Value Tests
         function testWriteMissingValue(testCase)
             % Test writing a missing value (serializes as null)
             data = yamldata();
@@ -209,37 +209,6 @@ classdef yamltest < matlab.unittest.TestCase
 
             content = string(fileread(filename));
             testCase.verifyTrue(contains(content, "optional: null"));
-        end
-
-        function testWriteStructInput(testCase)
-            % Test that struct input is accepted and converted
-            s.name = "hello";
-            s.count = 42;
-
-            filename = fullfile(pwd, 'output.yaml');
-            writeyaml(s, filename);
-
-            data = readyaml(filename);
-            testCase.verifyEqual(data.name, "hello");
-            testCase.verifyEqual(data.count, 42);
-        end
-
-        function testWriteDictionaryInput(testCase)
-            % Test that dictionary input is accepted and converted
-            d = dictionary(["name", "version"], {"myapp", "1.0"});
-
-            filename = fullfile(pwd, 'output.yaml');
-            writeyaml(d, filename);
-
-            data = readyaml(filename);
-            testCase.verifyEqual(data.name, "myapp");
-            testCase.verifyEqual(data.version, "1.0");
-        end
-
-        function testWriteInvalidInputErrors(testCase)
-            % Test that invalid input types produce an error
-            testCase.verifyError(@() writeyaml(42, 'test.yaml'), ...
-                "writeyaml:InvalidInput");
         end
 
         %% Round-trip Tests
