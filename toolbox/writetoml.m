@@ -328,7 +328,10 @@ end
 function str = serializeValue(value, opts, depth)
     % Serialize a value to TOML format
 
-    if islogical(value) && isscalar(value)
+    if ismissing(value)
+        str = """""";
+
+    elseif islogical(value) && isscalar(value)
         if value
             str = "true";
         else

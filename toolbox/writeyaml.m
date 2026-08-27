@@ -104,6 +104,8 @@ function yamlText = generateYAML(data, depth, indentSize, flowStyle, precision, 
             % Single ConfigurationData object
             yamlText = configDataToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
         end
+    elseif ismissing(data)
+        yamlText = "null";
     elseif iscell(data)
         yamlText = cellToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
     elseif isstring(data) && numel(data) > 1
