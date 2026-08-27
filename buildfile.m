@@ -11,8 +11,25 @@ end
 
 function testTask(~)
 % Run the shipped test suite in tests/ against the toolbox on the path.
-suite = matlab.unittest.TestSuite.fromFolder("tests");
-runner = matlab.unittest.TestRunner.withTextOutput;
+%   Measures coverage of toolbox/ and writes two reports into coverage/:
+%   cobertura.xml for CI consumption and html/index.html to browse locally.
+import matlab.unittest.TestSuite
+import matlab.unittest.TestRunner
+import matlab.unittest.plugins.CodeCoveragePlugin
+import matlab.unittest.plugins.codecoverage.CoberturaFormat
+import matlab.unittest.plugins.codecoverage.CoverageReport
+
+coverageFolder = "coverage";
+if ~isfolder(coverageFolder)
+    mkdir(coverageFolder);
+end
+
+suite = TestSuite.fromFolder("tests");
+runner = TestRunner.withTextOutput;
+runner.addPlugin(CodeCoveragePlugin.forFolder("toolbox", ...
+    IncludingSubfolders=true, ...
+    Producing=[CoberturaFormat(fullfile(coverageFolder, "cobertura.xml")), ...
+               CoverageReport(fullfile(coverageFolder, "html"))]));
 results = runner.run(suite);
 assertSuccess(results);
 end
