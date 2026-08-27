@@ -367,10 +367,27 @@ function str = serializeValue(value, opts, depth)
     elseif isa(value, 'matlab.io.config.ConfigurationData') && ~isscalar(value)
         str = serializeArrayOfTables(value, opts);
 
+    elseif iscell(value)
+        str = serializeCellArray(value, opts, depth);
+
     else
         error('tomlToolbox:writetoml:UnsupportedType', ...
             'Cannot serialize value of type: %s', class(value));
     end
+end
+
+function str = serializeCellArray(value, opts, depth)
+    % Serialize a cell array as a TOML array
+    str = "[";
+
+    for i = 1:numel(value)
+        str = str + serializeValue(value{i}, opts, depth + 1);
+        if i < numel(value)
+            str = str + ", ";
+        end
+    end
+
+    str = str + "]";
 end
 
 function str = serializeArray(arr, opts, depth)
