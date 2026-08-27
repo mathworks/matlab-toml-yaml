@@ -476,6 +476,76 @@ classdef tomltest < matlab.unittest.TestCase
             testCase.roundtripTest('simple_project.toml');
         end
 
+        %% Cell Array and Missing Value Tests
+        function testWriteCellArray(testCase)
+            % Test writing a cell array (heterogeneous types)
+            data = tomldata();
+            data.mixed = {1, "hello", true};
+
+            filename = 'test.toml';
+            writetoml(data, filename);
+
+            content = string(fileread(filename));
+            testCase.verifyTrue(contains(content, "mixed = [1, ""hello"", true]"));
+        end
+
+        function testWriteNestedCellArray(testCase)
+            % Test writing cell arrays with nested arrays
+            data = tomldata();
+            data.matrix = {[1, 2], [3, 4]};
+
+            filename = 'test.toml';
+            writetoml(data, filename);
+
+            content = string(fileread(filename));
+            testCase.verifyTrue(contains(content, "matrix = [[1, 2], [3, 4]]"));
+        end
+
+        function testWriteMissingValue(testCase)
+            % Test writing a missing value (serializes as empty string)
+            data = tomldata();
+            data.name = "test";
+            data.optional = missing;
+
+            filename = 'test.toml';
+            writetoml(data, filename);
+
+            content = string(fileread(filename));
+            testCase.verifyTrue(contains(content, 'optional = ""'));
+        end
+
+        %% Input Conversion Tests
+        function testWriteStructInput(testCase)
+            % Test that struct input is accepted and converted
+            s.name = "hello";
+            s.count = 42;
+
+            filename = 'test.toml';
+            writetoml(s, filename);
+
+            data = readtoml(filename);
+            testCase.verifyEqual(data.name, "hello");
+            testCase.verifyEqual(data.count, 42);
+        end
+
+        function testWriteDictionaryInput(testCase)
+            % Test that dictionary input is accepted and converted
+            d = dictionary(["name", "version"], {"myapp", "1.0"});
+
+            filename = 'test.toml';
+            writetoml(d, filename);
+
+            data = readtoml(filename);
+            testCase.verifyEqual(data.name, "myapp");
+            testCase.verifyEqual(data.version, "1.0");
+        end
+
+        function testWriteInvalidInputErrors(testCase)
+            % Test that invalid input types produce an error
+            testCase.verifyError(@() writetoml(42, 'test.toml'), ...
+                "writetoml:InvalidInput");
+        end
+
         function testRoundtripComplexWorkflow(testCase)
             testCase.roundtripTest('complex_workflow.toml');
         end
