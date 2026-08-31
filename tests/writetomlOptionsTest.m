@@ -1,0 +1,303 @@
+classdef writetomlOptionsTest < matlab.unittest.TestCase
+    % Tests for writetoml input handling and its formatting options:
+    % TableStyle, TableArrayStyle, StringEscapeStyle and StringLayout,
+    % including the heuristics each option's "auto" setting applies.
+    %
+    % writetoml.m also contains type-dispatch branches for struct and char
+    % input that cannot be reached, because writetoml converts its input to
+    % TOMLData before serializing and TOMLData converts char to string on
+    % storage. Those branches, and the unused configDataToStruct helper, are
+    % the subject of #29 and are deliberately not tested here.
+
+    methods(Access = private)
+        function text = writeAndRead(testCase, data, varargin)
+            import matlab.unittest.fixtures.TemporaryFolderFixture
+            fixture = testCase.applyFixture(TemporaryFolderFixture);
+            file = fullfile(fixture.Folder, "out.toml");
+            writetoml(data, file, varargin{:});
+            text = string(fileread(file));
+        end
+
+        function config = makeTable(~, keyCount)
+            % A TOMLData with keyCount simple keys named k1..kN.
+            config = tomldata();
+            for i = 1:keyCount
+                config.("k" + i) = i;
+            end
+        end
+    end
+
+    methods(Test)
+        % --- Input types ---------------------------------------------------
+
+        function testDictionaryInput(testCase)
+            data = dictionary("host", {"example.com"});
+
+            text = testCase.writeAndRead(data);
+
+            testCase.verifySubstring(text, "host = ""example.com""");
+        end
+
+        function testContainersMapInputErrors(testCase)
+            % Issue #40: writetoml routes containers.Map to tomldata, which
+            % rejects it, even though the adjacent error message advertises
+            % support and writeyaml accepts a map. Invert this when #40 is
+            % fixed.
+            data = containers.Map("port", 8080);
+
+            testCase.verifyError(@() testCase.writeAndRead(data), ...
+                "ConfigurationData:InvalidInput", ...
+                "Issue #40: containers.Map input is not actually supported");
+        end
+
+        function testUnsupportedInputTypeErrors(testCase)
+            import matlab.unittest.fixtures.TemporaryFolderFixture
+            fixture = testCase.applyFixture(TemporaryFolderFixture);
+            file = fullfile(fixture.Folder, "out.toml");
+
+            testCase.verifyError(@() writetoml(42, file), ...
+                "writetoml:InvalidInput", ...
+                "A bare number is not a table and should be rejected");
+        end
+
+        function testDefaultFilenameIsUntitled(testCase)
+            import matlab.unittest.fixtures.TemporaryFolderFixture
+            import matlab.unittest.fixtures.CurrentFolderFixture
+            fixture = testCase.applyFixture(TemporaryFolderFixture);
+            testCase.applyFixture(CurrentFolderFixture(fixture.Folder));
+            config = tomldata();
+            config.host = "example.com";
+
+            writetoml(config);
+
+            expected = fullfile(fixture.Folder, "untitled.toml");
+            testCase.verifyTrue(isfile(expected), ...
+                "Omitting the filename should write untitled.toml");
+        end
+
+        % --- TableStyle ----------------------------------------------------
+
+        function testTableStyleInlineForcesInlineTable(testCase)
+            % The table is nested one level down because TableStyle has no
+            % effect on top-level tables; see testTableStyleIsIgnoredAtRoot.
+            config = tomldata();
+            config.outer.server.host = "alpha";
+            config.outer.server.port = 80;
+
+            text = testCase.writeAndRead(config, "TableStyle", "inline");
+
+            testCase.verifySubstring(text, ...
+                "server = {host = ""alpha"", port = 80}", ...
+                "TableStyle=inline should fold the table into one line");
+            testCase.verifyFalse(contains(text, "[outer.server]"), ...
+                "No header should be emitted for an inlined table");
+        end
+
+        function testTableStyleExpandedForcesTableHeader(testCase)
+            % A single-key table is small enough that auto would inline it,
+            % so expanded is the only reason for the header here.
+            config = tomldata();
+            config.outer.server.host = "alpha";
+
+            text = testCase.writeAndRead(config, "TableStyle", "expanded");
+
+            testCase.verifySubstring(text, "[outer.server]", ...
+                "TableStyle=expanded should emit a header even for one key");
+        end
+
+        function testTableStyleAutoInlinesSmallTable(testCase)
+            config = tomldata();
+            config.outer.server = testCase.makeTable(3);
+
+            text = testCase.writeAndRead(config, "TableStyle", "auto");
+
+            testCase.verifySubstring(text, "server = {", ...
+                "A three-key table should be inlined under auto");
+        end
+
+        function testTableStyleAutoExpandsLargeTable(testCase)
+            % The auto heuristic gives up on inline past three keys.
+            config = tomldata();
+            config.outer.server = testCase.makeTable(4);
+
+            text = testCase.writeAndRead(config, "TableStyle", "auto");
+
+            testCase.verifySubstring(text, "[outer.server]", ...
+                "A four-key table should be expanded under auto");
+        end
+
+        function testTableStyleIsIgnoredAtRoot(testCase)
+            % Issue #41: serializeToml sends every table-valued root key to
+            % the table writer without consulting TableStyle, so a top-level
+            % table is always expanded. Invert this when #41 is fixed.
+            config = tomldata();
+            config.server.host = "alpha";
+            config.server.port = 80;
+
+            text = testCase.writeAndRead(config, "TableStyle", "inline");
+
+            testCase.verifySubstring(text, "[server]", ...
+                "Issue #41: TableStyle has no effect on top-level tables");
+        end
+
+        % --- TableArrayStyle -----------------------------------------------
+
+        function testTableArrayStyleInlineWritesInlineArray(testCase)
+            config = tomldata();
+            first = tomldata();
+            first.name = "alpha";
+            second = tomldata();
+            second.name = "beta";
+            config.products = [first; second];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "inline");
+
+            testCase.verifySubstring(text, "products = [", ...
+                "An inline table array is written as a key-value pair");
+            testCase.verifyFalse(contains(text, "[[products]]"), ...
+                "No expanded array-of-tables headers should appear");
+        end
+
+        function testTableArrayStyleExpandedWritesHeaders(testCase)
+            config = tomldata();
+            first = tomldata();
+            first.name = "alpha";
+            config.products = [first; first];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "expanded");
+
+            testCase.verifySubstring(text, "[[products]]");
+        end
+
+        function testTableArrayStyleAutoExpandsLongArray(testCase)
+            % The auto heuristic gives up on inline past two elements.
+            config = tomldata();
+            element = tomldata();
+            element.name = "alpha";
+            config.products = [element; element; element];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "auto");
+
+            testCase.verifySubstring(text, "[[products]]", ...
+                "Three elements should be expanded under auto");
+        end
+
+        function testTableArrayStyleAutoExpandsWideElements(testCase)
+            % Each element may have at most three fields to stay inline.
+            config = tomldata();
+            element = testCase.makeTable(4);
+            config.products = [element; element];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "auto");
+
+            testCase.verifySubstring(text, "[[products]]", ...
+                "Four-field elements should be expanded under auto");
+        end
+
+        function testTableArrayStyleAutoExpandsNestedElements(testCase)
+            % An element holding a nested table cannot be written inline.
+            config = tomldata();
+            element = tomldata();
+            element.name = "alpha";
+            element.limits.cpu = 2;
+            config.products = [element; element];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "auto");
+
+            testCase.verifySubstring(text, "[[products]]", ...
+                "A nested table forces expanded output under auto");
+        end
+
+        % --- String formatting ---------------------------------------------
+
+        function testMultilineLiteralString(testCase)
+            config = tomldata();
+            config.path = "C:\temp";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "multiline");
+
+            testCase.verifySubstring(text, "'''C:\temp'''", ...
+                "Both options together give a multi-line literal string");
+        end
+
+        function testMultilineBasicString(testCase)
+            config = tomldata();
+            config.text = "hello";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "escaped", "StringLayout", "multiline");
+
+            testCase.verifySubstring(text, """""""hello""""""", ...
+                "Escaped multiline output uses triple double quotes");
+        end
+
+        function testSingleLineLiteralString(testCase)
+            config = tomldata();
+            config.path = "C:\temp";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "singleline");
+
+            testCase.verifySubstring(text, "'C:\temp'");
+        end
+
+        function testAutoStyleUsesLiteralForBackslashPaths(testCase)
+            config = tomldata();
+            config.path = "C:\temp\logs";
+
+            text = testCase.writeAndRead(config);
+
+            testCase.verifySubstring(text, "'C:\temp\logs'", ...
+                "A path with backslashes and no control chars stays literal");
+        end
+
+        function testAutoStyleEscapesWhenControlCharactersPresent(testCase)
+            % A backslash alongside a real newline must be escaped, since a
+            % literal string cannot carry the newline.
+            config = tomldata();
+            config.text = "C:\temp" + newline + "second";
+
+            text = testCase.writeAndRead(config);
+
+            testCase.verifyFalse(contains(text, "'C:"), ...
+                "Control characters should rule out the literal form");
+        end
+
+        function testAutoStyleEscapesWhenSingleQuotePresent(testCase)
+            % A single quote cannot appear inside a literal string.
+            config = tomldata();
+            config.path = "C:\user's files";
+
+            text = testCase.writeAndRead(config);
+
+            testCase.verifySubstring(text, """", ...
+                "A single quote should force the escaped double-quoted form");
+            testCase.verifyFalse(contains(text, "= 'C:"), ...
+                "The literal form must not be used");
+        end
+
+        function testStringWithoutBackslashesUsesDoubleQuotes(testCase)
+            config = tomldata();
+            config.host = "example.com";
+
+            text = testCase.writeAndRead(config);
+
+            testCase.verifySubstring(text, "host = ""example.com""");
+        end
+
+        % --- Unsupported values --------------------------------------------
+
+        function testCellValueErrors(testCase)
+            % Issue #28: writetoml has no cell serialization, so a cell value
+            % reaches the unsupported-type error. Invert this when #28 is
+            % fixed.
+            config = tomldata();
+            config.items = {1, "two"};
+
+            testCase.verifyError(@() testCase.writeAndRead(config), ...
+                "tomlToolbox:writetoml:UnsupportedType", ...
+                "Issue #28: cell values cannot be serialized");
+        end
+    end
+end
