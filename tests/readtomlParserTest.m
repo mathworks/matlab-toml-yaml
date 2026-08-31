@@ -59,6 +59,9 @@ classdef readtomlParserTest < matlab.unittest.TestCase
         % --- Strings -------------------------------------------------------
 
         function testMultilineLiteralString(testCase)
+            % The space before the delimiter leaks a stray apostrophe into
+            % the value (#42), so this only checks that the lines survive.
+            % readtomlMultilineStringTest covers the delimiter handling.
             file = testCase.writeToml([...
                 "text = '''"; ...
                 "line one"; ...
