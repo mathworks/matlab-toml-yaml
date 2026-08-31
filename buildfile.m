@@ -14,22 +14,29 @@ function testTask(~)
 %   Measures coverage of the toolbox library code and writes two reports
 %   into coverage/: cobertura.xml for CI consumption and html/index.html to
 %   browse locally.
+%   On releases before R2023a only the Cobertura report is produced, because
+%   the CoverageReport (HTML) format was introduced in R2023a and R2022b is
+%   the minimum supported release.
 import matlab.unittest.TestSuite
 import matlab.unittest.TestRunner
 import matlab.unittest.plugins.CodeCoveragePlugin
 import matlab.unittest.plugins.codecoverage.CoberturaFormat
-import matlab.unittest.plugins.codecoverage.CoverageReport
 
 coverageFolder = "coverage";
 if ~isfolder(coverageFolder)
     mkdir(coverageFolder);
 end
 
+formats = CoberturaFormat(fullfile(coverageFolder, "cobertura.xml"));
+if ~isMATLABReleaseOlderThan("R2023a")
+    formats = [formats, ...
+        matlab.unittest.plugins.codecoverage.CoverageReport( ...
+            fullfile(coverageFolder, "html"))];
+end
+
 suite = TestSuite.fromFolder("tests");
 runner = TestRunner.withTextOutput;
-runner.addPlugin(CodeCoveragePlugin.forFile(libraryFiles(), ...
-    Producing=[CoberturaFormat(fullfile(coverageFolder, "cobertura.xml")), ...
-               CoverageReport(fullfile(coverageFolder, "html"))]));
+runner.addPlugin(CodeCoveragePlugin.forFile(libraryFiles(), Producing=formats));
 results = runner.run(suite);
 assertSuccess(results);
 end
