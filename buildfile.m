@@ -11,8 +11,9 @@ end
 
 function testTask(~)
 % Run the shipped test suite in tests/ against the toolbox on the path.
-%   Measures coverage of toolbox/ and writes two reports into coverage/:
-%   cobertura.xml for CI consumption and html/index.html to browse locally.
+%   Measures coverage of the toolbox library code and writes two reports
+%   into coverage/: cobertura.xml for CI consumption and html/index.html to
+%   browse locally.
 import matlab.unittest.TestSuite
 import matlab.unittest.TestRunner
 import matlab.unittest.plugins.CodeCoveragePlugin
@@ -26,12 +27,30 @@ end
 
 suite = TestSuite.fromFolder("tests");
 runner = TestRunner.withTextOutput;
-runner.addPlugin(CodeCoveragePlugin.forFolder("toolbox", ...
-    IncludingSubfolders=true, ...
+runner.addPlugin(CodeCoveragePlugin.forFile(libraryFiles(), ...
     Producing=[CoberturaFormat(fullfile(coverageFolder, "cobertura.xml")), ...
                CoverageReport(fullfile(coverageFolder, "html"))]));
 results = runner.run(suite);
 assertSuccess(results);
+end
+
+function files = libraryFiles()
+% List the toolbox library files to measure coverage against.
+%   Everything under toolbox/ except the examples and documentation. The
+%   example scripts are run by tests/exampleScriptsTest.m, but from a
+%   temporary copy, so the originals can never register as covered no matter
+%   how thorough the suite gets. The library lines those examples exercise
+%   are still counted here, via the files below. Measuring the examples
+%   themselves would only add several hundred permanently unreachable lines
+%   to the denominator.
+%
+%   forFile is used rather than forFolder because forFolder's
+%   IncludingSubfolders option is all-or-nothing and cannot skip a subfolder.
+excludedFolders = fullfile(pwd, "toolbox", ["examples", "doc"]) + filesep;
+
+found = dir(fullfile("toolbox", "**", "*.m"));
+files = string(fullfile({found.folder}, {found.name}))';
+files = files(~startsWith(files, excludedFolders));
 end
 
 function mltbxTask(~)
