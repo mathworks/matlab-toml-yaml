@@ -2,7 +2,8 @@ classdef readtomlParserTest < matlab.unittest.TestCase
     % Tests for readtoml scalar parsing, inline tables, nested arrays of
     % tables, and the malformed-value error paths.
     %
-    % Two regions of readtoml.m are deliberately not covered here:
+    % Several regions of readtoml.m are deliberately not covered, because no
+    % input can reach them:
     %   - The fread failure handler (lines 50-52) rethrows an error that
     %     fread cannot produce once fopen has succeeded.
     %   - The closes-on-first-line branch of accumulateMultiLineString
@@ -10,6 +11,18 @@ classdef readtomlParserTest < matlab.unittest.TestCase
     %     already returns false for that case, so the accumulator is never
     %     called. testMultilineStringClosingOnFirstLine in
     %     readtomlArrayTest confirms that input parses correctly.
+    %   - The empty-path guards on the recursive path helpers (166, 186,
+    %     208-209, 232-233, 410-411) protect against a call the callers never
+    %     make: each one is entered under a numel(pathKeys) > 1 test and
+    %     recurses with pathKeys(2:end) only while more than one key remains.
+    %   - The missing-intermediate branches of setDataPath (512) and
+    %     updateDataPath (526) cannot fire, because every table path is
+    %     created by ensureDataPath before either is called.
+    %   - The empty-element branch of parseArray (767) is unreachable:
+    %     parseArray returns early when the bracket content is empty, and for
+    %     any non-empty content splitArrayElements yields at least one
+    %     element, since every character either extends the current element
+    %     or closes it.
 
     methods(Access = private)
         function file = writeToml(testCase, text)

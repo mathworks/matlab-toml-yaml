@@ -6,8 +6,10 @@ classdef writetomlOptionsTest < matlab.unittest.TestCase
     % writetoml.m also contains type-dispatch branches for struct and char
     % input that cannot be reached, because writetoml converts its input to
     % TOMLData before serializing and TOMLData converts char to string on
-    % storage. Those branches, and the unused configDataToStruct helper, are
-    % the subject of #29 and are deliberately not tested here.
+    % storage. That accounts for the fieldnames fallbacks at 185, 272, 337,
+    % 534, 588 and 654, the ischar test at 405 and the isstruct test at 439.
+    % configDataToStruct (130-172) has no caller but itself. All of it is the
+    % subject of #29 and is deliberately not tested here.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
