@@ -149,6 +149,22 @@ classdef readtomlParserTest < matlab.unittest.TestCase
                 "tomlToolbox:readtoml:InvalidInlineTable");
         end
 
+        function testUnclosedInlineTableErrors(testCase)
+            % The value is accumulated to the end of the file and still has
+            % no closing brace, so the syntax guard rejects it.
+            file = testCase.writeToml("section = {bare = 1");
+
+            testCase.verifyError(@() readtoml(file), ...
+                "tomlToolbox:readtoml:InvalidInlineTable");
+        end
+
+        function testUnclosedArrayErrors(testCase)
+            file = testCase.writeToml("items = [1, 2");
+
+            testCase.verifyError(@() readtoml(file), ...
+                "tomlToolbox:readtoml:InvalidArray");
+        end
+
         function testInlineTableWithMultipleEntries(testCase)
             file = testCase.writeToml("server = {host = ""alpha"", port = 80}");
 

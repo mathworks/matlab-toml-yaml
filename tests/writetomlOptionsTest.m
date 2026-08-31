@@ -208,6 +208,29 @@ classdef writetomlOptionsTest < matlab.unittest.TestCase
                 "A nested table forces expanded output under auto");
         end
 
+        function testNestedInlineTableArrayIsWrittenAsAPair(testCase)
+            % A table array below another table takes a different route than
+            % a root-level one: it is classified as a key-value pair and then
+            % serialized as an inline array of inline tables.
+            config = tomldata();
+            first = tomldata();
+            first.name = "alpha";
+            second = tomldata();
+            second.name = "beta";
+            config.outer.products = [first; second];
+
+            text = testCase.writeAndRead(config, "TableArrayStyle", "inline");
+
+            testCase.verifySubstring(text, "[outer]");
+            testCase.verifySubstring(text, "products = [", ...
+                "The array should be written as a key-value pair");
+            testCase.verifySubstring(text, "{name = ""alpha""}", ...
+                "Each element should be an inline table");
+            testCase.verifySubstring(text, "{name = ""beta""}");
+            testCase.verifyFalse(contains(text, "[[outer.products]]"), ...
+                "No expanded array-of-tables headers should appear");
+        end
+
         % --- String formatting ---------------------------------------------
 
         function testMultilineLiteralString(testCase)
