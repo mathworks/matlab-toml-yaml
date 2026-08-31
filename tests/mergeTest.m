@@ -267,17 +267,21 @@ classdef mergeTest < matlab.unittest.TestCase
                 "MATLAB:validation:UnableToConvert");
         end
 
-        function testObjectArrayInputErrors(testCase)
-            % merge declares no size restriction, so an object array passes
-            % validation and then fails inside with an opaque indexing error.
-            % Asserting only that it errors, not the specific identifier,
-            % because the fix for issue #24 will change it.
+        function testObjectArrayBaseMergesElementwise(testCase)
+            % merge declares no size restriction on base, and applies the
+            % override to every element rather than rejecting the array.
             base = testCase.makeBase();
             override = yamldata();
             override.timeout = 60;
 
-            testCase.verifyError(@() merge([base, base], override), ...
-                ?MException);
+            result = merge([base, base], override);
+
+            testCase.verifySize(result, [1 2], ...
+                "The result should keep the shape of the base array");
+            testCase.verifyEqual([result.timeout], [60, 60], ...
+                "The override should apply to every element");
+            testCase.verifyEqual(keys(result(1)), keys(base), ...
+                "Base-only keys should survive in each element");
         end
     end
 end
