@@ -72,6 +72,26 @@ classdef readtomlNestedTableTest < matlab.unittest.TestCase
                 "The second element should not inherit the first array");
         end
 
+        function testArrayOverScalarKeyInSameElementErrors(testCase)
+            % "steps" is a plain key of the current element, so it cannot be
+            % turned into an array of tables.
+            file = testCase.writeToml([...
+                "[[jobs]]"; ...
+                "steps = 1"; ...
+                "[[jobs.steps]]"; ...
+                "run = ""a"""]);
+
+            testCase.verifyError(@() readtoml(file), ...
+                "tomlToolbox:readtoml:InvalidArrayOfTables");
+        end
+
+        function testArrayOverScalarRootKeyErrors(testCase)
+            file = testCase.writeToml(["items = 1"; "[[items]]"; "n = 1"]);
+
+            testCase.verifyError(@() readtoml(file), ...
+                "tomlToolbox:readtoml:InvalidArrayOfTables");
+        end
+
         function testDeepArrayOverExistingScalarErrors(testCase)
             % "include" is already a number, so it cannot be appended to.
             file = testCase.writeToml([...
