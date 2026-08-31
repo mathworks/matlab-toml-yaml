@@ -86,6 +86,23 @@ classdef readyamlSequenceTest < matlab.unittest.TestCase
                 "A blank line should not end the item");
         end
 
+        function testCommentOnlyLineInsideItemIsSkipped(testCase)
+            % Blank lines are stripped before parsing, but comments are
+            % removed afterwards, so a comment-only line is what actually
+            % reaches the item parser as an empty line.
+            file = testCase.writeText([...
+                "servers:"; ...
+                "  - name: alpha"; ...
+                "    # a note about the port"; ...
+                "    port: 80"]);
+
+            config = readyaml(file);
+
+            testCase.verifyEqual(keys(config.servers), ["name", "port"], ...
+                "A comment line should not end the item");
+            testCase.verifyEqual(config.servers.port, 80);
+        end
+
         function testLineWithoutColonInsideItemIsSkipped(testCase)
             file = testCase.writeText([...
                 "servers:"; ...
