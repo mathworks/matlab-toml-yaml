@@ -85,6 +85,25 @@ classdef readtomlNestedTableTest < matlab.unittest.TestCase
                 "tomlToolbox:readtoml:InvalidArrayOfTables");
         end
 
+        % --- Deep headers with no declared parents ---------------------------
+
+        function testDeepTableHeaderCreatesItsOwnParents(testCase)
+            file = testCase.writeToml(["[a.b.c]"; "n = 1"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(config.a.b.c.n, 1, ...
+                "Undeclared intermediate tables should be created");
+        end
+
+        function testDeepArrayHeaderCreatesItsOwnParents(testCase)
+            file = testCase.writeToml(["[[a.b.c]]"; "n = 1"; "[[a.b.c]]"; "n = 2"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual([config.a.b.c.n], [1; 2]);
+        end
+
         % --- Arrays of tables below a plain table ---------------------------
 
         function testArrayOfTablesUnderPlainTable(testCase)
