@@ -7,7 +7,7 @@ function plan = buildfile
 
     plan = buildplan(localfunctions);
 
-    plan.DefaultTasks = ["lint", "test"];
+    plan.DefaultTasks = ["mex", "lint", "test"];
 
     plan("test").Dependencies = "lint";
     plan("fixLint").Dependencies = "indent";
