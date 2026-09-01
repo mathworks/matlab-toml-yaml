@@ -61,3 +61,7 @@ tests/test_*.ini
 
 # Claude Code local settings (personal permissions, not shared)
 .claude/settings.local.json
+
+# Vendored 3P libraries.
+cpp/vendored/*
+!cpp/vendored/.gitkeep
