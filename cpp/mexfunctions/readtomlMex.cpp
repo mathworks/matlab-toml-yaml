@@ -5,6 +5,7 @@
 class MexFunction : public matlab::mex::Function {
     std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
     matlab::data::ArrayFactory factory;
+    bool datetimeAsString = false;
 
 public:
     void operator()(matlab::mex::ArgumentList outputs,
@@ -16,6 +17,15 @@ public:
 
         std::string filename = matlabCharToUtf8(
             engine->feval(u"char", {inputs[0]}));
+
+        datetimeAsString = false;
+        if (inputs.size() > 1) {
+            matlab::data::Array dtType = engine->feval(u"getfield",
+                {inputs[1], factory.createCharArray("DatetimeType")});
+            std::string val = matlabCharToUtf8(
+                engine->feval(u"char", {dtType}));
+            datetimeAsString = (val == "string");
+        }
 
         toml::value data;
         try {
@@ -59,6 +69,9 @@ private:
     matlab::data::Array makeDatetime(const std::string& str,
                                       const char* format,
                                       const char* timeZone = nullptr) {
+        if (datetimeAsString) {
+            return makeString(str);
+        }
         std::vector<matlab::data::Array> args = {
             makeString(str),
             factory.createCharArray("InputFormat"),
@@ -76,10 +89,8 @@ private:
                                   std::vector<matlab::data::Array>{});
 
         for (const auto& [key, val] : table.as_table()) {
-            auto s = engine->feval(u"substruct",
-                {factory.createCharArray("."),
-                 factory.createCharArray(key)});
-            obj = engine->feval(u"subsasgn", {obj, s, convert(val)});
+            obj = engine->feval(u"setfield",
+                {obj, factory.createCharArray(key), convert(val)});
         }
         return obj;
     }
