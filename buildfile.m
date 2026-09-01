@@ -15,15 +15,50 @@ function plan = buildfile
     plan("all").Dependencies = ["indent", "fixLint", "test"];
 
     mexOutputFolder = fullfile("toolbox", "derived");
+    includeFolder   = fullfile("cpp", "include");
 
-    filesToMex = plan.files(fullfile("cpp", "mexfunctions", "*.cpp"));
-    for cppFile = filesToMex.paths
+    mexOptions = ["-I" + includeFolder, staticLibcxxFlags()];
+
+    mexSrcFolder = fullfile("cpp", "mexfunctions");
+    allPaths = plan.files(fullfile(mexSrcFolder, "*.cpp")).paths;
+    isMex = allPaths.endsWith("Mex.cpp");
+    supportSrc = allPaths(~isMex);
+    for cppFile = allPaths(isMex)
         [~, fileName] = fileparts(cppFile);
-        plan("mex:" + fileName) = matlab.buildtool.tasks.MexTask(cppFile, ...
-            mexOutputFolder);
+        plan("mex:" + fileName) = matlab.buildtool.tasks.MexTask( ...
+            [cppFile, supportSrc], ...
+            mexOutputFolder, ...
+            Options=mexOptions);
     end
+    plan("mex").Dependencies = "fetch";
     plan("mex").Description = "Build MEX functions";
     plan("clean") = matlab.buildtool.tasks.CleanTask;
+end
+
+function fetchTask(~)
+    % Download pinned third-party single-header C++ libraries into cpp/include/.
+    includeFolder = fullfile("cpp", "include");
+
+    libs = struct( ...
+        "toml11", struct( ...
+            Version="v4.4.0", ...
+            URL="https://raw.githubusercontent.com/ToruNiina/toml11/v4.4.0/single_include/toml.hpp", ...
+            File=fullfile(includeFolder, "toml.hpp")), ...
+        "rapidyaml", struct( ...
+            Version="v0.16.0", ...
+            URL="https://github.com/biojppm/rapidyaml/releases/download/v0.16.0/rapidyaml.v0.16.0.singlehdr.hpp", ...
+            File=fullfile(includeFolder, "ryml.hpp")));
+
+    names = string(fieldnames(libs));
+    for i = 1:numel(names)
+        lib = libs.(names(i));
+        if isfile(lib.File)
+            fprintf("  %s %s — already present\n", names(i), lib.Version);
+            continue
+        end
+        fprintf("  Downloading %s %s ...\n", names(i), lib.Version);
+        websave(lib.File, lib.URL);
+    end
 end
 
 function testTask(~)
@@ -63,6 +98,21 @@ function testTask(~)
         result = coverageResult.Result; %#ok<NASGU>
         save(fullfile(coverageFolder, "result.mat"), "result");
     end
+end
+
+function flags = staticLibcxxFlags()
+    % On Linux, statically link libstdc++ so the MEX binary works even when
+    % the system compiler is newer than MATLAB's bundled C++ runtime.
+    flags = string.empty;
+    if ~isunix || ismac
+        return
+    end
+    archDir = fullfile(matlabroot, "bin", computer("arch"));
+    extDir  = fullfile(matlabroot, "extern", "bin", computer("arch"));
+    flags = ["LDFLAGS=$LDFLAGS -static-libstdc++", ...
+        "LINKLIBS=-Wl,--as-needed" ...
+            + " -L" + archDir + " -L" + extDir ...
+            + " -lMatlabDataArray -lmx -lmex -lm -lmat"];
 end
 
 function mltbxTask(~)
