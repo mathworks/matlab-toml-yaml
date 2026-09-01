@@ -12,6 +12,17 @@ function plan = buildfile
     plan("test").Dependencies = "lint";
     plan("fixLint").Dependencies = "indent";
     plan("all").Dependencies = ["indent", "fixLint", "test"];
+
+    mexOutputFolder = fullfile("toolbox", "derived");
+
+    filesToMex = plan.files(fullfile("cpp", "mexfunctions", "*.cpp"));
+    for cppFile = filesToMex.paths
+        [~, fileName] = fileparts(cppFile);
+        plan("mex:" + fileName) = matlab.buildtool.tasks.MexTask(cppFile, ...
+            mexOutputFolder);
+    end
+    plan("mex").Description = "Build MEX functions";
+    plan("clean") = matlab.buildtool.tasks.CleanTask;
 end
 
 function testTask(~)
