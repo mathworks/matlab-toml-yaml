@@ -10,13 +10,11 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
         end
 
         function file = writeBytes(testCase, bytes)
-            % Bytes have to go through fopen, because writelines would
-            % encode them as text.
-            file = testCase.tempFile("in.yaml");
-            fid = fopen(file, "w");
-            testCase.assertNotEqual(fid, -1, "Could not open temp file");
-            fwrite(fid, bytes, "uint8");
-            fclose(fid);
+            % Write raw bytes. ISO-8859-1 maps code points 0-255 to the same
+            % byte, so each element of BYTES lands in the file as itself,
+            % which is what the byte order mark test needs.
+            file = testCase.writeTempFile("in.yaml", string(char(bytes)), ...
+                Encoding = "ISO-8859-1");
         end
     end
 

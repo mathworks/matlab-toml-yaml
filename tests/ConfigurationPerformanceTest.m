@@ -119,56 +119,53 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
 end
 
 function generateLargeTomlFile(filename, numArray, numKeys)
-    fid = fopen(filename, 'w');
-    fprintf(fid, 'title = "Large TOML Performance Test"\n\n');
-    fprintf(fid, '[array_section]\n');
-    fprintf(fid, 'data = [\n');
+    % The array is split across lines in chunks, so the file exercises the
+    % multi-line array path rather than one very long line.
     chunkSize = 100;
-    for i = 1:chunkSize:numArray
-        endIdx = min(i + chunkSize - 1, numArray);
-        fprintf(fid, '%d, ', i:endIdx);
-        fprintf(fid, '\n');
+    chunkStarts = 1:chunkSize:numArray;
+    chunkLines = strings(numel(chunkStarts), 1);
+    for i = 1:numel(chunkStarts)
+        last = min(chunkStarts(i) + chunkSize - 1, numArray);
+        chunkLines(i) = join(string(chunkStarts(i):last), ", ") + ", ";
     end
-    fprintf(fid, ']\n\n');
-    fprintf(fid, '[key_section]\n');
-    for i = 1:numKeys
-        fprintf(fid, 'key%d = "value_%d"\n', i, i);
-    end
-    fclose(fid);
+
+    keyNumbers = (1:numKeys)';
+    lines = [ ...
+        "title = ""Large TOML Performance Test"""; ...
+        ""; ...
+        "[array_section]"; ...
+        "data = ["; ...
+        chunkLines; ...
+        "]"; ...
+        ""; ...
+        "[key_section]"; ...
+        compose("key%d = ""value_%d""", keyNumbers, keyNumbers)];
+    writelines(lines, filename);
 end
 
 function generateLargeYamlFile(filename, numArray, numKeys)
-    fid = fopen(filename, 'w');
-    fprintf(fid, 'title: "Large YAML Performance Test"\n');
-    fprintf(fid, 'array_section:\n');
-    fprintf(fid, '  data:\n');
-    for i = 1:numArray
-        fprintf(fid, '    - %d\n', i);
-    end
-    fprintf(fid, 'key_section:\n');
-    for i = 1:numKeys
-        fprintf(fid, '  key%d: "value_%d"\n', i, i);
-    end
-    fclose(fid);
+    keyNumbers = (1:numKeys)';
+    lines = [ ...
+        "title: ""Large YAML Performance Test"""; ...
+        "array_section:"; ...
+        "  data:"; ...
+        compose("    - %d", (1:numArray)'); ...
+        "key_section:"; ...
+        compose("  key%d: ""value_%d""", keyNumbers, keyNumbers)];
+    writelines(lines, filename);
 end
 
 function generateLargeYamlArrayFile(filename, numItems)
-    fid = fopen(filename, 'w');
-    fprintf(fid, 'numeric_list:\n');
-    for i = 1:numItems
-        fprintf(fid, '  - %d\n', i);
-    end
-    fprintf(fid, 'string_list:\n');
-    for i = 1:min(numItems, 1000)
-        fprintf(fid, '  - "item_%d"\n', i);
-    end
-    fprintf(fid, 'bool_list:\n');
-    for i = 1:min(numItems, 1000)
-        if mod(i, 2) == 0
-            fprintf(fid, '  - true\n');
-        else
-            fprintf(fid, '  - false\n');
-        end
-    end
-    fclose(fid);
+    % The string and boolean lists are capped, because they are only there
+    % to make the file heterogeneous.
+    cappedCount = min(numItems, 1000);
+    booleans = repmat(["  - false"; "  - true"], ceil(cappedCount / 2), 1);
+    lines = [ ...
+        "numeric_list:"; ...
+        compose("  - %d", (1:numItems)'); ...
+        "string_list:"; ...
+        compose("  - ""item_%d""", (1:cappedCount)'); ...
+        "bool_list:"; ...
+        booleans(1:cappedCount)];
+    writelines(lines, filename);
 end
