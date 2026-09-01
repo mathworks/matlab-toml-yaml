@@ -2,17 +2,17 @@
 #include "mexAdapter.hpp"
 
 class MexFunction : public matlab::mex::Function {
-public:
-    void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
-        double multiplier = inputs[0][0];
-        matlab::data::TypedArray<double> in = std::move(inputs[1]);
-        arrayProduct(in, multiplier);
-        outputs[0] = std::move(in);
-    }
+    std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
+    matlab::data::ArrayFactory factory;
 
-    void arrayProduct(matlab::data::TypedArray<double>& inMatrix, double multiplier) {
-        for (auto& elem : inMatrix) {
-            elem *= multiplier;
-        }
+public:
+    void operator()(matlab::mex::ArgumentList outputs,
+                    matlab::mex::ArgumentList inputs) {
+        // Construct an empty TOMLData object via MATLAB
+        matlab::data::Array tomlObj = engine->feval(
+            u"matlab.io.config.TOMLData",
+            std::vector<matlab::data::Array>{});
+
+        outputs[0] = tomlObj;
     }
 };
