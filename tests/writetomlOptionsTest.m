@@ -2,14 +2,6 @@ classdef writetomlOptionsTest < matlab.unittest.TestCase
     % Tests for writetoml input handling and its formatting options:
     % TableStyle, TableArrayStyle, StringEscapeStyle and StringLayout,
     % including the heuristics each option's "auto" setting applies.
-    %
-    % writetoml.m also contains type-dispatch branches for struct and char
-    % input that cannot be reached, because writetoml converts its input to
-    % TOMLData before serializing and TOMLData converts char to string on
-    % storage. That accounts for the fieldnames fallbacks at 185, 272, 337,
-    % 534, 588 and 654, the ischar test at 405 and the isstruct test at 439.
-    % configDataToStruct (130-172) has no caller but itself. All of it is the
-    % subject of #29 and is deliberately not tested here.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
@@ -41,15 +33,14 @@ classdef writetomlOptionsTest < matlab.unittest.TestCase
         end
 
         function testContainersMapInputErrors(testCase)
-            % Issue #40: writetoml routes containers.Map to tomldata, which
-            % rejects it, even though the adjacent error message advertises
-            % support and writeyaml accepts a map. Invert this when #40 is
-            % fixed.
+            % Issue #40: containers.Map is not an accepted input type. Both
+            % writers now say so consistently; invert this if #40 is resolved
+            % by adding support rather than by documenting the restriction.
             data = containers.Map("port", 8080);
 
             testCase.verifyError(@() testCase.writeAndRead(data), ...
-                "ConfigurationData:InvalidInput", ...
-                "Issue #40: containers.Map input is not actually supported");
+                "writetoml:InvalidInput", ...
+                "Issue #40: containers.Map input is not supported");
         end
 
         function testUnsupportedInputTypeErrors(testCase)
@@ -311,18 +302,18 @@ classdef writetomlOptionsTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "host = ""example.com""");
         end
 
-        % --- Unsupported values --------------------------------------------
+        % --- Cell values ---------------------------------------------------
 
-        function testCellValueErrors(testCase)
-            % Issue #28: writetoml has no cell serialization, so a cell value
-            % reaches the unsupported-type error. Invert this when #28 is
-            % fixed.
+        function testCellValueIsWrittenAsAnArray(testCase)
+            % Cell serialization was added for #28. Mixed contents are
+            % written as a single TOML array.
             config = tomldata();
             config.items = {1, "two"};
 
-            testCase.verifyError(@() testCase.writeAndRead(config), ...
-                "tomlToolbox:writetoml:UnsupportedType", ...
-                "Issue #28: cell values cannot be serialized");
+            text = testCase.writeAndRead(config);
+
+            testCase.verifySubstring(text, "items = [1, ""two""]", ...
+                "A cell value should serialize as a TOML array");
         end
     end
 end
