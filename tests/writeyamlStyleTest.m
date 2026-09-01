@@ -1,12 +1,10 @@
-classdef writeyamlStyleTest < matlab.unittest.TestCase
+classdef writeyamlStyleTest < ConfigurationFileTestCase
     % Tests for writeyaml formatting paths: flow-style cell arrays, nested
     % mapping values, and section spacing.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "out.yaml");
+            file = testCase.tempFile("out.yaml");
             writeyaml(data, file, varargin{:});
             text = string(fileread(file));
         end

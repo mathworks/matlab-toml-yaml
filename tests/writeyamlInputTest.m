@@ -1,4 +1,4 @@
-classdef writeyamlInputTest < matlab.unittest.TestCase
+classdef writeyamlInputTest < ConfigurationFileTestCase
     % Tests for the writeyaml input types and numeric formatting branches
     % that the main yamltest suite does not reach: struct and dictionary
     % inputs, the rejected input types, integer and logical arrays in both
@@ -11,14 +11,8 @@ classdef writeyamlInputTest < matlab.unittest.TestCase
     % testUnserializableValueErrors.
 
     methods(Access = private)
-        function file = tempFile(testCase)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "out.yaml");
-        end
-
         function text = writeAndRead(testCase, data, varargin)
-            file = testCase.tempFile();
+            file = testCase.tempFile("out.yaml");
             writeyaml(data, file, varargin{:});
             text = string(fileread(file));
         end

@@ -1,4 +1,4 @@
-classdef readtomlNestedTableTest < matlab.unittest.TestCase
+classdef readtomlNestedTableTest < ConfigurationFileTestCase
     % Tests for readtoml table paths that are more than one level deep:
     % arrays of tables reached through an intermediate table inside a parent
     % array element, arrays of tables under a plain table, and dotted keys
@@ -6,10 +6,7 @@ classdef readtomlNestedTableTest < matlab.unittest.TestCase
 
     methods(Access = private)
         function file = writeToml(testCase, text)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.toml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.toml", text);
         end
     end
 

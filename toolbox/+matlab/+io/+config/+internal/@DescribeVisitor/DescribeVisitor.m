@@ -9,8 +9,11 @@ classdef (Abstract) DescribeVisitor < matlab.io.config.internal.ConfigurationVis
 
     methods
         function obj = DescribeVisitor(maxDepth)
+            % maxDepth is required: describe() always has a value for it,
+            % from its own Depth default, so a default here would only add
+            % an unreachable second one.
             arguments
-                maxDepth (1,1) double = Inf
+                maxDepth (1,1) double
             end
             obj.MaxDepth = maxDepth;
         end

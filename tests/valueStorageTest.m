@@ -8,6 +8,32 @@ classdef valueStorageTest < matlab.unittest.TestCase
         constructor = struct( ...
             yaml = struct(make = @yamldata), ...
             toml = struct(make = @tomldata))
+
+        % Types that are stored as they are given. The types that are
+        % accepted but converted on the way in are tested individually
+        % below, because each one has its own target type to check.
+        supportedValue = struct( ...
+            double = 42, ...
+            string = "text", ...
+            logical = true, ...
+            int32 = int32(7), ...
+            uint8 = uint8(3), ...
+            single = single(1.5), ...
+            datetime = datetime(2026, 1, 1), ...
+            missingValue = missing, ...
+            cellOfScalars = {{1, 2}})
+
+        % Types that assignment rejects. calendarDuration is the one that
+        % matches none of the specific cases in validateValue and so reaches
+        % the mustBeA check at the end, which lists the supported types.
+        unsupportedValue = struct( ...
+            complexDouble = 1 + 2i, ...
+            functionHandle = @sin, ...
+            table = table(1), ...
+            timetable = timetable(seconds(1), 1), ...
+            categorical = categorical({'a'}), ...
+            calendarDuration = calyears(1), ...
+            containersMap = containers.Map("a", 1))
     end
 
     methods(Access = private)
@@ -22,6 +48,17 @@ classdef valueStorageTest < matlab.unittest.TestCase
     end
 
     methods(Test)
+        % --- Accepted input types -----------------------------------------
+
+        function testSupportedTypeIsStoredUnchanged(testCase, supportedValue)
+            config = yamldata();
+
+            config.x = supportedValue;
+
+            testCase.verifyEqual(config.x, supportedValue, ...
+                "A supported value should read back as it was assigned");
+        end
+
         % --- Converted input types ----------------------------------------
 
         function testDurationConvertsToSeconds(testCase)
@@ -72,60 +109,13 @@ classdef valueStorageTest < matlab.unittest.TestCase
 
         % --- Rejected types -----------------------------------------------
 
-        function testComplexNumberIsRejected(testCase)
+        function testUnsupportedTypeIsRejected(testCase, unsupportedValue)
             config = yamldata();
 
-            testCase.verifyError(@() setKey(config, 1 + 2i), ...
+            testCase.verifyError(@() setKey(config, unsupportedValue), ...
                 "ConfigurationData:InvalidType", ...
-                "Configuration formats have no imaginary numbers");
-        end
-
-        function testFunctionHandleIsRejected(testCase)
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, @sin), ...
-                "ConfigurationData:InvalidType", ...
-                "Function handles cannot be serialized");
-        end
-
-        function testTableIsRejected(testCase)
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, table(1)), ...
-                "ConfigurationData:InvalidType");
-        end
-
-        function testTimetableIsRejected(testCase)
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, timetable(seconds(1), 1)), ...
-                "ConfigurationData:InvalidType");
-        end
-
-        function testCategoricalIsRejected(testCase)
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, categorical({'a'})), ...
-                "ConfigurationData:InvalidType");
-        end
-
-        function testUnsupportedTypeFallsToGenericError(testCase)
-            % A type matching none of the specific cases reaches the mustBeA
-            % check at the end, which lists the supported types.
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, calyears(1)), ...
-                "ConfigurationData:InvalidType", ...
-                "An unhandled type should still be rejected by name");
-        end
-
-        function testContainersMapIsRejectedOnAssignment(testCase)
-            % writeyaml accepts containers.Map as top-level input, but it is
-            % not a storage type, so direct assignment rejects it.
-            config = yamldata();
-
-            testCase.verifyError(@() setKey(config, containers.Map("a", 1)), ...
-                "ConfigurationData:InvalidType");
+                "A value no configuration format can represent should be " + ...
+                "rejected on assignment");
         end
 
         % --- Vector orientation (issue #77) --------------------------------

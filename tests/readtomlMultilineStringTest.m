@@ -1,4 +1,4 @@
-classdef readtomlMultilineStringTest < matlab.unittest.TestCase
+classdef readtomlMultilineStringTest < ConfigurationFileTestCase
     % Tests for readtoml multi-line basic ("""...""") and literal
     % ('''...''') strings, including the newline trimmed after the opening
     % delimiter.
@@ -18,10 +18,7 @@ classdef readtomlMultilineStringTest < matlab.unittest.TestCase
 
     methods(Access = private)
         function file = writeToml(testCase, text)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.toml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.toml", text);
         end
     end
 

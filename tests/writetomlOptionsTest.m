@@ -1,13 +1,11 @@
-classdef writetomlOptionsTest < matlab.unittest.TestCase
+classdef writetomlOptionsTest < ConfigurationFileTestCase
     % Tests for writetoml input handling and its formatting options:
     % TableStyle, TableArrayStyle, StringEscapeStyle and StringLayout,
     % including the heuristics each option's "auto" setting applies.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "out.toml");
+            file = testCase.tempFile("out.toml");
             writetoml(data, file, varargin{:});
             text = string(fileread(file));
         end

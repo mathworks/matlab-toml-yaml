@@ -1,4 +1,4 @@
-classdef readyamlOptionsTest < matlab.unittest.TestCase
+classdef readyamlOptionsTest < ConfigurationFileTestCase
     % Tests for readyaml paths the main yamltest suite does not reach: the
     % DatetimeType option, byte order marks, tab indentation, and the
     % parser's handling of incomplete or unrecognized lines.
@@ -6,16 +6,13 @@ classdef readyamlOptionsTest < matlab.unittest.TestCase
     methods(Access = private)
         function file = writeText(testCase, text)
             % Write YAML source text to a temp file and return its path.
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.yaml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.yaml", text);
         end
 
         function file = writeBytes(testCase, bytes)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.yaml");
+            % Bytes have to go through fopen, because writelines would
+            % encode them as text.
+            file = testCase.tempFile("in.yaml");
             fid = fopen(file, "w");
             testCase.assertNotEqual(fid, -1, "Could not open temp file");
             fwrite(fid, bytes, "uint8");
