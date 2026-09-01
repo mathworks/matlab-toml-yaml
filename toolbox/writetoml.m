@@ -2,7 +2,7 @@ function writetoml(data, filename, options)
 % WRITETOML Write data to TOML file
 %
 %   WRITETOML(DATA) writes DATA to 'untitled.toml' in the current directory.
-%   DATA can be a TOMLData object, struct, dictionary, or containers.Map.
+%   DATA can be a TOMLData object, struct, or dictionary.
 %
 %   WRITETOML(DATA, FILENAME) writes DATA to the specified TOML file.
 %
@@ -98,13 +98,11 @@ function writetoml(data, filename, options)
     end
 
     % Convert input to TOMLData for consistent processing
-    if isa(data, 'dictionary') || isa(data, 'containers.Map')
-        data = tomldata(data);
-    elseif isstruct(data)
+    if isa(data, 'dictionary') || isstruct(data)
         data = tomldata(data);
     elseif ~isa(data, 'matlab.io.config.ConfigurationData')
-        error('writetoml:InvalidInput', ...
-            'Input must be TOMLData, struct, dictionary, or containers.Map.');
+        error("writetoml:InvalidInput", ...
+            "Input must be TOMLData, struct, or dictionary.");
     end
 
     % Convert options for internal use
@@ -133,57 +131,12 @@ function writetoml(data, filename, options)
     end
 end
 
-function s = configDataToStruct(data)
-    % Convert ConfigurationData to struct, preserving key order
-    s = struct;
-    
-    if isa(data, 'matlab.io.config.ConfigurationData')
-        dataKeys = keys(data);
-        for i = 1:length(dataKeys)
-            key = dataKeys(i);
-            value = data.(key);
-            
-            % Recursively convert nested ConfigurationData
-            if isa(value, 'matlab.io.config.ConfigurationData')
-                if numel(value) > 1
-                    % Array of ConfigurationData - convert each element
-                    valueArray = struct([]);
-                    for j = 1:numel(value)
-                        valueArray(j) = configDataToStruct(value(j));
-                    end
-                    value = valueArray;
-                else
-                    value = configDataToStruct(value);
-                end
-            end
-            
-            % Use original key (may have hyphens, etc.)
-            fieldName = matlab.lang.makeValidName(key);
-            s.(fieldName) = value;
-            
-            % Store original key name as metadata (we'll use this for writing)
-            if fieldName ~= key
-                % Key was modified - we need to track this
-                % For now, just use the valid fieldname
-                % TODO: Consider adding metadata field
-            end
-        end
-    else
-        s = struct(data);
-    end
-end
-
 function tomlStr = serializeToml(data, opts)
-    % Serialize struct or ConfigurationData to TOML string
+    % Serialize ConfigurationData to TOML string
 
     tomlStr = "";
 
-    % Get keys based on type
-    if isa(data, 'matlab.io.config.ConfigurationData')
-        allKeys = keys(data);
-    else
-        allKeys = string(fieldnames(data));
-    end
+    allKeys = keys(data);
 
     % Separate root key-values from tables
     rootPairs = string.empty;
@@ -193,10 +146,7 @@ function tomlStr = serializeToml(data, opts)
         key = allKeys(i);
         value = getValue(data, key);
 
-        if (isstruct(value) && numel(value) == 1) || ...
-           (isa(value, 'matlab.io.config.ConfigurationData') && numel(value) == 1) || ...
-           (isstruct(value) && numel(value) > 1) || ...
-           (isa(value, 'matlab.io.config.ConfigurationData') && numel(value) > 1)
+        if isa(value, 'matlab.io.config.ConfigurationData')
             tables = [tables, key]; %#ok<AGROW>
         else
             rootPairs = [rootPairs, key]; %#ok<AGROW>
@@ -246,8 +196,7 @@ function tomlStr = serializeTable(tableName, tableData, prefix, opts)
     end
 
     % Check if this is an array (array of tables)
-    if (isstruct(tableData) && numel(tableData) > 1) || ...
-       (isa(tableData, 'matlab.io.config.ConfigurationData') && numel(tableData) > 1)
+    if numel(tableData) > 1
         % Array of tables - check TableArrayStyle
         useInlineArray = shouldUseInlineTableArray(tableData, opts.tableArrayStyle);
 
@@ -264,13 +213,9 @@ function tomlStr = serializeTable(tableName, tableData, prefix, opts)
                 end
             end
         end
-    elseif isstruct(tableData) || isa(tableData, 'matlab.io.config.ConfigurationData')
+    else
         % Regular table - get keys
-        if isa(tableData, 'matlab.io.config.ConfigurationData')
-            allKeys = keys(tableData);
-        else
-            allKeys = string(fieldnames(tableData));
-        end
+        allKeys = keys(tableData);
 
         % Separate key-values from subtables
         pairs = string.empty;
@@ -281,8 +226,8 @@ function tomlStr = serializeTable(tableName, tableData, prefix, opts)
             value = getValue(tableData, key);
 
             % Check if this is a table or array of tables
-            isTableValue = (isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')) && numel(value) == 1;
-            isTableArray = (isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')) && numel(value) > 1;
+            isTableValue = isa(value, 'matlab.io.config.ConfigurationData') && numel(value) == 1;
+            isTableArray = isa(value, 'matlab.io.config.ConfigurationData') && numel(value) > 1;
 
             if isTableValue && shouldUseInlineTable(value, opts.tableStyle)
                 % Inline tables are written as key-value pairs
@@ -326,22 +271,17 @@ function tomlStr = serializeTable(tableName, tableData, prefix, opts)
 end
 
 function tomlStr = serializeStructContent(data, parentPath, opts)
-    % Serialize struct or ConfigurationData content without table header
+    % Serialize ConfigurationData content without table header
 
     tomlStr = "";
 
-    % Get keys
-    if isa(data, 'matlab.io.config.ConfigurationData')
-        allKeys = keys(data);
-    else
-        allKeys = string(fieldnames(data));
-    end
+    allKeys = keys(data);
 
     for i = 1:numel(allKeys)
         key = allKeys(i);
         value = getValue(data, key);
 
-        if ~isstruct(value) && ~isa(value, 'matlab.io.config.ConfigurationData')
+        if ~isa(value, 'matlab.io.config.ConfigurationData')
             tomlStr = tomlStr + serializeKeyValue(key, value, opts) + newline;
         end
     end
@@ -351,7 +291,7 @@ function tomlStr = serializeStructContent(data, parentPath, opts)
         key = allKeys(i);
         value = getValue(data, key);
 
-        if isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')
+        if isa(value, 'matlab.io.config.ConfigurationData')
             tomlStr = tomlStr + serializeTable(key, value, parentPath, opts);
         end
     end
@@ -388,8 +328,10 @@ end
 function str = serializeValue(value, opts, depth)
     % Serialize a value to TOML format
 
-    if islogical(value) && isscalar(value)
-        % Scalar boolean
+    if ismissing(value)
+        str = """""";
+
+    elseif islogical(value) && isscalar(value)
         if value
             str = "true";
         else
@@ -397,33 +339,22 @@ function str = serializeValue(value, opts, depth)
         end
 
     elseif islogical(value) && ~isscalar(value)
-        % Boolean array
         str = serializeArray(value, opts, depth);
 
-    elseif ischar(value)
-        % Char array - treat as string
-        str = formatTomlString(string(value), opts);
-
-    elseif (isstring(value)) && isscalar(value)
-        % Scalar string
+    elseif isstring(value) && isscalar(value)
         str = formatTomlString(value, opts);
 
     elseif isstring(value) && ~isscalar(value)
-        % String array
         str = serializeArray(value, opts, depth);
 
     elseif isdatetime(value)
-        % DateTime - handle with or without timezone
         if isempty(value.TimeZone)
-            % Local datetime (no timezone)
             str = string(value, 'yyyy-MM-dd''T''HH:mm:ss');
         else
-            % Offset datetime (with timezone)
             str = string(value, 'yyyy-MM-dd''T''HH:mm:ssXXX');
         end
 
     elseif isnumeric(value) && isscalar(value)
-        % Number - use precision parameter
         if value == floor(value) && abs(value) < 2^53
             str = sprintf('%d', value);
         else
@@ -431,25 +362,35 @@ function str = serializeValue(value, opts, depth)
         end
 
     elseif isnumeric(value) && ~isscalar(value)
-        % Numeric array
         str = serializeArray(value, opts, depth);
 
-    elseif isstruct(value) && isscalar(value)
-        % Inline table
-        str = serializeInlineTable(value, opts);
-
     elseif isa(value, 'matlab.io.config.ConfigurationData') && isscalar(value)
-        % ConfigurationData as inline table
         str = serializeInlineTable(value, opts);
 
-    elseif (isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')) && ~isscalar(value)
-        % Array of tables - serialize as inline array of inline tables
+    elseif isa(value, 'matlab.io.config.ConfigurationData') && ~isscalar(value)
         str = serializeArrayOfTables(value, opts);
+
+    elseif iscell(value)
+        str = serializeCellArray(value, opts, depth);
 
     else
         error('tomlToolbox:writetoml:UnsupportedType', ...
             'Cannot serialize value of type: %s', class(value));
     end
+end
+
+function str = serializeCellArray(value, opts, depth)
+    % Serialize a cell array as a TOML array
+    str = "[";
+
+    for i = 1:numel(value)
+        str = str + serializeValue(value{i}, opts, depth + 1);
+        if i < numel(value)
+            str = str + ", ";
+        end
+    end
+
+    str = str + "]";
 end
 
 function str = serializeArray(arr, opts, depth)
@@ -523,16 +464,11 @@ function useFlow = shouldUseFlowArray(arr, opts)
 end
 
 function str = serializeInlineTable(tbl, opts)
-    % Serialize inline table (struct or ConfigurationData)
+    % Serialize ConfigurationData as inline table
 
     str = "{";
 
-    % Get keys
-    if isa(tbl, 'matlab.io.config.ConfigurationData')
-        tableKeys = keys(tbl);
-    else
-        tableKeys = string(fieldnames(tbl));
-    end
+    tableKeys = keys(tbl);
 
     for i = 1:numel(tableKeys)
         fieldName = tableKeys(i);
@@ -581,12 +517,7 @@ function useInline = shouldUseInlineTable(tbl, style)
         % Heuristic: use inline if table has ≤3 keys, all simple values,
         % and total serialized length <= 60 characters
 
-        % Get keys
-        if isa(tbl, 'matlab.io.config.ConfigurationData')
-            tableKeys = keys(tbl);
-        else
-            tableKeys = string(fieldnames(tbl));
-        end
+        tableKeys = keys(tbl);
 
         % Too many keys?
         if numel(tableKeys) > 3
@@ -597,7 +528,7 @@ function useInline = shouldUseInlineTable(tbl, style)
         % Check if any values are complex (nested tables or arrays of tables)
         for i = 1:numel(tableKeys)
             value = getValue(tbl, tableKeys(i));
-            if isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')
+            if isa(value, 'matlab.io.config.ConfigurationData')
                 useInline = false;
                 return;
             end
@@ -608,11 +539,9 @@ function useInline = shouldUseInlineTable(tbl, style)
         for i = 1:numel(tableKeys)
             key = tableKeys(i);
             value = getValue(tbl, key);
-            % key = value, (approximate)
             totalLen = totalLen + strlength(key) + 3; % key, " = "
-            if isstring(value) || ischar(value)
-                % Handle string arrays - sum all lengths
-                strLens = strlength(string(value));
+            if isstring(value)
+                strLens = strlength(value);
                 totalLen = totalLen + sum(strLens(:)) + 2; % quotes
             elseif isnumeric(value) && ~isscalar(value)
                 % Numeric array - estimate based on element count
@@ -646,13 +575,7 @@ function useInline = shouldUseInlineTableArray(tableArray, style)
         % Check each element
         for i = 1:numel(tableArray)
             elem = tableArray(i);
-
-            % Get keys
-            if isa(elem, 'matlab.io.config.ConfigurationData')
-                tableKeys = keys(elem);
-            else
-                tableKeys = string(fieldnames(elem));
-            end
+            tableKeys = keys(elem);
 
             % Too many fields?
             if numel(tableKeys) > 3
@@ -663,7 +586,7 @@ function useInline = shouldUseInlineTableArray(tableArray, style)
             % Check if any values are complex (nested tables)
             for j = 1:numel(tableKeys)
                 value = getValue(elem, tableKeys(j));
-                if isstruct(value) || isa(value, 'matlab.io.config.ConfigurationData')
+                if isa(value, 'matlab.io.config.ConfigurationData')
                     useInline = false;
                     return;
                 end

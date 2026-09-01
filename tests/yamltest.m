@@ -197,6 +197,20 @@ classdef yamltest < matlab.unittest.TestCase
             testCase.verifyTrue(isfile('untitled.yaml'));
         end
         
+        %% Missing Value Tests
+        function testWriteMissingValue(testCase)
+            % Test writing a missing value (serializes as null)
+            data = yamldata();
+            data.name = "test";
+            data.optional = missing;
+
+            filename = fullfile(pwd, 'output.yaml');
+            writeyaml(data, filename);
+
+            content = string(fileread(filename));
+            testCase.verifyTrue(contains(content, "optional: null"));
+        end
+
         %% Round-trip Tests
         function testRoundTripSimple(testCase)
             % Test simple round-trip

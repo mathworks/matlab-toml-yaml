@@ -4,7 +4,7 @@ function writeyaml(data, filename, options)
 %
 %   WRITEYAML(DATA, FILENAME) writes to the specified file.
 %
-%   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
+%   DATA can be a YAMLData object, struct, or dictionary.
 %
 %   WRITEYAML(..., Name, Value) specifies additional options using
 %   name-value pairs:
@@ -51,9 +51,12 @@ function writeyaml(data, filename, options)
         options.Precision (1,1) {mustBeInteger, mustBePositive} = 6
     end
 
-    % Convert dictionary to YAMLData for consistent processing
-    if isa(data, 'dictionary')
+    % Convert input to YAMLData for consistent processing
+    if isa(data, 'dictionary') || isstruct(data)
         data = yamldata(data);
+    elseif ~isa(data, 'matlab.io.config.ConfigurationData')
+        error("writeyaml:InvalidInput", ...
+            "Input must be YAMLData, struct, or dictionary.");
     end
 
     % Convert ArrayStyle to boolean for internal use
@@ -101,10 +104,8 @@ function yamlText = generateYAML(data, depth, indentSize, flowStyle, precision, 
             % Single ConfigurationData object
             yamlText = configDataToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
         end
-    elseif isstruct(data)
-        yamlText = structToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
-    elseif isa(data, 'containers.Map')
-        yamlText = mapToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
+    elseif ismissing(data)
+        yamlText = "null";
     elseif iscell(data)
         yamlText = cellToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
     elseif isstring(data) && numel(data) > 1
@@ -139,7 +140,7 @@ function yamlText = configDataToYAML(data, depth, indentSize, flowStyle, precisi
         % Nested objects (ConfigurationData, struct, Map) are ALWAYS on new line
         % Multi-line values (arrays in block style) are on new line
         % Simple scalars and flow arrays can be on same line
-        isNestedObject = isa(value, 'matlab.io.config.ConfigurationData') || isstruct(value) || isa(value, 'containers.Map');
+        isNestedObject = isa(value, 'matlab.io.config.ConfigurationData');
 
         if isNestedObject || contains(valueYAML, newline)
             yamlLines(i) = indent + key + ":" + newline + valueYAML;
@@ -159,65 +160,6 @@ function yamlText = configDataToYAML(data, depth, indentSize, flowStyle, precisi
     end
 
     yamlText = join(yamlLines, separator);
-end
-
-function yamlText = structToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing)
-    %STRUCTTOYAML Convert structure to YAML
-
-    if isscalar(data)
-        % Single structure
-        fields = fieldnames(data);
-        yamlLines = strings(length(fields), 1);
-
-        for i = 1:length(fields)
-            fieldName = string(fields{i});
-            fieldValue = data.(fields{i});
-
-            indent = string(blanks(depth * indentSize));
-            valueYAML = generateYAML(fieldValue, depth + 1, indentSize, flowStyle, precision, false);
-
-            % Check if value should be on new line
-            isNestedObject = isa(fieldValue, 'matlab.io.config.ConfigurationData') || isstruct(fieldValue) || isa(fieldValue, 'containers.Map');
-
-            if isNestedObject || contains(valueYAML, newline)
-                yamlLines(i) = indent + fieldName + ":" + newline + valueYAML;
-            else
-                yamlLines(i) = indent + fieldName + ": " + valueYAML;
-            end
-        end
-
-        % Add section spacing for top-level keys (depth == 0)
-        if depth == 0 && addSectionSpacing && length(yamlLines) > 1
-            separator = [newline newline];
-        else
-            separator = newline;
-        end
-
-        yamlText = join(yamlLines, separator);
-    else
-        % Array of structures
-        yamlText = structArrayToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing);
-    end
-end
-
-function yamlText = structArrayToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing)
-    %STRUCTARRAYTOYAML Convert structure array to YAML
-
-    yamlLines = strings(length(data), 1);
-
-    for i = 1:length(data)
-        indent = string(blanks(depth * indentSize));
-        itemYAML = generateYAML(data(i), depth + 1, indentSize, flowStyle, precision, false);
-
-        % Remove first level indent from item
-        itemLinesArray = splitlines(itemYAML);
-        itemLinesArray = extractAfter(itemLinesArray, indentSize);
-        itemYAML = join(itemLinesArray, newline);
-
-        yamlLines(i) = indent + "- " + itemYAML;
-    end
-
-    yamlText = join(yamlLines, newline);
 end
 
 function yamlText = stringArrayToYAML(data, depth, indentSize, flowStyle)
@@ -246,39 +188,6 @@ function yamlText = stringArrayToYAML(data, depth, indentSize, flowStyle)
 
         yamlText = join(yamlLines, newline);
     end
-end
-
-function yamlText = mapToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing)
-    %MAPTOYAML Convert containers.Map to YAML
-
-    mapKeys = data.keys;
-    yamlLines = strings(length(mapKeys), 1);
-
-    for i = 1:length(mapKeys)
-        key = string(mapKeys{i});
-        value = data(mapKeys{i});
-
-        indent = string(blanks(depth * indentSize));
-        valueYAML = generateYAML(value, depth + 1, indentSize, flowStyle, precision, false);
-
-        % Check if value should be on new line
-        isNestedObject = isa(value, 'matlab.io.config.ConfigurationData') || isstruct(value) || isa(value, 'containers.Map');
-
-        if isNestedObject || contains(valueYAML, newline)
-            yamlLines(i) = indent + key + ":" + newline + valueYAML;
-        else
-            yamlLines(i) = indent + key + ": " + valueYAML;
-        end
-    end
-
-    % Add section spacing for top-level keys (depth == 0)
-    if depth == 0 && addSectionSpacing && length(yamlLines) > 1
-        separator = [newline newline];
-    else
-        separator = newline;
-    end
-
-    yamlText = join(yamlLines, separator);
 end
 
 function yamlText = cellToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing)
