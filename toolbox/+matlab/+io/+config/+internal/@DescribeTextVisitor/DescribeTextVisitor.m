@@ -5,7 +5,7 @@ classdef DescribeTextVisitor < matlab.io.config.internal.DescribeVisitor
     methods
         function obj = DescribeTextVisitor(maxDepth)
             arguments
-                maxDepth (1,1) double = Inf
+                maxDepth (1,1) double
             end
             obj@matlab.io.config.internal.DescribeVisitor(maxDepth);
         end

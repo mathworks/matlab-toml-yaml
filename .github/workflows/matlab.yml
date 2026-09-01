@@ -1,13 +1,9 @@
 name: MATLAB
 
 on:
-  # Automatic triggers are temporarily disabled: Actions cannot run in this
-  # repo yet, so every push produced a failing run before any step executed.
-  # See issue #21. Restore the two triggers below once that is resolved.
-  #
-  # push:
-  #   branches: [main]
-  # pull_request:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch: {}
 
 env:

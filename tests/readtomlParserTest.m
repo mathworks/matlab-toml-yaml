@@ -1,4 +1,4 @@
-classdef readtomlParserTest < matlab.unittest.TestCase
+classdef readtomlParserTest < ConfigurationFileTestCase
     % Tests for readtoml scalar parsing, inline tables, nested arrays of
     % tables, and the malformed-value error paths.
     %
@@ -26,10 +26,7 @@ classdef readtomlParserTest < matlab.unittest.TestCase
 
     methods(Access = private)
         function file = writeToml(testCase, text)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.toml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.toml", text);
         end
     end
 

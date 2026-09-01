@@ -1,4 +1,4 @@
-classdef readyamlSequenceTest < matlab.unittest.TestCase
+classdef readyamlSequenceTest < ConfigurationFileTestCase
     % Tests for readyaml paths inside sequence-of-mapping items: incomplete
     % keys, blank and unrecognized lines within an item, stray list markers,
     % empty flow sequences, and the unreadable-file error.
@@ -15,10 +15,7 @@ classdef readyamlSequenceTest < matlab.unittest.TestCase
 
     methods(Access = private)
         function file = writeText(testCase, text)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.yaml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.yaml", text);
         end
     end
 

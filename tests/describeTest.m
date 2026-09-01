@@ -1,5 +1,9 @@
 classdef describeTest < matlab.unittest.TestCase
     % Tests for the describe() method on ConfigurationData
+    %
+    % The base ConfigurationVisitor.visitNode implementation is not covered:
+    % all three concrete visitors override it, so the inherited default has
+    % no caller.
 
     methods (TestClassSetup)
         function addToPath(testCase)

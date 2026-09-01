@@ -1,14 +1,11 @@
-classdef readtomlArrayTest < matlab.unittest.TestCase
+classdef readtomlArrayTest < ConfigurationFileTestCase
     % Tests for readtoml paths the main tomltest suite does not reach: the
     % DatetimeType option, array element type consolidation, nested arrays
     % of tables, multiline strings, and the malformed-input error paths.
 
     methods(Access = private)
         function file = writeToml(testCase, text)
-            import matlab.unittest.fixtures.TemporaryFolderFixture
-            fixture = testCase.applyFixture(TemporaryFolderFixture);
-            file = fullfile(fixture.Folder, "in.toml");
-            writelines(text, file);
+            file = testCase.writeTempFile("in.toml", text);
         end
     end
 
