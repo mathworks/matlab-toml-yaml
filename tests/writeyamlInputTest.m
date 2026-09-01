@@ -1,8 +1,14 @@
 classdef writeyamlInputTest < matlab.unittest.TestCase
     % Tests for the writeyaml input types and numeric formatting branches
-    % that the main yamltest suite does not reach: struct, containers.Map,
-    % cell and dictionary inputs, integer and logical arrays in both array
-    % styles, and the two error wrappers.
+    % that the main yamltest suite does not reach: struct and dictionary
+    % inputs, the rejected input types, integer and logical arrays in both
+    % array styles, and the file-write error wrapper.
+    %
+    % The GenerateError wrapper around generateYAML (lines 69-73) is no
+    % longer reachable. writeyaml converts its input to YAMLData up front,
+    % and YAMLData rejects any value it cannot serialize on assignment, so
+    % nothing that reaches the generator can fail in it. See
+    % testUnserializableValueErrors.
 
     methods(Access = private)
         function file = tempFile(testCase)
@@ -45,21 +51,6 @@ classdef writeyamlInputTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "- id: 2");
         end
 
-        function testWritesContainersMap(testCase)
-            text = testCase.writeAndRead(containers.Map({'alpha', 'beta'}, {1, "two"}));
-
-            testCase.verifySubstring(text, "alpha: 1");
-            testCase.verifySubstring(text, "beta: two");
-        end
-
-        function testWritesCellArrayAsSequence(testCase)
-            text = testCase.writeAndRead({1, "two", 3});
-
-            testCase.verifySubstring(text, "- 1");
-            testCase.verifySubstring(text, "- two");
-            testCase.verifySubstring(text, "- 3");
-        end
-
         function testWritesDictionary(testCase)
             % A dictionary is converted to a YAMLData object first. Only
             % cell-valued dictionaries are supported (issue #26).
@@ -73,11 +64,47 @@ classdef writeyamlInputTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "beta: two");
         end
 
-        function testWritesStringArrayAsSequence(testCase)
-            text = testCase.writeAndRead(["first", "second"]);
+        function testWritesStringArrayValueAsSequence(testCase)
+            text = testCase.writeAndRead(struct("names", ["first", "second"]));
 
             testCase.verifySubstring(text, "- first");
             testCase.verifySubstring(text, "- second");
+        end
+
+        function testWritesCellValueAsSequence(testCase)
+            text = testCase.writeAndRead(struct("items", {{1, "two", 3}}));
+
+            testCase.verifySubstring(text, "- 1");
+            testCase.verifySubstring(text, "- two");
+            testCase.verifySubstring(text, "- 3");
+        end
+
+        % --- Rejected input types ----------------------------------------
+        % writeyaml only accepts a mapping at the top level, and only as a
+        % ConfigurationData object, struct or dictionary. Everything else is
+        % turned away before any conversion happens.
+
+        function testContainersMapInputErrors(testCase)
+            % Issue #40: containers.Map is not an accepted input type, in
+            % either writer. Invert this if #40 is resolved by adding support
+            % rather than by documenting the restriction.
+            data = containers.Map({'alpha', 'beta'}, {1, "two"});
+
+            testCase.verifyError(@() testCase.writeAndRead(data), ...
+                "writeyaml:InvalidInput", ...
+                "Issue #40: containers.Map input is not supported");
+        end
+
+        function testCellArrayInputErrors(testCase)
+            testCase.verifyError(@() testCase.writeAndRead({1, "two", 3}), ...
+                "writeyaml:InvalidInput", ...
+                "A bare cell array is not a mapping and should be rejected");
+        end
+
+        function testStringArrayInputErrors(testCase)
+            testCase.verifyError(@() testCase.writeAndRead(["first", "second"]), ...
+                "writeyaml:InvalidInput", ...
+                "A bare string array is not a mapping and should be rejected");
         end
 
         % --- Integer formatting ------------------------------------------
@@ -154,14 +181,15 @@ classdef writeyamlInputTest < matlab.unittest.TestCase
         end
 
         function testUnserializableValueErrors(testCase)
-            % A function handle cannot be converted to text, so generation
-            % fails before any file is written.
+            % A function handle cannot be converted to text. The rejection now
+            % comes from the up-front conversion to YAMLData rather than from
+            % the writer's own GenerateError wrapper.
             file = testCase.tempFile();
 
             testCase.verifyError(...
                 @() writeyaml(struct("callback", @sin), file), ...
-                "yamlToolbox:yamlwrite:GenerateError", ...
-                "A value that cannot be serialized should raise GenerateError");
+                "ConfigurationData:InvalidType", ...
+                "A value that cannot be serialized should be rejected");
         end
 
         function testEmptyFilenameIsRejected(testCase)

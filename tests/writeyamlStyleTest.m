@@ -1,6 +1,6 @@
 classdef writeyamlStyleTest < matlab.unittest.TestCase
-    % Tests for writeyaml formatting paths: flow-style cell arrays,
-    % containers.Map input with nested values, and section spacing.
+    % Tests for writeyaml formatting paths: flow-style cell arrays, nested
+    % mapping values, and section spacing.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
@@ -45,30 +45,29 @@ classdef writeyamlStyleTest < matlab.unittest.TestCase
                 "Block style is the default rendering for sequences");
         end
 
-        % --- containers.Map input ------------------------------------------
+        % --- Section spacing and nested values -----------------------------
 
-        function testSingleKeyMapUsesSingleNewlineSeparator(testCase)
+        function testSingleKeyUsesSingleNewlineSeparator(testCase)
             % With only one top-level key there is no section separator to
             % add, so the loose spacing branch is skipped.
-            data = containers.Map("host", "example.com");
+            data = struct("host", "example.com");
 
             text = testCase.writeAndRead(data);
 
             testCase.verifySubstring(text, "host: example.com");
         end
 
-        function testNestedMapValueGoesOnItsOwnLines(testCase)
-            % A map value that is itself a map is written as an indented
+        function testNestedStructValueGoesOnItsOwnLines(testCase)
+            % A value that is itself a mapping is written as an indented
             % block under its key rather than inline.
-            inner = containers.Map("port", 8080);
-            data = containers.Map("database", inner);
+            data = struct("database", struct("port", 8080));
 
             text = testCase.writeAndRead(data);
 
             testCase.verifySubstring(text, "database:", ...
                 "The outer key should be followed by a block");
             testCase.verifySubstring(text, "port: 8080", ...
-                "The nested map contents should be written");
+                "The nested contents should be written");
             lines = splitlines(strtrim(text));
             testCase.verifyNumElements(lines, 2, ...
                 "The nested value should be on its own line");
@@ -76,8 +75,11 @@ classdef writeyamlStyleTest < matlab.unittest.TestCase
                 "The nested key should be indented");
         end
 
-        function testStructValueInsideMapGoesOnItsOwnLines(testCase)
-            data = containers.Map("database", struct("port", 8080));
+        function testNestedObjectValueInsideDictionaryGoesOnItsOwnLines(testCase)
+            inner = yamldata();
+            inner.port = 8080;
+            data = configureDictionary("string", "cell");
+            data("database") = {inner};
 
             text = testCase.writeAndRead(data);
 
@@ -85,8 +87,8 @@ classdef writeyamlStyleTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "port: 8080");
         end
 
-        function testMultiKeyMapWithLooseSpacing(testCase)
-            data = containers.Map({'alpha', 'beta'}, {1, 2});
+        function testMultipleKeysWithLooseSpacing(testCase)
+            data = struct("alpha", 1, "beta", 2);
 
             text = testCase.writeAndRead(data, "SectionSpacing", "loose");
 
@@ -94,8 +96,8 @@ classdef writeyamlStyleTest < matlab.unittest.TestCase
                 "Loose spacing should separate top-level keys by a blank line");
         end
 
-        function testMultiKeyMapWithCompactSpacing(testCase)
-            data = containers.Map({'alpha', 'beta'}, {1, 2});
+        function testMultipleKeysWithCompactSpacing(testCase)
+            data = struct("alpha", 1, "beta", 2);
 
             text = testCase.writeAndRead(data, "SectionSpacing", "compact");
 
