@@ -1,5 +1,4 @@
-#include "mex.hpp"
-#include "mexAdapter.hpp"
+#include "util.hpp"
 #include "toml.hpp"
 
 class MexFunction : public matlab::mex::Function {
@@ -11,27 +10,28 @@ public:
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
         if (inputs.size() < 1) {
-            throwError("readtomlMex:InvalidInput", "Filename required.");
+            throwMexError(*engine, factory,
+                "readtomlMex:InvalidInput", "Filename required.");
             return;
         }
 
-        std::string filename = matlabCharToUtf8(
-            engine->feval(u"char", {inputs[0]}));
+        matlab::data::CharArray filenameArr(inputs[0]);
+        std::string filename = filenameArr.toUTF8();
 
         datetimeAsString = false;
         if (inputs.size() > 1) {
             matlab::data::Array dtType = engine->feval(u"getfield",
                 {inputs[1], factory.createCharArray("DatetimeType")});
-            std::string val = matlabCharToUtf8(
-                engine->feval(u"char", {dtType}));
-            datetimeAsString = (val == "string");
+            matlab::data::CharArray dtChar(dtType);
+            datetimeAsString = (dtChar.toUTF8() == "string");
         }
 
         toml::value data;
         try {
             data = toml::parse(filename);
         } catch (const std::exception& e) {
-            throwError("readtomlMex:ParseError", e.what());
+            throwMexError(*engine, factory,
+                "readtomlMex:ParseError", e.what());
             return;
         }
 
@@ -39,41 +39,14 @@ public:
     }
 
 private:
-    void throwError(const std::string& id, const std::string& msg) {
-        engine->feval(u"error",
-            {factory.createCharArray(id), factory.createCharArray(msg)});
-    }
-
-    std::string matlabCharToUtf8(const matlab::data::Array& charArr) {
-        matlab::data::TypedArray<uint8_t> bytes = engine->feval(
-            u"unicode2native",
-            {charArr, factory.createCharArray("UTF-8")});
-        std::string out;
-        out.reserve(bytes.getNumberOfElements());
-        for (auto b : bytes) {
-            out += static_cast<char>(b);
-        }
-        return out;
-    }
-
-    matlab::data::Array makeString(const std::string& utf8) {
-        auto bytes = factory.createArray<uint8_t>({1, utf8.size()});
-        for (size_t i = 0; i < utf8.size(); ++i) {
-            bytes[0][i] = static_cast<uint8_t>(utf8[i]);
-        }
-        auto chars = engine->feval(u"native2unicode",
-            {std::move(bytes), factory.createCharArray("UTF-8")});
-        return engine->feval(u"string", {chars});
-    }
-
     matlab::data::Array makeDatetime(const std::string& str,
                                       const char* format,
                                       const char* timeZone = nullptr) {
         if (datetimeAsString) {
-            return makeString(str);
+            return makeString(factory, str);
         }
         std::vector<matlab::data::Array> args = {
-            makeString(str),
+            makeString(factory, str),
             factory.createCharArray("InputFormat"),
             factory.createCharArray(format)
         };
@@ -90,7 +63,8 @@ private:
 
         for (const auto& [key, val] : table.as_table()) {
             obj = engine->feval(u"setfield",
-                {obj, factory.createCharArray(key), convert(val)});
+                {obj, factory.createCharArrayFromUTF8(key),
+                 convert(val)});
         }
         return obj;
     }
@@ -108,7 +82,7 @@ private:
                 return factory.createScalar<double>(val.as_floating());
 
             case toml::value_t::string:
-                return makeString(val.as_string());
+                return makeString(factory, val.as_string());
 
             case toml::value_t::table:
                 return tableToData(val);
@@ -117,19 +91,23 @@ private:
                 return convertArray(val.as_array());
 
             case toml::value_t::offset_datetime:
-                return makeDatetime(toml::to_string(val.as_offset_datetime()),
+                return makeDatetime(
+                    toml::to_string(val.as_offset_datetime()),
                     "yyyy-MM-dd'T'HH:mm:ssXXX", "UTC");
 
             case toml::value_t::local_datetime:
-                return makeDatetime(toml::to_string(val.as_local_datetime()),
+                return makeDatetime(
+                    toml::to_string(val.as_local_datetime()),
                     "yyyy-MM-dd'T'HH:mm:ss");
 
             case toml::value_t::local_date:
-                return makeDatetime(toml::to_string(val.as_local_date()),
+                return makeDatetime(
+                    toml::to_string(val.as_local_date()),
                     "yyyy-MM-dd");
 
             case toml::value_t::local_time:
-                return makeDatetime(toml::to_string(val.as_local_time()),
+                return makeDatetime(
+                    toml::to_string(val.as_local_time()),
                     "HH:mm:ss");
 
             default:
@@ -162,7 +140,6 @@ private:
             return engine->feval(u"horzcat", elems);
         }
 
-        // Mixed types or nested arrays → cell array
         auto out = factory.createArray<matlab::data::Array>(
             {1, arr.size()});
         for (size_t i = 0; i < elems.size(); ++i) {
