@@ -155,7 +155,7 @@ classdef yamltest < matlab.unittest.TestCase
             content = fileread(filename);
 
             if strcmp(ArrayStyle, 'flow')
-                testCase.verifyTrue(contains(content, '[8080, 8443]'));
+                testCase.verifyTrue(contains(content, '[8080,8443]'));
             else
                 testCase.verifyTrue(contains(content, '- 8080'));
                 testCase.verifyTrue(contains(content, '- 8443'));
