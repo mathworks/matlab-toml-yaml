@@ -29,7 +29,7 @@ function cs = compact(obj, format, precision)
     for i = 1:n
         val = obj.(k(i));
 
-        if isa(val, 'missing') || (isnumeric(val) && isempty(val))
+        if isa(val, 'missing')
             nullIndices(end+1) = i; %#ok<AGROW>
             values{i} = [];
 
