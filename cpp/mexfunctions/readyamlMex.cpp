@@ -7,9 +7,17 @@
 #include <sstream>
 #include <vector>
 
-static void rymlErrorHandler(const char* msg, size_t len, ryml::Location,
-                             void*) {
-    throw std::runtime_error(std::string(msg, len));
+[[noreturn]] static void rymlErrorBasic(ryml::csubstr msg,
+    ryml::ErrorDataBasic const&, void*) {
+    throw std::runtime_error(std::string(msg.data(), msg.size()));
+}
+[[noreturn]] static void rymlErrorParse(ryml::csubstr msg,
+    ryml::ErrorDataParse const&, void*) {
+    throw std::runtime_error(std::string(msg.data(), msg.size()));
+}
+[[noreturn]] static void rymlErrorVisit(ryml::csubstr msg,
+    ryml::ErrorDataVisit const&, void*) {
+    throw std::runtime_error(std::string(msg.data(), msg.size()));
 }
 
 class MexFunction : public matlab::mex::Function {
@@ -20,7 +28,9 @@ class MexFunction : public matlab::mex::Function {
 public:
     MexFunction() {
         ryml::Callbacks cb = ryml::get_callbacks();
-        cb.m_error = &rymlErrorHandler;
+        cb.set_error_basic(&rymlErrorBasic);
+        cb.set_error_parse(&rymlErrorParse);
+        cb.set_error_visit(&rymlErrorVisit);
         ryml::set_callbacks(cb);
     }
 
@@ -84,10 +94,7 @@ private:
         auto values = factory.createArray<matlab::data::Array>({1, 0});
         auto empty = factory.createArray<double>({1, 0});
 
-        return factory.createStructArray({1, 1},
-            {"Keys", "Values", "NullIndices", "DatetimeIndices",
-             "QuotedIndices"},
-            {{keys, values, empty, empty, empty}});
+        return makeCompactStruct(factory, keys, values, empty, empty, empty);
     }
 
     matlab::data::Array convertNode(ryml::ConstNodeRef node) {
@@ -142,10 +149,7 @@ private:
         auto quotedArr = toDoubleArray(quotedIdx);
         auto emptyArr = factory.createArray<double>({1, 0});
 
-        return factory.createStructArray({1, 1},
-            {"Keys", "Values", "NullIndices", "DatetimeIndices",
-             "QuotedIndices"},
-            {{keys, values, nullArr, emptyArr, quotedArr}});
+        return makeCompactStruct(factory, keys, values, nullArr, emptyArr, quotedArr);
     }
 
     matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
