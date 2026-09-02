@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mex.hpp"
-#include "mexAdapter.hpp"
 #include <string>
 
 std::string matlabStringToUtf8(

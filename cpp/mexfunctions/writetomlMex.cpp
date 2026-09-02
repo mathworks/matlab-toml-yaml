@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include "mexAdapter.hpp"
 #include "toml.hpp"
 
 #include <fstream>
@@ -30,8 +31,9 @@ public:
         }
 
         matlab::data::Array data = inputs[0];
-        matlab::data::CharArray filenameArr(inputs[1]);
-        std::string filename = filenameArr.toUTF8();
+        matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
+            inputs[1];
+        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
         arrayStyle = "auto";
         tableStyle = "auto";

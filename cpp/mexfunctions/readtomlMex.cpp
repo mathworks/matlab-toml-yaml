@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include "mexAdapter.hpp"
 #include "toml.hpp"
 
 class MexFunction : public matlab::mex::Function {
@@ -15,15 +16,17 @@ public:
             return;
         }
 
-        matlab::data::CharArray filenameArr(inputs[0]);
-        std::string filename = filenameArr.toUTF8();
+        matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
+            inputs[0];
+        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
         datetimeAsString = false;
         if (inputs.size() > 1) {
-            matlab::data::Array dtType = engine->feval(u"getfield",
-                {inputs[1], factory.createCharArray("DatetimeType")});
-            matlab::data::CharArray dtChar(dtType);
-            datetimeAsString = (dtChar.toUTF8() == "string");
+            matlab::data::StructArray opts(inputs[1]);
+            matlab::data::TypedArray<matlab::data::MATLABString> dtType =
+                opts[0]["DatetimeType"];
+            datetimeAsString =
+                (matlabStringToUtf8(factory, dtType[0]) == "string");
         }
 
         toml::value data;
