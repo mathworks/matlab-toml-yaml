@@ -7,7 +7,6 @@
 class MexFunction : public matlab::mex::Function {
     std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
     matlab::data::ArrayFactory factory;
-    bool datetimeAsString = false;
 
 public:
     void operator()(matlab::mex::ArgumentList outputs,
@@ -22,15 +21,6 @@ public:
             inputs[0];
         std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
-        datetimeAsString = false;
-        if (inputs.size() > 1) {
-            matlab::data::StructArray opts(inputs[1]);
-            matlab::data::TypedArray<matlab::data::MATLABString> dtType =
-                opts[0]["DatetimeType"];
-            datetimeAsString =
-                (matlabStringToUtf8(factory, dtType[0]) == "string");
-        }
-
         toml::value data = toml::parse(filename);
 
         outputs[0] = tableToCompactStruct(data);
@@ -44,47 +34,19 @@ private:
                t == toml::value_t::local_time;
     }
 
-    matlab::data::Array makeDatetime(const toml::value& val) {
-        std::string str;
-        const char* format;
-        const char* timeZone = nullptr;
-
+    std::string datetimeToString(const toml::value& val) {
         switch (val.type()) {
             case toml::value_t::offset_datetime:
-                str = toml::to_string(val.as_offset_datetime());
-                format = "yyyy-MM-dd'T'HH:mm:ssXXX";
-                timeZone = "UTC";
-                break;
+                return toml::to_string(val.as_offset_datetime());
             case toml::value_t::local_datetime:
-                str = toml::to_string(val.as_local_datetime());
-                format = "yyyy-MM-dd'T'HH:mm:ss";
-                break;
+                return toml::to_string(val.as_local_datetime());
             case toml::value_t::local_date:
-                str = toml::to_string(val.as_local_date());
-                format = "yyyy-MM-dd";
-                break;
+                return toml::to_string(val.as_local_date());
             case toml::value_t::local_time:
-                str = toml::to_string(val.as_local_time());
-                format = "HH:mm:ss";
-                break;
+                return toml::to_string(val.as_local_time());
             default:
-                return factory.createArray<double>({0, 0});
+                return {};
         }
-
-        if (datetimeAsString) {
-            return makeString(factory, str);
-        }
-
-        std::vector<matlab::data::Array> args = {
-            makeString(factory, str),
-            factory.createCharArray("InputFormat"),
-            factory.createCharArray(format)
-        };
-        if (timeZone) {
-            args.push_back(factory.createCharArray("TimeZone"));
-            args.push_back(factory.createCharArray(timeZone));
-        }
-        return engine->feval(u"datetime", args);
     }
 
     matlab::data::Array tableToCompactStruct(const toml::value& table) {
@@ -106,7 +68,7 @@ private:
                 values[0][i] = convertArray(val.as_array());
             } else if (isDatetimeType(val.type())) {
                 datetimeIdx.push_back(static_cast<double>(i + 1));
-                values[0][i] = makeDatetime(val);
+                values[0][i] = makeString(factory, datetimeToString(val));
             } else {
                 values[0][i] = convertScalar(val);
             }
@@ -210,7 +172,7 @@ private:
             } else if (elem.type() == toml::value_t::array) {
                 elems.push_back(convertArray(elem.as_array()));
             } else if (isDatetimeType(elem.type())) {
-                elems.push_back(makeDatetime(elem));
+                elems.push_back(makeString(factory, datetimeToString(elem)));
             } else {
                 elems.push_back(convertScalar(elem));
             }

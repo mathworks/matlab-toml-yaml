@@ -19,7 +19,7 @@ function obj = expand(cs, format, options)
     arguments
         cs (1,1) struct
         format (1,1) string {mustBeMember(format, ["yaml", "toml"])}
-        options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "string"
+        options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "datetime"
     end
 
     isYAML = (format == "yaml");
@@ -42,7 +42,7 @@ function obj = expand(cs, format, options)
         key = cs.Keys(i);
 
         if isNull(i)
-            obj.(key) = [];
+            obj.(key) = missing;
             continue
         end
 
@@ -58,14 +58,57 @@ function obj = expand(cs, format, options)
             obj.(key) = vertcat(children(:));
 
         elseif isDatetime(i)
-            obj.(key) = val;
+            if options.DatetimeType == "datetime"
+                obj.(key) = parseTOMLDatetime(val);
+            else
+                obj.(key) = val;
+            end
 
         elseif isYAML && isstring(val) && isscalar(val)
             obj.(key) = matlab.io.config.internal.read.parseYAMLScalar( ...
                 val, isQuoted(i), options.DatetimeType);
 
+        elseif isYAML && isstring(val) && ~isscalar(val)
+            obj.(key) = parseYAMLSequence(val, options.DatetimeType);
+
         else
             obj.(key) = val;
         end
+    end
+end
+
+function result = parseYAMLSequence(values, datetimeType)
+    parsed = cell(numel(values), 1);
+    for j = 1:numel(values)
+        parsed{j} = matlab.io.config.internal.read.parseYAMLScalar( ...
+            values(j), false, datetimeType);
+    end
+    if isempty(parsed)
+        result = parsed;
+        return
+    end
+    firstClass = class(parsed{1});
+    if all(cellfun(@(x) isa(x, firstClass), parsed))
+        try
+            result = vertcat(parsed{:});
+        catch
+            result = parsed;
+        end
+    else
+        result = parsed;
+    end
+end
+
+function dt = parseTOMLDatetime(str)
+    if contains(str, "T")
+        if endsWith(str, "Z") || ~isempty(regexp(str, '[+-]\d{2}:\d{2}$', 'once'))
+            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone="UTC");
+        else
+            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ss");
+        end
+    elseif contains(str, ":")
+        dt = datetime(str, InputFormat="HH:mm:ss");
+    else
+        dt = datetime(str, InputFormat="uuuu-MM-dd");
     end
 end
