@@ -29,14 +29,7 @@ public:
                 (matlabStringToUtf8(factory, dtType[0]) == "string");
         }
 
-        toml::value data;
-        try {
-            data = toml::parse(filename);
-        } catch (const std::exception& e) {
-            throwMexError(*engine, factory,
-                "readtomlMex:ParseError", e.what());
-            return;
-        }
+        toml::value data = toml::parse(filename);
 
         outputs[0] = tableToData(data);
     }
