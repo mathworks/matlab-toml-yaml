@@ -123,7 +123,7 @@ private:
     void buildMap(ryml::NodeRef mapNode,
                   const matlab::data::Array& obj) {
         auto results = engine->feval(
-            u"matlab.io.config.internal.formatYAMLMap",
+            u"matlab.io.config.internal.write.formatYAMLMap",
             5, {obj, factory.createScalar<double>(precision)});
 
         matlab::data::TypedArray<matlab::data::MATLABString> keys = results[0];
@@ -173,7 +173,7 @@ private:
     void buildTypedSequence(ryml::NodeRef node,
                             const matlab::data::Array& data) {
         auto results = engine->feval(
-            u"matlab.io.config.internal.formatYAMLSequence",
+            u"matlab.io.config.internal.write.formatYAMLSequence",
             2, {data, factory.createScalar<double>(precision)});
 
         matlab::data::TypedArray<matlab::data::MATLABString> texts = results[0];
@@ -250,7 +250,7 @@ private:
     void formatAndSetScalar(ryml::NodeRef node,
                             const matlab::data::Array& val) {
         auto results = engine->feval(
-            u"matlab.io.config.internal.formatYAMLScalar",
+            u"matlab.io.config.internal.write.formatYAMLScalar",
             2, {val, factory.createScalar<double>(precision)});
         matlab::data::TypedArray<matlab::data::MATLABString> t = results[0];
         matlab::data::TypedArray<bool> q = results[1];
