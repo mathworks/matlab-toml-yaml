@@ -22,13 +22,14 @@ function obj = expand(cs, format, options)
         options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "string"
     end
 
-    if format == "yaml"
+    isYAML = (format == "yaml");
+
+    if isYAML
         obj = matlab.io.config.YAMLData;
     else
         obj = matlab.io.config.TOMLData;
     end
 
-    isYAML = (format == "yaml");
     n = numel(cs.Keys);
     isNull = false(1, n);
     isNull(cs.NullIndices) = true;

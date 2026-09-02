@@ -117,10 +117,7 @@ private:
         auto dtArr = toDoubleArray(datetimeIdx);
         auto emptyArr = factory.createArray<double>({1, 0});
 
-        return factory.createStructArray({1, 1},
-            {"Keys", "Values", "NullIndices", "DatetimeIndices",
-             "QuotedIndices"},
-            {{keys, values, nullArr, dtArr, emptyArr}});
+        return makeCompactStruct(factory, keys, values, nullArr, dtArr, emptyArr);
     }
 
     matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
