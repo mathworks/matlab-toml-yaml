@@ -1,26 +1,12 @@
 #define RYML_WITH_LEGACY_OPERATORS
-#define RYML_SINGLE_HDR_DEFINE_NOW
 #include "util.hpp"
 #include "mexAdapter.hpp"
-#include "ryml.hpp"
+#include "ryml_util.hpp"
 
 #include <fstream>
 #include <vector>
 
 using matlab::data::ArrayType;
-
-[[noreturn]] static void rymlErrorBasic(ryml::csubstr msg,
-    ryml::ErrorDataBasic const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
-[[noreturn]] static void rymlErrorParse(ryml::csubstr msg,
-    ryml::ErrorDataParse const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
-[[noreturn]] static void rymlErrorVisit(ryml::csubstr msg,
-    ryml::ErrorDataVisit const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
 
 class MexFunction : public matlab::mex::Function {
     std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
@@ -32,13 +18,7 @@ class MexFunction : public matlab::mex::Function {
     int precision = 6;
 
 public:
-    MexFunction() {
-        ryml::Callbacks cb = ryml::get_callbacks();
-        cb.set_error_basic(&rymlErrorBasic);
-        cb.set_error_parse(&rymlErrorParse);
-        cb.set_error_visit(&rymlErrorVisit);
-        ryml::set_callbacks(cb);
-    }
+    MexFunction() { installRymlErrorHandlers(); }
 
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
@@ -194,7 +174,7 @@ private:
             } else if (numel > 1) {
                 buildTypedSequence(child, val);
             } else if (numel == 0) {
-                child.set_val(toArena("null"));
+                child |= (ryml::SEQ | ryml::FLOW_SL);
             } else {
                 formatAndSetScalar(child, val);
             }
@@ -261,7 +241,7 @@ private:
         }
 
         if (numel == 0) {
-            node.set_val(toArena("null"));
+            node |= (ryml::SEQ | ryml::FLOW_SL);
             return;
         }
 
