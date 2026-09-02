@@ -37,7 +37,7 @@ function [keyNames, texts, quoted, kinds, values] = formatYAMLMap(obj, precision
         else
             kinds(i) = "scalar";
             [texts(i), quoted(i)] = ...
-                matlab.io.config.internal.formatYAMLScalar(val, precision);
+                matlab.io.config.internal.write.formatYAMLScalar(val, precision);
         end
     end
 
