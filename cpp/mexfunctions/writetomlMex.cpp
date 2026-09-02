@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <cmath>
+#include <vector>
 
 using matlab::data::ArrayType;
 
@@ -101,36 +102,50 @@ private:
             getOptionDouble(opts, "Precision"));
     }
 
-    // --- MATLAB helpers for object types ---
+    // --- Index set helper ---
 
-    bool isConfigurationData(const matlab::data::Array& val) {
-        matlab::data::TypedArray<bool> result = engine->feval(u"isa",
-            {val, factory.createCharArray(
-                "matlab.io.config.ConfigurationData")});
-        return result[0];
+    static std::vector<bool> buildIndexSet(
+            const matlab::data::Array& indices, size_t n) {
+        std::vector<bool> flags(n + 1, false);
+        if (indices.getNumberOfElements() > 0) {
+            matlab::data::TypedArray<double> idx = indices;
+            for (auto v : idx) {
+                size_t i = static_cast<size_t>(v);
+                if (i >= 1 && i <= n) flags[i] = true;
+            }
+        }
+        return flags;
     }
 
-    bool isDatetime(const matlab::data::Array& val) {
-        matlab::data::TypedArray<bool> result = engine->feval(u"isa",
-            {val, factory.createCharArray("datetime")});
-        return result[0];
-    }
+    // --- Conversion from CompactStruct ---
 
-    // --- Conversion: MATLAB → toml::ordered_value ---
+    toml::ordered_value convertTable(const matlab::data::Array& csArr) {
+        matlab::data::StructArray cs(csArr);
 
-    toml::ordered_value convertTable(const matlab::data::Array& obj) {
+        matlab::data::TypedArray<matlab::data::MATLABString> keys =
+            cs[0]["Keys"];
+        matlab::data::TypedArray<matlab::data::Array> values =
+            cs[0]["Values"];
+
+        size_t n = keys.getNumberOfElements();
+        auto isNull = buildIndexSet(cs[0]["NullIndices"], n);
+        auto isDt = buildIndexSet(cs[0]["DatetimeIndices"], n);
+
         toml::ordered_table tbl;
+        for (size_t i = 0; i < n; ++i) {
+            std::string key = matlabStringToUtf8(factory, keys[i]);
 
-        matlab::data::TypedArray<matlab::data::MATLABString> keyArray =
-            engine->feval(u"keys", {obj});
+            if (isNull[i + 1]) {
+                continue;
+            }
 
-        for (const auto& ms : keyArray) {
-            std::string key = matlabStringToUtf8(factory, ms);
+            matlab::data::Array val = values[i];
 
-            matlab::data::Array val = engine->feval(u"getfield",
-                {obj, factory.createCharArrayFromUTF8(key)});
-
-            tbl.push_back({key, convert(val)});
+            if (isDt[i + 1]) {
+                tbl.push_back({key, convertDatetime(val)});
+            } else {
+                tbl.push_back({key, convert(val)});
+            }
         }
 
         return toml::ordered_value(std::move(tbl));
@@ -140,24 +155,17 @@ private:
         auto type = val.getType();
         size_t numel = val.getNumberOfElements();
 
-        if (type == ArrayType::VALUE_OBJECT ||
-            type == ArrayType::HANDLE_OBJECT_REF) {
-            if (isConfigurationData(val)) {
-                if (numel == 1) {
-                    return convertTable(val);
-                }
-                return convertObjectArray(val, numel, true);
+        if (type == ArrayType::STRUCT) {
+            return convertTable(val);
+        }
+
+        if (type == ArrayType::CELL) {
+            matlab::data::TypedArray<matlab::data::Array> cells = val;
+            if (numel > 0 &&
+                cells[0].getType() == ArrayType::STRUCT) {
+                return convertObjectArray(val, numel);
             }
-            if (isDatetime(val)) {
-                if (numel == 1) {
-                    return convertDatetime(val);
-                }
-                return convertObjectArray(val, numel, false);
-            }
-            throwMexError(*engine, factory,
-                "writetomlMex:UnsupportedType",
-                "Cannot serialize MATLAB object of this type.");
-            return toml::ordered_value();
+            return convertCellArray(val, numel);
         }
 
         switch (type) {
@@ -205,8 +213,12 @@ private:
                 }
                 return convertStringArray(val, numel);
 
-            case ArrayType::CELL:
-                return convertCellArray(val, numel);
+            case ArrayType::VALUE_OBJECT:
+            case ArrayType::HANDLE_OBJECT_REF:
+                if (numel == 1) {
+                    return convertDatetime(val);
+                }
+                return convertDatetimeArray(val, numel);
 
             default:
                 throwMexError(*engine, factory,
@@ -370,8 +382,24 @@ private:
     }
 
     toml::ordered_value convertObjectArray(
-            const matlab::data::Array& val, size_t numel,
-            bool allTables) {
+            const matlab::data::Array& val, size_t numel) {
+        matlab::data::TypedArray<matlab::data::Array> cells = val;
+
+        toml::ordered_array tomlArr;
+        tomlArr.reserve(numel);
+
+        for (size_t i = 0; i < numel; ++i) {
+            tomlArr.push_back(convertTable(cells[i]));
+        }
+
+        toml::array_format_info fmt;
+        fmt.body_indent = indentSize;
+        fmt.fmt = resolveTableArrayFormat(tomlArr);
+        return toml::ordered_value(std::move(tomlArr), fmt);
+    }
+
+    toml::ordered_value convertDatetimeArray(
+            const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<matlab::data::Array> cells =
             engine->feval(u"num2cell", {val});
 
@@ -379,13 +407,12 @@ private:
         tomlArr.reserve(numel);
 
         for (size_t i = 0; i < numel; ++i) {
-            tomlArr.push_back(convert(cells[i]));
+            tomlArr.push_back(convertDatetime(cells[i]));
         }
 
         toml::array_format_info fmt;
+        fmt.fmt = resolveArrayFormat(tomlArr);
         fmt.body_indent = indentSize;
-        fmt.fmt = allTables ? resolveTableArrayFormat(tomlArr)
-                            : resolveArrayFormat(tomlArr);
         return toml::ordered_value(std::move(tomlArr), fmt);
     }
 
