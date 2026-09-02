@@ -8,6 +8,11 @@
 
 using matlab::data::ArrayType;
 
+static void rymlErrorHandler(const char* msg, size_t len, ryml::Location,
+                             void*) {
+    throw std::runtime_error(std::string(msg, len));
+}
+
 class MexFunction : public matlab::mex::Function {
     std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
     matlab::data::ArrayFactory factory;
@@ -18,6 +23,12 @@ class MexFunction : public matlab::mex::Function {
     int precision = 6;
 
 public:
+    MexFunction() {
+        ryml::Callbacks cb = ryml::get_callbacks();
+        cb.m_error = &rymlErrorHandler;
+        ryml::set_callbacks(cb);
+    }
+
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
         if (inputs.size() < 2) {
