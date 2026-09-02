@@ -16,6 +16,7 @@ classdef (Abstract) ConfigurationData < ...
 
     properties (Access = protected)
         Data = dictionary(string.empty, cell.empty)
+        Metadata = []
     end
 
     methods
