@@ -59,6 +59,9 @@ function cs = compact(obj, format, precision)
                 quotedIndices(end+1) = i; %#ok<AGROW>
             end
 
+        elseif iscell(val)
+            values{i} = compactCell(val, format, precision);
+
         else
             values{i} = val;
         end
@@ -69,4 +72,26 @@ function cs = compact(obj, format, precision)
     cs.NullIndices = nullIndices;
     cs.DatetimeIndices = datetimeIndices;
     cs.QuotedIndices = quotedIndices;
+end
+
+function c = compactCell(c, format, precision)
+    for j = 1:numel(c)
+        elem = c{j};
+        if isa(elem, 'matlab.io.config.ConfigurationData')
+            if isempty(elem)
+                c{j} = [];
+            elseif isscalar(elem)
+                c{j} = matlab.io.config.internal.write.compact(elem, format, precision);
+            else
+                nc = numel(elem);
+                children = cell(1, nc);
+                for jj = 1:nc
+                    children{jj} = matlab.io.config.internal.write.compact(elem(jj), format, precision);
+                end
+                c{j} = children;
+            end
+        elseif iscell(elem)
+            c{j} = compactCell(elem, format, precision);
+        end
+    end
 end
