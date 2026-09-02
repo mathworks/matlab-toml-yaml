@@ -84,32 +84,6 @@ private:
         precision = static_cast<int>(prec[0]);
     }
 
-    // --- MATLAB helpers ---
-
-    bool isConfigurationData(const matlab::data::Array& val) {
-        matlab::data::TypedArray<bool> r = engine->feval(u"isa",
-            {val, factory.createCharArray(
-                "matlab.io.config.ConfigurationData")});
-        return r[0];
-    }
-
-    bool isDatetime(const matlab::data::Array& val) {
-        matlab::data::TypedArray<bool> r = engine->feval(u"isa",
-            {val, factory.createCharArray("datetime")});
-        return r[0];
-    }
-
-    void formatScalar(const matlab::data::Array& val,
-                      std::string& text, bool& quoted) {
-        auto results = engine->feval(
-            u"matlab.io.config.internal.formatYAMLScalar",
-            2, {val, factory.createScalar<double>(precision)});
-        matlab::data::TypedArray<matlab::data::MATLABString> t = results[0];
-        text = matlabStringToUtf8(factory, t[0]);
-        matlab::data::TypedArray<bool> q = results[1];
-        quoted = q[0];
-    }
-
     // --- Arena helper ---
 
     ryml::csubstr toArena(const std::string& s) {
@@ -117,72 +91,14 @@ private:
             ryml::csubstr(s.data(), s.size()));
     }
 
-    // --- Tree building ---
-
-    void buildMap(ryml::NodeRef mapNode,
-                  const matlab::data::Array& obj) {
-        matlab::data::TypedArray<matlab::data::MATLABString> keyArray =
-            engine->feval(u"keys", {obj});
-
-        for (const auto& ms : keyArray) {
-            std::string key = matlabStringToUtf8(factory, ms);
-            matlab::data::Array val = engine->feval(u"getfield",
-                {obj, factory.createCharArrayFromUTF8(key)});
-
-            ryml::NodeRef child = mapNode.append_child();
-            child.set_key(toArena(key));
-            buildValue(child, val);
-        }
+    ryml::type_bits seqFlags() {
+        return flowArrays
+            ? (ryml::SEQ | ryml::FLOW_SL)
+            : ryml::SEQ;
     }
 
-    void buildValue(ryml::NodeRef node,
-                    const matlab::data::Array& val) {
-        auto type = val.getType();
-        size_t numel = val.getNumberOfElements();
-
-        if (type == ArrayType::VALUE_OBJECT ||
-            type == ArrayType::HANDLE_OBJECT_REF) {
-            if (isConfigurationData(val)) {
-                if (numel == 0) {
-                    node.set_val(toArena("null"));
-                    return;
-                }
-                if (numel > 1) {
-                    buildObjectSequence(node, val, numel);
-                    return;
-                }
-                node |= ryml::MAP;
-                buildMap(node, val);
-                return;
-            }
-            setFormattedScalar(node, val);
-            return;
-        }
-
-        if (numel == 0) {
-            node.set_val(toArena("null"));
-            return;
-        }
-
-        if (numel == 1) {
-            setFormattedScalar(node, val);
-            return;
-        }
-
-        if (type == ArrayType::CELL) {
-            buildCellSequence(node, val, numel);
-            return;
-        }
-
-        buildTypedSequence(node, val, numel);
-    }
-
-    void setFormattedScalar(ryml::NodeRef node,
-                            const matlab::data::Array& val) {
-        std::string text;
-        bool quoted;
-        formatScalar(val, text, quoted);
-
+    void setNodeValue(ryml::NodeRef node,
+                      const std::string& text, bool quoted) {
         ryml::csubstr arenaVal = toArena(text);
         if (quoted) {
             node.set_val(arenaVal, ryml::VAL_DQUO);
@@ -191,19 +107,50 @@ private:
         }
     }
 
-    // --- Sequence builders ---
+    // --- Batch tree building ---
 
-    ryml::type_bits seqFlags() {
-        return flowArrays
-            ? (ryml::SEQ | ryml::FLOW_SL)
-            : ryml::SEQ;
+    void buildMap(ryml::NodeRef mapNode,
+                  const matlab::data::Array& obj) {
+        auto results = engine->feval(
+            u"matlab.io.config.internal.formatYAMLMap",
+            5, {obj, factory.createScalar<double>(precision)});
+
+        matlab::data::TypedArray<matlab::data::MATLABString> keys = results[0];
+        matlab::data::TypedArray<matlab::data::MATLABString> texts = results[1];
+        matlab::data::TypedArray<bool> quoted = results[2];
+        matlab::data::TypedArray<matlab::data::MATLABString> kinds = results[3];
+        matlab::data::TypedArray<matlab::data::Array> values = results[4];
+
+        size_t n = keys.getNumberOfElements();
+        for (size_t i = 0; i < n; ++i) {
+            std::string key = matlabStringToUtf8(factory, keys[i]);
+            std::string kind = matlabStringToUtf8(factory, kinds[i]);
+
+            ryml::NodeRef child = mapNode.append_child();
+            child.set_key(toArena(key));
+
+            if (kind == "scalar" || kind == "null") {
+                setNodeValue(child,
+                    matlabStringToUtf8(factory, texts[i]),
+                    static_cast<bool>(quoted[i]));
+            } else if (kind == "map") {
+                child |= ryml::MAP;
+                buildMap(child, values[i]);
+            } else if (kind == "object_seq") {
+                buildObjectSequence(child, values[i]);
+            } else if (kind == "typed_seq") {
+                buildTypedSequence(child, values[i]);
+            } else if (kind == "cell_seq") {
+                buildCellSequence(child, values[i]);
+            }
+        }
     }
 
     void buildObjectSequence(ryml::NodeRef node,
-                             const matlab::data::Array& data,
-                             size_t numel) {
+                             const matlab::data::Array& data) {
         matlab::data::TypedArray<matlab::data::Array> cells =
             engine->feval(u"num2cell", {data});
+        size_t numel = cells.getNumberOfElements();
         node |= seqFlags();
         for (size_t i = 0; i < numel; ++i) {
             ryml::NodeRef item = node.append_child();
@@ -213,26 +160,92 @@ private:
     }
 
     void buildTypedSequence(ryml::NodeRef node,
-                            const matlab::data::Array& data,
-                            size_t numel) {
-        matlab::data::TypedArray<matlab::data::Array> cells =
-            engine->feval(u"num2cell", {data});
+                            const matlab::data::Array& data) {
+        auto results = engine->feval(
+            u"matlab.io.config.internal.formatYAMLSequence",
+            2, {data, factory.createScalar<double>(precision)});
+
+        matlab::data::TypedArray<matlab::data::MATLABString> texts = results[0];
+        matlab::data::TypedArray<bool> quoted = results[1];
+
+        size_t numel = texts.getNumberOfElements();
         node |= seqFlags();
         for (size_t i = 0; i < numel; ++i) {
             ryml::NodeRef item = node.append_child();
-            setFormattedScalar(item, cells[i]);
+            setNodeValue(item,
+                matlabStringToUtf8(factory, texts[i]),
+                static_cast<bool>(quoted[i]));
         }
     }
 
     void buildCellSequence(ryml::NodeRef node,
-                           const matlab::data::Array& data,
-                           size_t numel) {
+                           const matlab::data::Array& data) {
         matlab::data::TypedArray<matlab::data::Array> cells = data;
+        size_t numel = cells.getNumberOfElements();
         node |= seqFlags();
         for (size_t i = 0; i < numel; ++i) {
             ryml::NodeRef item = node.append_child();
             buildValue(item, cells[i]);
         }
+    }
+
+    // --- Fallback for individual values (cell elements only) ---
+
+    void buildValue(ryml::NodeRef node,
+                    const matlab::data::Array& val) {
+        auto type = val.getType();
+        size_t numel = val.getNumberOfElements();
+
+        if (type == ArrayType::VALUE_OBJECT ||
+            type == ArrayType::HANDLE_OBJECT_REF) {
+            matlab::data::TypedArray<bool> r = engine->feval(u"isa",
+                {val, factory.createCharArray(
+                    "matlab.io.config.ConfigurationData")});
+            if (r[0]) {
+                if (numel == 0) {
+                    node.set_val(toArena("null"));
+                    return;
+                }
+                if (numel > 1) {
+                    buildObjectSequence(node, val);
+                    return;
+                }
+                node |= ryml::MAP;
+                buildMap(node, val);
+                return;
+            }
+            formatAndSetScalar(node, val);
+            return;
+        }
+
+        if (numel == 0) {
+            node.set_val(toArena("null"));
+            return;
+        }
+
+        if (numel == 1) {
+            formatAndSetScalar(node, val);
+            return;
+        }
+
+        if (type == ArrayType::CELL) {
+            buildCellSequence(node, val);
+            return;
+        }
+
+        buildTypedSequence(node, val);
+    }
+
+    void formatAndSetScalar(ryml::NodeRef node,
+                            const matlab::data::Array& val) {
+        auto results = engine->feval(
+            u"matlab.io.config.internal.formatYAMLScalar",
+            2, {val, factory.createScalar<double>(precision)});
+        matlab::data::TypedArray<matlab::data::MATLABString> t = results[0];
+        matlab::data::TypedArray<bool> q = results[1];
+        setNodeValue(node,
+            matlabStringToUtf8(factory, t[0]),
+            static_cast<bool>(q[0]));
     }
 
     // --- Post-processing ---
