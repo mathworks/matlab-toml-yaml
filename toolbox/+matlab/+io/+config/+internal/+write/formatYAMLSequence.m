@@ -12,6 +12,6 @@ function [texts, quoted] = formatYAMLSequence(arr, precision)
     quoted = false(n, 1);
     for i = 1:n
         [texts(i), quoted(i)] = ...
-            matlab.io.config.internal.formatYAMLScalar(arr(i), precision);
+            matlab.io.config.internal.write.formatYAMLScalar(arr(i), precision);
     end
 end
