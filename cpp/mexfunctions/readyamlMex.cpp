@@ -95,7 +95,7 @@ private:
         if (node.has_val()) {
             return convertScalar(node);
         }
-        return factory.createArray<double>({0, 0});
+        return makeEmptyYAMLData();
     }
 
     matlab::data::Array convertMap(ryml::ConstNodeRef node) {
