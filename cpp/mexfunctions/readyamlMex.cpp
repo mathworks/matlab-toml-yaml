@@ -1,24 +1,10 @@
-#define RYML_SINGLE_HDR_DEFINE_NOW
 #include "util.hpp"
 #include "mexAdapter.hpp"
-#include "ryml.hpp"
+#include "ryml_util.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <vector>
-
-[[noreturn]] static void rymlErrorBasic(ryml::csubstr msg,
-    ryml::ErrorDataBasic const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
-[[noreturn]] static void rymlErrorParse(ryml::csubstr msg,
-    ryml::ErrorDataParse const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
-[[noreturn]] static void rymlErrorVisit(ryml::csubstr msg,
-    ryml::ErrorDataVisit const&, void*) {
-    throw std::runtime_error(std::string(msg.data(), msg.size()));
-}
 
 class MexFunction : public matlab::mex::Function {
     std::shared_ptr<matlab::engine::MATLABEngine> engine = getEngine();
@@ -26,13 +12,7 @@ class MexFunction : public matlab::mex::Function {
     bool sequenceAsCell = false;
 
 public:
-    MexFunction() {
-        ryml::Callbacks cb = ryml::get_callbacks();
-        cb.set_error_basic(&rymlErrorBasic);
-        cb.set_error_parse(&rymlErrorParse);
-        cb.set_error_visit(&rymlErrorVisit);
-        ryml::set_callbacks(cb);
-    }
+    MexFunction() { installRymlErrorHandlers(); }
 
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
