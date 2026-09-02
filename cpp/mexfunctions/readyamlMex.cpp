@@ -209,7 +209,7 @@ private:
         bool isQuoted = node.is_val_quoted();
 
         return engine->feval(
-            u"matlab.io.config.internal.parseYAMLScalar",
+            u"matlab.io.config.internal.read.parseYAMLScalar",
             {makeString(factory, s),
              factory.createScalar<bool>(isQuoted),
              makeString(factory, datetimeType)});
