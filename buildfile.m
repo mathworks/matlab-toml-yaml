@@ -3,6 +3,8 @@ function plan = buildfile
 %   Run with `buildtool` from the repo root. See `buildtool -tasks` for the
 %   available tasks.
 
+addpath("buildUtilities");
+
 plan = buildplan(localfunctions);
 
 % Run the shipped (TOML/YAML) test suite by default.
@@ -31,7 +33,7 @@ formats = CoberturaFormat(fullfile(coverageFolder, "cobertura.xml"));
 if ~isMATLABReleaseOlderThan("R2023a")
     formats = [formats, ...
         matlab.unittest.plugins.codecoverage.CoverageReport( ...
-            fullfile(coverageFolder, "html"))];
+        fullfile(coverageFolder, "html"))];
 end
 
 suite = TestSuite.fromFolder("tests");
@@ -76,4 +78,90 @@ if isfile(fullfile("images", "matlab-toml-yaml.png"))
 end
 opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.mlx");
 matlab.addons.toolbox.packageToolbox(opts);
+end
+
+%% ---- Formatting and static analysis ----------------------------------------
+
+function indentTask(~)
+% Auto-indent all project .m files using MATLAB smart indentation.
+%   Uses the editor's smartIndentContents with 4-space indent to normalize
+%   whitespace across the codebase. Reports which files were modified.
+s = settings;
+s.matlab.editor.tab.IndentSize.TemporaryValue = 4;
+s.matlab.editor.tab.InsertSpaces.TemporaryValue = true;
+s.matlab.editor.language.matlab.FunctionIndentingFormat.TemporaryValue = ...
+    "AllFunctionIndent";
+
+files = projectMatlabFiles();
+modified = string.empty;
+for i = 1:numel(files)
+    original = fileread(files(i));
+    doc = matlab.desktop.editor.openDocument(files(i));
+    smartIndentContents(doc);
+    save(doc);
+    closeNoPrompt(doc);
+    if ~strcmp(fileread(files(i)), original)
+        modified(end+1) = files(i); %#ok<AGROW>
+    end
+end
+if isempty(modified)
+    fprintf("All %d files already correctly indented.\n", numel(files));
+else
+    fprintf("Re-indented %d of %d files:\n", numel(modified), numel(files));
+    for i = 1:numel(modified)
+        fprintf("  %s\n", modified(i));
+    end
+end
+end
+
+function lintTask(~)
+% Report Code Analyzer issues in the toolbox library source.
+%   Displays all issues found by codeIssues on toolbox/, excluding example
+%   and doc scripts. Errors if any warnings are present.
+issues = codeIssues(libraryFiles());
+t = issues.Issues;
+
+if isempty(t)
+    fprintf("No code issues found.\n");
+    return
+end
+
+disp(t(:, ["Location", "Severity", "Fixability", "CheckID", "Description"]));
+nWarnings = sum(t.Severity == "warning");
+nInfo = height(t) - nWarnings;
+fprintf("\n%d warning(s), %d info\n", nWarnings, nInfo);
+
+if nWarnings > 0
+    error("lint:warnings", "Code Analyzer found %d warning(s).", nWarnings);
+end
+end
+
+function fixLintTask(~)
+% Auto-fix Code Analyzer issues in the toolbox library source.
+%   Applies automatic fixes via codeIssues/fix (R2023a+) on toolbox/,
+%   excluding example and doc scripts. Remaining manual-fix issues are
+%   reported but not modified.
+if isMATLABReleaseOlderThan("R2023a")
+    error("fixLint:release", "The fixLint task requires R2023a or later.");
+end
+
+issues = codeIssues(libraryFiles());
+t = issues.Issues;
+
+if isempty(t)
+    fprintf("No code issues found.\n");
+    return
+end
+
+autoFixable = t(t.Fixability == "auto", :);
+if ~isempty(autoFixable)
+    [~, results] = fix(issues, autoFixable);
+    fprintf("Auto-fixed %d of %d issue(s).\n", sum(results.Success), height(results));
+end
+
+manual = t(t.Fixability == "manual", :);
+if ~isempty(manual)
+    fprintf("\nRemaining issues (require manual fix):\n");
+    disp(manual(:, ["Location", "Severity", "CheckID", "Description"]));
+end
 end
