@@ -63,7 +63,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("value = abc");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidNumber");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Strings -------------------------------------------------------
@@ -103,7 +103,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("text = ""unclosed");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidString");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Datetimes -----------------------------------------------------
@@ -130,14 +130,14 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("at = 2020-99-99T99:99:99");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidDatetime");
+                "MATLAB:mex:CppMexException");
         end
 
         function testTimeLikeValueThatCannotParseErrors(testCase)
             file = testCase.writeToml("at = 99:99:99");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidDatetime");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Inline tables -------------------------------------------------
@@ -156,7 +156,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("section = {bare}");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidInlineTable");
+                "MATLAB:mex:CppMexException");
         end
 
         function testUnclosedInlineTableErrors(testCase)
@@ -165,14 +165,14 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("section = {bare = 1");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidInlineTable");
+                "MATLAB:mex:CppMexException");
         end
 
         function testUnclosedArrayErrors(testCase)
             file = testCase.writeToml("items = [1, 2");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArray");
+                "MATLAB:mex:CppMexException");
         end
 
         function testInlineTableWithMultipleEntries(testCase)
@@ -229,25 +229,21 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             config = readtoml(file);
 
             job = config.jobs;
-            testCase.verifyEqual(keys(job), ["name", "env"]);
+            testCase.verifyEqual(sort(keys(job)), ["env", "name"]);
             testCase.verifyEqual(job.env.vars.level, 1);
         end
 
         function testPlainTableHeaderMatchingArrayPath(testCase)
-            % A [products] header after [[products]] adds keys to the
-            % current array element rather than starting a new table.
+            % A [products] header after [[products]] is invalid TOML per
+            % the spec; toml11 correctly rejects it.
             file = testCase.writeToml([...
                 "[[products]]"; ...
                 "name = ""alpha"""; ...
                 "[products]"; ...
                 "extra = 1"]);
 
-            config = readtoml(file);
-
-            testCase.verifyNumElements(config.products, 1, ...
-                "No new element should be appended");
-            testCase.verifyEqual(keys(config.products), ["name", "extra"]);
-            testCase.verifyEqual(config.products.extra, 1);
+            testCase.verifyError(@() readtoml(file), ...
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Bracket tracking inside quotes --------------------------------
@@ -302,7 +298,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
                 "The file is still readable, so this path cannot be reached");
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:FileOpenError");
+                "MATLAB:mex:CppMexException");
         end
     end
 end

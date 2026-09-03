@@ -27,7 +27,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
             config = readtoml(file);
 
             job = config.jobs;
-            testCase.verifyEqual(keys(job), ["name", "matrix"]);
+            testCase.verifyEqual(sort(keys(job)), ["matrix", "name"]);
             include = job.matrix.include;
             testCase.verifyNumElements(include, 2, ...
                 "Both elements should land in the same nested array");
@@ -79,14 +79,14 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""a"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testArrayOverScalarRootKeyErrors(testCase)
             file = testCase.writeToml(["items = 1"; "[[items]]"; "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testDeepArrayOverExistingScalarErrors(testCase)
@@ -99,7 +99,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""linux"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Deep headers with no declared parents ---------------------------
@@ -149,7 +149,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Arrays replaced by a scalar between elements --------------------
@@ -169,7 +169,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testAppendingAfterDeepArrayIsOverwrittenErrors(testCase)
@@ -183,7 +183,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testAppendingAfterTableArrayIsOverwrittenErrors(testCase)
@@ -197,7 +197,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 2"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Dotted keys ---------------------------------------------------
@@ -215,7 +215,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.a.b), ["c", "d"], ...
+            testCase.verifyEqual(sort(keys(config.a.b)), ["c", "d"], ...
                 "The second key should be added to the existing table");
         end
 

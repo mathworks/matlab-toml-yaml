@@ -13,6 +13,9 @@ function writeyaml(data, filename, options)
     %                  'block' - Use block style with - items
     %                  'flow'  - Use inline style as [1, 2, 3]
     %
+    %   'NumIndentationSpaces' - Number of spaces for indentation (default: 2)
+    %                            Must be a positive integer
+    %
     %   'SectionSpacing' - Spacing between top-level sections (default: 'loose')
     %                      'loose'   - Blank line between each top-level key
     %                      'compact' - No blank lines
@@ -40,6 +43,7 @@ function writeyaml(data, filename, options)
         filename (1,1) string = "untitled.yaml"
         options.ArrayStyle (1,1) string ...
             {mustBeMember(options.ArrayStyle, ["block", "flow"])} = "block"
+        options.NumIndentationSpaces (1,1) double {mustBeInteger, mustBePositive} = 2
         options.SectionSpacing (1,1) string ...
             {mustBeMember(options.SectionSpacing, ["compact", "loose"])} = "loose"
         options.Precision (1,1) double {mustBeInteger, mustBePositive} = 6

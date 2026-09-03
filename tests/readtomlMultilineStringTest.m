@@ -83,7 +83,8 @@ classdef readtomlMultilineStringTest < ConfigurationFileTestCase
         end
 
         function testStringClosingOnItsOwnLine(testCase)
-            % The closing delimiter alone on a line contributes no content.
+            % The closing delimiter on its own line: the newline before it
+            % is part of the value per the TOML spec.
             file = testCase.writeToml([...
                 "text=" + testCase.BasicDelimiter; ...
                 "only line"; ...
@@ -91,7 +92,7 @@ classdef readtomlMultilineStringTest < ConfigurationFileTestCase
 
             config = readtoml(file);
 
-            testCase.verifyEqual(config.text, "only line");
+            testCase.verifyEqual(config.text, "only line" + newline);
         end
 
         function testSingleLineDelimitedStringIsNotAccumulated(testCase)
@@ -104,10 +105,9 @@ classdef readtomlMultilineStringTest < ConfigurationFileTestCase
 
         % --- Issue #42 -----------------------------------------------------
 
-        function testLeadingSpaceAddsStrayDelimiter(testCase)
-            % Issue #42: with one space before the delimiter the offset lands
-            % one character early, so a stray quote joins the value. Invert
-            % this when #42 is fixed.
+        function testSpaceBeforeDelimiterParsesCorrectly(testCase)
+            % Issue #42 (fixed): a space before the opening delimiter no
+            % longer leaks a stray quote into the value.
             file = testCase.writeToml([...
                 "text = " + testCase.BasicDelimiter; ...
                 "line one"; ...
@@ -116,23 +116,21 @@ classdef readtomlMultilineStringTest < ConfigurationFileTestCase
             config = readtoml(file);
 
             testCase.verifyEqual(config.text, ...
-                """" + newline + "line one" + newline + "line two", ...
-                "Issue #42: a space before the delimiter leaks a quote");
+                "line one" + newline + "line two");
         end
 
-        function testWideGapBeforeDelimiterErrors(testCase)
-            % Issue #42: with three spaces the leftover text contains the
-            % whole delimiter, so the accumulator decides the string closed
-            % on the first line and parseString slices a bare delimiter.
-            % Invert this when #42 is fixed.
+        function testWideGapBeforeDelimiterParsesCorrectly(testCase)
+            % Issue #42 (fixed): a wide gap before the opening delimiter no
+            % longer crashes the parser.
             file = testCase.writeToml([...
                 "text =   " + testCase.BasicDelimiter; ...
                 "line one"; ...
                 "line two" + testCase.BasicDelimiter]);
 
-            testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:string:InvalidPositionLocation", ...
-                "Issue #42: a wide gap before the delimiter crashes the parser");
+            config = readtoml(file);
+
+            testCase.verifyEqual(config.text, ...
+                "line one" + newline + "line two");
         end
     end
 end

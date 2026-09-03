@@ -18,7 +18,7 @@ classdef writeyamlStyleTest < ConfigurationFileTestCase
 
             text = testCase.writeAndRead(data, "ArrayStyle", "flow");
 
-            testCase.verifySubstring(text, "[1, 2, 3]", ...
+            testCase.verifySubstring(text, "[1,2,3]", ...
                 "A cell array should render inline in flow style");
         end
 

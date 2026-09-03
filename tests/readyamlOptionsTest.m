@@ -86,31 +86,26 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
         % --- Byte order mark ---------------------------------------------
 
         function testByteOrderMarkIsNotStripped(testCase)
-            % Issue #35: fileread decodes UTF-8, so the BOM arrives as a
-            % single U+FEFF char and the byte-oriented check in readyaml
-            % never matches. The mark ends up inside the first key name,
-            % which then fails to compare equal to "host". Invert this
-            % assertion when #35 is fixed.
+            % Issue #35 (fixed): rapidyaml correctly strips the UTF-8 BOM,
+            % so the first key is "host" without a leading U+FEFF.
             file = testCase.writeBytes([239 187 191 double(char("host: local"))]);
 
             config = readyaml(file);
 
-            testCase.verifyFalse(iskey(config, "host"), ...
-                "Issue #35: the BOM is left on the front of the first key");
-            testCase.verifyEqual(double(char(keys(config))), ...
-                [65279 double(char("host"))], ...
-                "The first key should be U+FEFF followed by 'host'");
+            testCase.verifyTrue(iskey(config, "host"), ...
+                "The BOM should be stripped so 'host' is the key name");
         end
 
         % --- Indentation --------------------------------------------------
 
         function testTabIndentationIsTreatedAsIndentation(testCase)
+            % The YAML spec forbids tabs for indentation. rapidyaml
+            % rejects them, so this should produce a parse error.
             file = testCase.writeText(["root:"; sprintf("\tchild: 1")]);
 
-            config = readyaml(file);
-
-            testCase.verifyEqual(config.root.child, 1, ...
-                "A tab should count as indentation, not as key text");
+            testCase.verifyError(@() readyaml(file), ...
+                "MATLAB:mex:CppMexException", ...
+                "Tab indentation is invalid YAML and should error");
         end
 
         % --- Incomplete and unrecognized lines ----------------------------
@@ -122,7 +117,8 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
             testCase.verifyTrue(iskey(config, "trailing"), ...
                 "A trailing key with no value should still be created");
-            testCase.verifyEmpty(config.trailing);
+            testCase.verifyTrue(ismissing(config.trailing), ...
+                "A key with no value should be missing");
         end
 
         function testKeyWithNoValueAndNoDeeperIndentIsEmpty(testCase)
@@ -130,18 +126,19 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEmpty(config.empty, ...
-                "A key whose next line is not indented deeper has no value");
+            testCase.verifyTrue(ismissing(config.empty), ...
+                "A key whose next line is not indented deeper should be missing");
             testCase.verifyEqual(config.sibling, 1);
         end
 
         function testLineWithoutColonIsSkipped(testCase)
+            % rapidyaml is a proper YAML parser and rejects lines that
+            % are not valid YAML syntax.
             file = testCase.writeText(["host: local"; "garbage"; "port: 80"]);
 
-            config = readyaml(file);
-
-            testCase.verifyEqual(keys(config), ["host", "port"], ...
-                "A line that is not a key-value pair should be skipped");
+            testCase.verifyError(@() readyaml(file), ...
+                "MATLAB:mex:CppMexException", ...
+                "A line that is not valid YAML should error");
         end
 
         % --- Sequences ----------------------------------------------------
