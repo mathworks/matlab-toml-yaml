@@ -46,25 +46,6 @@ function testTask(~)
     assertSuccess(results);
 end
 
-function files = libraryFiles()
-    % List the toolbox library files to measure coverage against.
-    %   Everything under toolbox/ except the examples and documentation. The
-    %   example scripts are run by tests/exampleScriptsTest.m, but from a
-    %   temporary copy, so the originals can never register as covered no matter
-    %   how thorough the suite gets. The library lines those examples exercise
-    %   are still counted here, via the files below. Measuring the examples
-    %   themselves would only add several hundred permanently unreachable lines
-    %   to the denominator.
-    %
-    %   forFile is used rather than forFolder because forFolder's
-    %   IncludingSubfolders option is all-or-nothing and cannot skip a subfolder.
-    excludedFolders = fullfile(pwd, "toolbox", ["examples", "doc"]) + filesep;
-
-    found = dir(fullfile("toolbox", "**", "*.m"));
-    files = string(fullfile({found.folder}, {found.name}))';
-    files = files(~startsWith(files, excludedFolders));
-end
-
 function mltbxTask(~)
     % Package toolbox/ into a .mltbx artifact.
     opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
@@ -96,17 +77,7 @@ function indentTask(~)
         "AllFunctionIndent";
 
     files = projectMatlabFiles();
-    modified = string.empty;
-    for i = 1:numel(files)
-        original = fileread(files(i));
-        doc = matlab.desktop.editor.openDocument(files(i));
-        smartIndentContents(doc);
-        save(doc);
-        closeNoPrompt(doc);
-        if ~strcmp(fileread(files(i)), original)
-            modified(end+1) = files(i); %#ok<AGROW>
-        end
-    end
+    modified = files(arrayfun(@smartIndentFile, files));
     if isempty(modified)
         fprintf("All %d files already correctly indented.\n", numel(files));
     else
