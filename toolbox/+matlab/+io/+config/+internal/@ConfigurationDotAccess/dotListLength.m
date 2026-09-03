@@ -1,3 +1,3 @@
 function n = dotListLength(~, ~, ~)
-n = 1;
+    n = 1;
 end

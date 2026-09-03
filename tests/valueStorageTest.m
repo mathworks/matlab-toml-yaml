@@ -296,13 +296,13 @@ classdef valueStorageTest < matlab.unittest.TestCase
 end
 
 function setKey(config, value)
-config.x = value;
+    config.x = value;
 end
 
 function setKeyNamed(config, key, value)
-config.(key) = value;
+    config.(key) = value;
 end
 
 function indexAssign(config)
-config.absent(1) = 5;
+    config.absent(1) = 5;
 end

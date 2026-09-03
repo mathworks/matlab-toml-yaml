@@ -1,46 +1,46 @@
 function writeyaml(data, filename, options)
-%WRITEYAML Write data to YAML file
-%   WRITEYAML(DATA) writes the MATLAB data to 'untitled.yaml'.
-%
-%   WRITEYAML(DATA, FILENAME) writes to the specified file.
-%
-%   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
-%
-%   WRITEYAML(..., Name, Value) specifies additional options using
-%   name-value pairs:
-%
-%   'ArrayStyle' - Style for arrays/lists (default: 'block')
-%                  'block' - Use block style with - items
-%                  'flow'  - Use inline style as [1, 2, 3]
-%
-%   'NumIndentationSpaces' - Number of spaces for indentation (default: 2)
-%                            Must be a positive integer
-%
-%   'SectionSpacing' - Spacing between top-level sections (default: 'loose')
-%                      'loose'   - Blank line between each top-level key
-%                      'compact' - No blank lines
-%
-%   'Precision' - Number of decimal places for numeric values (default: 6)
-%                 Must be a positive integer
-%
-%   Examples:
-%       % Write to default filename
-%       writeyaml(data);  % Creates untitled.yaml
-%
-%       % Write to specific file
-%       writeyaml(data, 'output.yaml');
-%
-%       % Compact format with 4-space indentation
-%       writeyaml(myData, 'data.yml', ...
-%           'NumIndentationSpaces', 4, ...
-%           'SectionSpacing', 'compact');
-%
-%       % Flow style for compact arrays
-%       writeyaml(data, 'list.yaml', 'ArrayStyle', 'flow');
-%
-%   See also READYAML, YAMLData
+    %WRITEYAML Write data to YAML file
+    %   WRITEYAML(DATA) writes the MATLAB data to 'untitled.yaml'.
+    %
+    %   WRITEYAML(DATA, FILENAME) writes to the specified file.
+    %
+    %   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
+    %
+    %   WRITEYAML(..., Name, Value) specifies additional options using
+    %   name-value pairs:
+    %
+    %   'ArrayStyle' - Style for arrays/lists (default: 'block')
+    %                  'block' - Use block style with - items
+    %                  'flow'  - Use inline style as [1, 2, 3]
+    %
+    %   'NumIndentationSpaces' - Number of spaces for indentation (default: 2)
+    %                            Must be a positive integer
+    %
+    %   'SectionSpacing' - Spacing between top-level sections (default: 'loose')
+    %                      'loose'   - Blank line between each top-level key
+    %                      'compact' - No blank lines
+    %
+    %   'Precision' - Number of decimal places for numeric values (default: 6)
+    %                 Must be a positive integer
+    %
+    %   Examples:
+    %       % Write to default filename
+    %       writeyaml(data);  % Creates untitled.yaml
+    %
+    %       % Write to specific file
+    %       writeyaml(data, 'output.yaml');
+    %
+    %       % Compact format with 4-space indentation
+    %       writeyaml(myData, 'data.yml', ...
+    %           'NumIndentationSpaces', 4, ...
+    %           'SectionSpacing', 'compact');
+    %
+    %       % Flow style for compact arrays
+    %       writeyaml(data, 'list.yaml', 'ArrayStyle', 'flow');
+    %
+    %   See also READYAML, YAMLData
 
-%   Copyright 2025 The MathWorks, Inc.
+    %   Copyright 2025 The MathWorks, Inc.
 
     arguments
         data
@@ -190,7 +190,7 @@ function yamlText = stringArrayToYAML(data, depth, indentSize, flowStyle)
     end
 end
 
-function yamlText = cellToYAML(data, depth, indentSize, flowStyle, precision, addSectionSpacing)
+function yamlText = cellToYAML(data, depth, indentSize, flowStyle, precision, ~)
     %CELLTOYAML Convert cell array to YAML
 
     if flowStyle && isvector(data)
@@ -287,12 +287,12 @@ function yamlText = stringToYAML(data)
 
     % Check if quoting is needed
     needsQuoting = strlength(strData) == 0 || ...
-       startsWith(strData, ["!", "#", "&", "*", "{", "[", "|", ">", "@", "`"]) || ...
-       contains(strData, ": ") || ...
-       contains(strData, " #") || ...
-       ismember(lower(strData), ["true", "false", "null", "yes", "no", "on", "off", "~"]) || ...
-       looksLikeNumber(strData) || ...
-       looksLikeDate(strData);
+        startsWith(strData, ["!", "#", "&", "*", "{", "[", "|", ">", "@", "`"]) || ...
+        contains(strData, ": ") || ...
+        contains(strData, " #") || ...
+        ismember(lower(strData), ["true", "false", "null", "yes", "no", "on", "off", "~"]) || ...
+        looksLikeNumber(strData) || ...
+        looksLikeDate(strData);
 
     if needsQuoting
         % Use double quotes and escape special characters
@@ -329,7 +329,7 @@ function tf = looksLikeDate(str)
     end
     ch = char(str);
     tf = ch(5) == '-' && ch(8) == '-' && ...
-         all(ch([1 2 3 4 6 7 9 10]) >= '0' & ch([1 2 3 4 6 7 9 10]) <= '9');
+        all(ch([1 2 3 4 6 7 9 10]) >= '0' & ch([1 2 3 4 6 7 9 10]) <= '9');
 end
 
 function result = iif(condition, trueVal, falseVal)

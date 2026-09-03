@@ -1,29 +1,29 @@
 function data = readtoml(filename, options)
-% READTOML Read TOML file and return TOMLData object
-%
-%   DATA = READTOML(FILENAME) reads a TOML file and returns a TOMLData object
-%   with dot notation access and support for special characters in field names.
-%
-%   DATA = READTOML(FILENAME, Name, Value) specifies options:
-%       DatetimeType - How to represent dates ('datetime' | 'string')
-%                      Default: 'datetime'
-%
-% Examples:
-%   Read TOML file
-%       config = readtoml('pyproject.toml');
-%       name = config.project.name;
-%       deps = config.("build-system").requires;
-%
-%   Access with special characters
-%       version = config.("project").("version");
-%
-%   Formatted Display 
-%       show(config);
-%
-%   Convert to struct
-%       s = struct(config);
-%
-% See also WRITETOML, TOMLData
+    % READTOML Read TOML file and return TOMLData object
+    %
+    %   DATA = READTOML(FILENAME) reads a TOML file and returns a TOMLData object
+    %   with dot notation access and support for special characters in field names.
+    %
+    %   DATA = READTOML(FILENAME, Name, Value) specifies options:
+    %       DatetimeType - How to represent dates ('datetime' | 'string')
+    %                      Default: 'datetime'
+    %
+    % Examples:
+    %   Read TOML file
+    %       config = readtoml('pyproject.toml');
+    %       name = config.project.name;
+    %       deps = config.("build-system").requires;
+    %
+    %   Access with special characters
+    %       version = config.("project").("version");
+    %
+    %   Formatted Display
+    %       show(config);
+    %
+    %   Convert to struct
+    %       s = struct(config);
+    %
+    % See also WRITETOML, TOMLData
 
     arguments
         filename (1,1) string {mustBeFile}
@@ -56,7 +56,7 @@ end
 
 function data = parseToml(content, datetimeType)
     % Parse TOML content string and return TOMLData object
-    
+
     % Initialize root TOMLData
     data = matlab.io.config.TOMLData;
     currentTable = data;
@@ -212,7 +212,7 @@ function data = setNestedValue(data, pathKeys, finalKey, value)
     key = char(cleanKey(strtrim(pathKeys(1))));
     nestedData = data.(key);
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % At the final level, set the value
         nestedData.(finalKey) = value;
     else
@@ -235,7 +235,7 @@ function data = setNestedValueDirect(data, pathKeys, value)
 
     key = char(cleanKey(strtrim(pathKeys(1))));
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % At the final level, set the value
         data.(key) = value;
     else
@@ -502,7 +502,7 @@ end
 
 function data = setDataPath(data, pathKeys, value)
     % Set a value at a specific path
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         data.(cleanKey(pathKeys(1))) = value;
     else
         key = char(cleanKey(pathKeys(1)));
@@ -522,7 +522,7 @@ function data = updateDataPath(data, pathKeys, value, levelsFromEnd)
     end
 
     key = char(cleanKey(pathKeys(1)));
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         data.(key) = value;
     else
         if isfield(data, key)
@@ -581,7 +581,7 @@ function data = setArrayAtPath(data, arrayPath, arrayOfTables, arrayData)
 
     pathKeys = splitDottedKey(arrayPath);
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % Simple case - direct assignment
         data.(cleanKey(pathKeys(1))) = arrayData;
     else
@@ -617,7 +617,7 @@ end
 
 function pos = findUnquotedChar(str, char)
     % Find position of character not inside quotes
-    
+
     inQuotes = false;
     quoteChar = '';
 
@@ -640,11 +640,11 @@ end
 
 function key = cleanKey(keyStr)
     % Remove quotes from key if present
-    
+
     keyStr = strtrim(keyStr);
 
     if (startsWith(keyStr, '"') && endsWith(keyStr, '"')) || ...
-       (startsWith(keyStr, "'") && endsWith(keyStr, "'"))
+            (startsWith(keyStr, "'") && endsWith(keyStr, "'"))
         key = extractBetween(keyStr, 2, strlength(keyStr) - 1);
     else
         key = keyStr;
@@ -653,7 +653,7 @@ end
 
 function value = parseValue(valueStr, datetimeType)
     % Parse TOML value from string
-    
+
     valueStr = strtrim(valueStr);
 
     % Remove inline comments
@@ -663,21 +663,21 @@ function value = parseValue(valueStr, datetimeType)
     if startsWith(valueStr, "[")
         value = parseArray(valueStr, datetimeType);
 
-    % Inline tables  
+        % Inline tables
     elseif startsWith(valueStr, "{")
         value = parseInlineTable(valueStr, datetimeType);
 
-    % Strings
+        % Strings
     elseif startsWith(valueStr, '"') || startsWith(valueStr, "'")
         value = parseString(valueStr);
 
-    % Booleans
+        % Booleans
     elseif valueStr == "true"
         value = true;
     elseif valueStr == "false"
         value = false;
 
-    % DateTime
+        % DateTime
     elseif isDateTime(valueStr)
         if datetimeType == "datetime"
             value = parseDatetime(valueStr);
@@ -685,7 +685,7 @@ function value = parseValue(valueStr, datetimeType)
             value = char(valueStr);
         end
 
-    % Numbers
+        % Numbers
     else
         value = parseNumber(valueStr);
     end
@@ -693,7 +693,7 @@ end
 
 function valueStr = removeInlineComment(valueStr)
     % Remove inline comments from value string
-    
+
     inQuotes = false;
     quoteChar = '';
 
@@ -714,7 +714,7 @@ end
 
 function arr = parseArray(arrayStr, datetimeType)
     % Parse TOML array
-    
+
     arrayStr = strtrim(arrayStr);
 
     if ~startsWith(arrayStr, "[") || ~endsWith(arrayStr, "]")
@@ -770,7 +770,7 @@ end
 
 function elements = splitArrayElements(content)
     % Split array content by commas, respecting nesting
-    
+
     elements = string.empty;
     currentElement = "";
     depth = 0;
@@ -808,7 +808,7 @@ end
 
 function tbl = parseInlineTable(tableStr, datetimeType)
     % Parse inline table {key = value, ...} - returns TOMLData
-    
+
     tableStr = strtrim(tableStr);
 
     if ~startsWith(tableStr, "{") || ~endsWith(tableStr, "}")
@@ -966,7 +966,7 @@ end
 
 function dt = parseDatetime(str)
     % Parse datetime string
-    
+
     try
         dt = datetime(str, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ssXXX', 'TimeZone', 'UTC');
     catch

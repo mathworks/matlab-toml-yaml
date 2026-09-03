@@ -20,17 +20,17 @@ classdef (Abstract) ConfigurationData < ...
 
     methods
         function obj = ConfigurationData()
-        %CONFIGURATIONDATA Constructor for subclasses
-        %   This is an abstract class. Use YAMLData or TOMLData.
-        %
-        %   Subclass constructors create empty objects. To create from
-        %   existing data, use the informal wrapper functions:
-        %       config = tomldata(myStruct);   % from struct
-        %       config = yamldata(myDict);     % from dictionary
-        %
-        %   See also TOMLDATA, YAMLDATA
+            %CONFIGURATIONDATA Constructor for subclasses
+            %   This is an abstract class. Use YAMLData or TOMLData.
+            %
+            %   Subclass constructors create empty objects. To create from
+            %   existing data, use the informal wrapper functions:
+            %       config = tomldata(myStruct);   % from struct
+            %       config = yamldata(myDict);     % from dictionary
+            %
+            %   See also TOMLDATA, YAMLDATA
 
-        obj.Data = dictionary(string.empty, cell.empty);
+            obj.Data = dictionary(string.empty, cell.empty);
         end
     end
 
