@@ -46,17 +46,17 @@ All work must be done on a branch, not on main. Create a new branch for new work
 
 ### Class Hierarchy
 ```
-ConfigurationData (abstract value class, @-folder)
-├── YAMLData
-└── TOMLData
+ConfigurationStorage
+├── ConfigurationDotAccess (RedefinesDot, OverridesPublicDotMethodCall)
+├── ConfigurationDisplay (CustomDisplay)
+├── ConfigurationToType
+└── TypeToConfigurationData
+      └── ConfigurationData (abstract, @-folder)
+            ├── YAMLData
+            └── TOMLData
 ```
 
-ConfigurationData is decomposed into internal superclasses under `+internal/`:
-- `ConfigurationStorage` — `Data` property, `resolveKey`, `traverse`, `tryConcatenate`, `normalizeVectorOrientation`
-- `ConfigurationDotAccess` — `dotReference`, `dotAssign`, `dotListLength` (inherits `RedefinesDot` + `OverridesPublicDotMethodCall`)
-- `ConfigurationDisplay` — `displayScalarObject`, `displayNonScalarObject`, `getHeader`, `compactRepresentationForSingleLine` (inherits `CustomDisplay`)
-- `ConfigurationToType` — `struct`, `dictionary`, `keys`, `iskey`, `isfield`, `fieldnames`, `map`, `remove`, `rmfield`
-- `TypeToConfigurationData` — `importFrom` (struct/dictionary/containers.Map → ConfigurationData)
+Internal superclasses live in the `matlab.io.config.internal` package. Any undocumented or internal functionality must go in `matlab.io.config.internal`, or use `private`/`protected`/`Hidden` access.
 
 ### Internal Storage (ConfigurationData)
 One protected property:
