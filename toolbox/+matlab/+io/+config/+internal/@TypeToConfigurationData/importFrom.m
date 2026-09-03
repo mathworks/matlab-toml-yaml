@@ -1,7 +1,7 @@
 function obj = importFrom(obj, inputData)
-%IMPORTFROM Import data from struct or dictionary
-%   Converts a struct or dictionary into a ConfigurationData object,
-%   preserving the subclass type (YAMLData stays YAMLData, etc.).
+%IMPORTFROM Import data from struct, dictionary, or containers.Map
+%   Converts a struct, dictionary, or containers.Map into a
+%   ConfigurationData object, preserving the subclass type.
 %
 %   For struct arrays, returns an array of ConfigurationData objects
 %   with the same shape as the input struct array.
@@ -31,8 +31,14 @@ elseif isa(inputData, 'dictionary')
         end
         obj.(key) = val;
     end
+elseif isa(inputData, 'containers.Map')
+    keyList = keys(inputData);
+    for i = 1:numel(keyList)
+        key = string(keyList{i});
+        obj.(key) = inputData(keyList{i});
+    end
 else
     error('ConfigurationData:InvalidInput', ...
-        'Input must be struct or dictionary. Got %s.', class(inputData));
+        'Input must be struct, dictionary, or containers.Map. Got %s.', class(inputData));
 end
 end

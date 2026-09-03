@@ -30,15 +30,12 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "host = ""example.com""");
         end
 
-        function testContainersMapInputErrors(testCase)
-            % Issue #40: containers.Map is not an accepted input type. Both
-            % writers now say so consistently; invert this if #40 is resolved
-            % by adding support rather than by documenting the restriction.
-            data = containers.Map("port", 8080);
+        function testContainersMapInputWritesSuccessfully(testCase)
+            data = containers.Map('port', 8080);
 
-            testCase.verifyError(@() testCase.writeAndRead(data), ...
-                "writetoml:InvalidInput", ...
-                "Issue #40: containers.Map input is not supported");
+            text = testCase.writeAndRead(data);
+
+            testCase.verifySubstring(text, "port = 8080");
         end
 
         function testUnsupportedInputTypeErrors(testCase)

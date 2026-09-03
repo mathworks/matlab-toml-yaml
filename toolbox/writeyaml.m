@@ -4,7 +4,7 @@ function writeyaml(data, filename, options)
 %
 %   WRITEYAML(DATA, FILENAME) writes to the specified file.
 %
-%   DATA can be a YAMLData object, struct, or dictionary.
+%   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
 %
 %   WRITEYAML(..., Name, Value) specifies additional options using
 %   name-value pairs:
@@ -52,11 +52,11 @@ function writeyaml(data, filename, options)
     end
 
     % Convert input to YAMLData for consistent processing
-    if isa(data, 'dictionary') || isstruct(data)
+    if isa(data, 'dictionary') || isstruct(data) || isa(data, 'containers.Map')
         data = yamldata(data);
     elseif ~isa(data, 'matlab.io.config.ConfigurationData')
         error("writeyaml:InvalidInput", ...
-            "Input must be YAMLData, struct, or dictionary.");
+            "Input must be YAMLData, struct, dictionary, or containers.Map.");
     end
 
     % Convert ArrayStyle to boolean for internal use

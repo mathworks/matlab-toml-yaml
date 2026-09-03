@@ -78,15 +78,13 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
         % ConfigurationData object, struct or dictionary. Everything else is
         % turned away before any conversion happens.
 
-        function testContainersMapInputErrors(testCase)
-            % Issue #40: containers.Map is not an accepted input type, in
-            % either writer. Invert this if #40 is resolved by adding support
-            % rather than by documenting the restriction.
+        function testContainersMapInputWritesSuccessfully(testCase)
             data = containers.Map({'alpha', 'beta'}, {1, "two"});
 
-            testCase.verifyError(@() testCase.writeAndRead(data), ...
-                "writeyaml:InvalidInput", ...
-                "Issue #40: containers.Map input is not supported");
+            text = testCase.writeAndRead(data);
+
+            testCase.verifySubstring(text, "alpha: 1");
+            testCase.verifySubstring(text, "beta: two");
         end
 
         function testCellArrayInputErrors(testCase)
