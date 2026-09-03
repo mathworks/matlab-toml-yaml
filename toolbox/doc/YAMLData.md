@@ -45,8 +45,6 @@ data = readyaml(filename)
 ### Data Modification
 - [`rmfield`](#rmfield) — Remove a field
 - [`remove`](#remove) — Remove a key (alias for rmfield)
-- [`copy`](#copy) — Create deep copy of object
-
 ### Display
 - [`show`](#show) — Display contents as YAML text
 
@@ -148,10 +146,6 @@ original = readyaml("config.yaml");
 % Assignment creates independent copy
 copied = original;
 copied.database.port = 5433;  % Does NOT modify original
-
-% copy() method also works
-another = copy(original);
-another.database.port = 5434;  % Does NOT modify original
 ```
 
 ### Create from Struct
@@ -205,12 +199,10 @@ For comprehensive examples, see [readyamlExample.m](../../examples/readyamlExamp
 YAMLData is a value class:
 - Assignment creates independent copies
 - Modifications to one copy do not affect others
-- The `copy()` method is provided for compatibility but is equivalent to assignment
 
 ```matlab
 data1 = yamldata();
 data2 = data1;          % Independent copy
-data3 = copy(data1);    % Also independent copy
 ```
 
 ### Dot Notation Implementation

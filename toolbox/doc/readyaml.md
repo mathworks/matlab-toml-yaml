@@ -50,7 +50,7 @@ YAML data as a YAMLData object.
 - Dot notation for field access: `data.field`
 - Special character keys using dynamic field names: `data.("field-name")`
 - Conversion to struct: `s = struct(data)`
-- Methods: `keys`, `isfield`, `show`, `copy`
+- Methods: `keys`, `isfield`, `show`
 
 ## Examples
 

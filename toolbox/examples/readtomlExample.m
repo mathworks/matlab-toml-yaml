@@ -107,12 +107,9 @@ if isfield(project, "project") %[output:group:94bc2248]
     end
 end %[output:group:94bc2248]
 %%
-%[text] Use show and describe for formatted display (function syntax required)
+%[text] Use show for formatted display (function syntax required)
 %[text] Project structure:
 show(project) %[output:82e03ecb]
-%%
-%[text] Use `describe` for a compact structural overview showing types and sizes:
-describe(project)
 %%
 %[text] ## Data Types in TOML
 %[text] TOML supports various data types
