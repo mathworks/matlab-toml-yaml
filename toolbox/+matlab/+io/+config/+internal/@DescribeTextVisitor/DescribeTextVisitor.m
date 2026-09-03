@@ -21,7 +21,11 @@ classdef DescribeTextVisitor < matlab.io.config.internal.DescribeVisitor
                     matlab.io.config.internal.pluralize("key", nKeys));
             else
                 childLines = traverse(childObj, obj, depth + 1);
-                result = join(childLines, "");
+                if isempty(childLines)
+                    result = "(no keys)";
+                else
+                    result = join(childLines, "");
+                end
             end
         end
 
