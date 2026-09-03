@@ -2,7 +2,7 @@ function writetoml(data, filename, options)
 % WRITETOML Write data to TOML file
 %
 %   WRITETOML(DATA) writes DATA to 'untitled.toml' in the current directory.
-%   DATA can be a TOMLData object, struct, or dictionary.
+%   DATA can be a TOMLData object, struct, dictionary, or containers.Map.
 %
 %   WRITETOML(DATA, FILENAME) writes DATA to the specified TOML file.
 %
@@ -98,11 +98,11 @@ function writetoml(data, filename, options)
     end
 
     % Convert input to TOMLData for consistent processing
-    if isa(data, 'dictionary') || isstruct(data)
+    if isa(data, 'dictionary') || isstruct(data) || isa(data, 'containers.Map')
         data = tomldata(data);
     elseif ~isa(data, 'matlab.io.config.ConfigurationData')
         error("writetoml:InvalidInput", ...
-            "Input must be TOMLData, struct, or dictionary.");
+            "Input must be TOMLData, struct, dictionary, or containers.Map.");
     end
 
     % Convert options for internal use
