@@ -24,5 +24,14 @@ classdef methodsTest < matlab.unittest.TestCase
             plist = string(properties(object));
             testCase.verifyEqual(plist, "A");
         end
+
+        % Array-of-objects case.
+        function testArrayOfObjects(testCase, object)
+            object = [object object];
+            object(1).A = 5;
+            object(2).B = 3;
+            plist = string(properties(object));
+            testCase.verifyEqual(plist, ["A" "B"]);
+        end
     end
 end
