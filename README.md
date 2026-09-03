@@ -93,7 +93,6 @@ See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an in
 This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
 
 - **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.).
-- **Chained indexing**: `obj.field(i).subfield` requires extracting array first (e.g. `tmp = obj.field; val = tmp(i).subfield`).
 
 ## Requirements
 
@@ -106,6 +105,6 @@ Copyright 2026 The MathWorks, Inc. See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on building source code, submitting issues, and pull requests.
 
 ---
