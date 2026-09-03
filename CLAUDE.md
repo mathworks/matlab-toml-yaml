@@ -18,8 +18,17 @@ MATLAB toolbox for reading/writing YAML and TOML configuration files with dot no
 run_matlab_test_file('tests/yamltest.m')
 run_matlab_test_file('tests/tomltest.m')
 run_matlab_test_file('tests/subsasgnTest.m')
-run_matlab_test_file('tests/describeTest.m')
 run_matlab_test_file('tests/ConfigurationPerformanceTest.m')
+```
+
+### Build Tasks
+```matlab
+buildtool           % runs default tasks: lint, test
+buildtool indent    % auto-indent all .m files (uses indentcode)
+buildtool lint      % report Code Analyzer issues
+buildtool fixLint   % auto-fix Code Analyzer issues (R2023a+)
+buildtool test      % run test suite with coverage
+buildtool all       % indent, fixLint, test
 ```
 
 ### Setup Path
@@ -35,7 +44,7 @@ mcp__matlab__check_matlab_code('toolbox/readyaml.m')
 ```
 
 ## Branching Strategy
-All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement. 
+All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement.
 
 ## Code style
 - Don't use ambiguous abbreviations like Arr or Ann in variable names, especially ones that are UpperCase or camelCase. When in doubt, spell out the word.
@@ -44,27 +53,28 @@ All work must be done on a branch, not on main. Create a new branch for new work
 
 ### Class Hierarchy
 ```
-ConfigurationData (abstract value class, base)
+ConfigurationData (abstract value class, @-folder)
 ├── YAMLData
 └── TOMLData
 ```
 
-ConfigurationData inherits from:
-- `matlab.mixin.indexing.RedefinesDot` - custom dot notation
-- `matlab.mixin.indexing.OverridesPublicDotMethodCall` - data keys take priority over methods
-- `matlab.mixin.CustomDisplay` - custom disp/display
+ConfigurationData is decomposed into internal superclasses under `+internal/`:
+- `ConfigurationStorage` — `Data` property, `resolveKey`, `traverse`, `tryConcatenate`, `normalizeVectorOrientation`
+- `ConfigurationDotAccess` — `dotReference`, `dotAssign`, `dotListLength` (inherits `RedefinesDot` + `OverridesPublicDotMethodCall`)
+- `ConfigurationDisplay` — `displayScalarObject`, `displayNonScalarObject`, `getHeader`, `compactRepresentationForSingleLine` (inherits `CustomDisplay`)
+- `ConfigurationToType` — `struct`, `dictionary`, `keys`, `iskey`, `isfield`, `fieldnames`, `map`, `remove`, `rmfield`
+- `TypeToConfigurationData` — `importFrom` (struct/dictionary/containers.Map → ConfigurationData)
 
 ### Internal Storage (ConfigurationData)
-Two protected properties:
-- `Data` - dictionary<string, cell> storing values wrapped in cells (insertion order preserved)
-- `SourceFormat` - string identifying the file format ("yaml", "toml")
+One protected property:
+- `Data` — `dictionary<string, cell>` storing values wrapped in cells (insertion order preserved)
 
-Key aliases (e.g. `build_system` -> `build-system`) are computed on the fly in `resolveKey`. There are no reserved key names — users can have keys named "Data", "SourceFormat", etc.
+Key aliases (e.g. `build_system` → `build-system`) are computed on the fly in `resolveKey`. There are no reserved key names — users can have keys named "Data", etc.
 
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
 
-`ConfigurationData` is abstract. Subclass wrappers: `yamldata()`, `tomldata()`. These accept no args (empty), a struct, or a dictionary.
+`ConfigurationData` is abstract. Subclass wrappers: `yamldata()`, `tomldata()`. These accept no args (empty), a struct, a dictionary, or a containers.Map.
 
 ## Critical Design Decisions
 
@@ -82,7 +92,7 @@ config.isfield
 config.show
 ```
 
-This allows users to have data keys named "keys", "show", "isfield", etc.
+This allows users to have data keys named "keys", "show", "isfield", etc. All public methods are Hidden to keep them out of tab completion.
 
 ### Value Class Semantics
 ConfigurationData is a value class (not handle). Assignment creates independent copies:
@@ -114,53 +124,40 @@ obj(j).Data
 % CORRECT
 keys(obj(j))
 iskey(obj(j), key)
-getData(obj(j), key)
 ```
 
-### show() vs describe()
-- `show(obj)` — value viewer; displays actual data in native format (YAML or TOML). Arrays use ND-array style (`varname(i) =`).
-- `describe(obj)` — schema inspector; shows key hierarchy with MATLAB types and sizes. Supports `Depth=N` limiting and returns a queryable table when called with an output argument.
+### Missing Key Behavior on Arrays
+When accessing a key on a non-scalar array, elements that lack the key return `missing` (coerced to `NaN` for doubles, `<missing>` for strings). The key is not added to the object.
 
-### Missing Key Behavior (Issue #74)
-Reading a missing key returns `missing` instead of erroring:
 ```matlab
-events(3).sensor  % returns missing if events(3) has no "sensor" key
+events = [yamldata(struct("sensor","temp","value",1)) yamldata(struct("value",2))];
+events.sensor   % ["temp" <missing>]
+events(events.sensor == "temp")  % filters correctly
 ```
 
-**Key properties:**
-- The key is **not actually added** to the object — `iskey()` still returns false, `keys()` doesn't include it, `show()` and file writes omit it
-- This is **read-only convenience** without side effects
-- Enables direct filtering: `events(events.sensor == "temperature")` works even when some events lack "sensor"
-- Works naturally for `double` and `string` types (most common in configs)
-- Errors for integer/logical types (MATLAB can't concatenate `missing` with these)
-
-**Use `iskey()` for authoritative key existence checks:**
-```matlab
-iskey(obj, "field")  % true only if key actually exists
-obj.field            % returns missing if absent (read convenience)
-```
+Scalar access on a missing key errors (consistent with struct, dictionary, table, containers.Map). Integer/logical types error because MATLAB cannot concatenate `missing` with these types.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `toolbox/+matlab/+io/+config/ConfigurationData.m` | Abstract base class with dot notation handling (~1,700 lines) |
+| `toolbox/+matlab/+io/+config/@ConfigurationData/` | Abstract base class (@-folder with `properties` override) |
+| `toolbox/+matlab/+io/+config/+internal/` | Superclasses and shared utilities |
 | `toolbox/+matlab/+io/+config/YAMLData.m` | YAML subclass; `show()` prints YAML format |
 | `toolbox/+matlab/+io/+config/TOMLData.m` | TOML subclass; `show()` prints TOML format |
-| `toolbox/readyaml.m` | YAML parser (~500 lines) |
-| `toolbox/readtoml.m` | TOML parser (~1,250 lines, most complex) |
+| `toolbox/readyaml.m` | YAML parser |
+| `toolbox/readtoml.m` | TOML parser (most complex) |
 | `toolbox/writeyaml.m` | YAML writer with formatting options |
 | `toolbox/writetoml.m` | TOML writer with formatting options |
+| `buildfile.m` | Build tasks (indent, lint, fixLint, test, mltbx) |
+| `buildUtilities/` | Helpers for build tasks |
 
 ## Known Limitations
 
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
 - **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
-- **Tab completion**: IDE shows data keys and methods together; methods require function syntax to call
 
 ## Test Files Location
 
-Sample configuration files for testing are in `tests/SampleFiles/` (27+ real-world files including GitHub Actions workflows, Kubernetes manifests, pyproject.toml variants).
-
-
+Sample configuration files for testing are in `tests/SampleFiles/`.
