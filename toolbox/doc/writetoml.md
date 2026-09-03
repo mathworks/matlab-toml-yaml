@@ -35,9 +35,10 @@ Output file path.
 
 #### ArrayStyle
 Style for arrays.
-*Type:* `"flow"` or `"block"`
-*Default:* `"flow"`
+*Type:* `"auto"`, `"flow"`, or `"block"`
+*Default:* `"auto"`
 
+- `"auto"` - Choose flow or block automatically based on array length and complexity
 - `"flow"` - Use inline style as `[1, 2, 3]`
 - `"block"` - Use multi-line style with one item per line
 
