@@ -51,7 +51,6 @@ classdef dataConstructorTest < matlab.unittest.TestCase
         end
 
         function testCreatesFromCellValuedDictionary(testCase, constructor)
-            % Only cell-valued dictionaries are supported; see issue #26.
             input = configureDictionary("string", "cell");
             input("host") = {"example.com"};
             input("port") = {8080};
@@ -61,6 +60,16 @@ classdef dataConstructorTest < matlab.unittest.TestCase
             testCase.verifyClass(result, constructor.class);
             testCase.verifyEqual(keys(result), ["host", "port"]);
             testCase.verifyEqual(result.port, 8080);
+        end
+
+        function testCreatesFromPlainValuedDictionary(testCase, constructor)
+            input = dictionary(["host", "port"], ["example.com", "8080"]);
+
+            result = constructor.make(input);
+
+            testCase.verifyClass(result, constructor.class);
+            testCase.verifyEqual(result.host, "example.com");
+            testCase.verifyEqual(result.port, "8080");
         end
 
         function testUnsupportedInputErrors(testCase, constructor)

@@ -201,5 +201,47 @@ classdef displayTest < matlab.unittest.TestCase
             testCase.verifySubstring(output, "TOMLData with 1 key]", ...
                 "The compact representation should use the short class name");
         end
+
+        % --- disp: colon alignment with special-character keys ----------
+
+        function testColonsAlignWithMangledKeyNames(testCase)
+            config = yamldata();
+            config.("host") = "localhost";
+            config.("123-key") = "value";
+
+            output = evalc('disp(config)');
+
+            lines = splitlines(output);
+            colonPositions = [];
+            for i = 1:numel(lines)
+                idx = strfind(lines{i}, ':');
+                if ~isempty(idx) && contains(lines{i}, 'host') || ...
+                        contains(lines{i}, '123-key')
+                    colonPositions(end+1) = idx(1); %#ok<AGROW>
+                end
+            end
+            testCase.verifyGreaterThanOrEqual(numel(colonPositions), 2, ...
+                "Should find at least two key lines with colons");
+            testCase.verifyEqual(numel(unique(colonPositions)), 1, ...
+                "Colons should align to the same column");
+        end
+
+        % --- show: writerArgs forwarded on scalar path ------------------
+
+        function testShowForwardsWriterArgsOnScalarPath(testCase)
+            config = testCase.makeTOML();
+            called = {};
+            capturingWriter = @(varargin) captureArgs(varargin{:});
+
+            function captureArgs(varargin)
+                called = varargin;
+                writelines("", varargin{2});
+            end
+
+            evalc('matlab.io.config.internal.showAsFormat(config, capturingWriter, {"TableStyle", "inline"})');
+
+            testCase.verifyGreaterThan(numel(called), 2, ...
+                "Writer should receive extra arguments on the scalar path");
+        end
     end
 end
