@@ -301,16 +301,14 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
 
         function testUnwritablePathErrors(testCase)
             % The counterpart of writeyamlInputTest/testUnwritablePathErrors.
-            % Note the identifier says FileOpenError while writeyaml calls
-            % the same situation FileWriteError, and neither writer opens the
-            % file itself any more; both use writelines.
+            % Both writers report this the same way.
             config = tomldata();
             config.a = 1;
 
             testCase.verifyError(...
                 @() writetoml(config, "/nonexistent-directory-for-tests/out.toml"), ...
-                "tomlToolbox:writetoml:FileOpenError", ...
-                "A path that cannot be written should raise FileOpenError");
+                "tomlToolbox:writetoml:FileWriteError", ...
+                "A path that cannot be written should raise FileWriteError");
         end
 
         % --- Cell values ---------------------------------------------------

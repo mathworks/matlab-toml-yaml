@@ -69,7 +69,7 @@ function writeyaml(data, filename, options)
     try
         yamlText = generateYAML(data, 0, options.NumIndentationSpaces, flowStyle, options.Precision, addSectionSpacing);
     catch ME
-        error('yamlToolbox:yamlwrite:GenerateError', ...
+        error('yamlToolbox:writeyaml:GenerateError', ...
             'Error generating YAML content: %s', ME.message);
     end
 
@@ -77,7 +77,7 @@ function writeyaml(data, filename, options)
     try
         writelines(yamlText, filename, WriteMode="overwrite");
     catch ME
-        error('yamlToolbox:yamlwrite:FileWriteError', ...
+        error('yamlToolbox:writeyaml:FileWriteError', ...
             'Unable to write to file "%s": %s', filename, ME.message);
     end
 end
