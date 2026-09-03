@@ -34,6 +34,11 @@ buildtool all       % indent, fixLint, test
 ## Branching Strategy
 All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement.
 
+## Pre-PR Checklist
+- Run `buildtool indent` and `buildtool lint` before submitting a PR. Commit any resulting changes.
+- Run `buildtool test` and verify that code coverage has not regressed compared to the base branch.
+- Before starting work on an issue, review all open and closed issues, discussions, and other open branches to check for prior work, related decisions, or overlapping efforts.
+
 ## Code style
 - Don't use ambiguous abbreviations like Arr or Ann in variable names, especially ones that are UpperCase or camelCase. When in doubt, spell out the word.
 
