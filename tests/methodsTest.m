@@ -31,7 +31,7 @@ classdef methodsTest < matlab.unittest.TestCase
             object(1).A = 5;
             object(2).B = 3;
             plist = string(properties(object));
-            testCase.verifyEqual(plist, ["A" "B"]);
+            testCase.verifyEqual(plist, ["A" "B"]');
         end
     end
 end
