@@ -7,8 +7,11 @@ function plan = buildfile
 
     plan = buildplan(localfunctions);
 
-    % Run the shipped (TOML/YAML) test suite by default.
-    plan.DefaultTasks = "test";
+    plan.DefaultTasks = ["lint", "test"];
+
+    plan("test").Dependencies = "lint";
+    plan("fixLint").Dependencies = "indent";
+    plan("all").Dependencies = ["indent", "fixLint", "test"];
 end
 
 function testTask(~)
@@ -164,4 +167,9 @@ function fixLintTask(~)
         fprintf("\nRemaining issues (require manual fix):\n");
         disp(manual(:, ["Location", "Severity", "CheckID", "Description"]));
     end
+end
+
+function allTask(~)
+% Auto-format, fix lint issues, and run the test suite.
+%   Orchestrated via dependencies: indent → fixLint → test (which includes lint).
 end
