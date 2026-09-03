@@ -502,7 +502,7 @@ classdef tomltest < matlab.unittest.TestCase
         end
 
         function testWriteMissingValue(testCase)
-            % Test writing a missing value (serializes as empty string)
+            % Test writing a missing value (MEX writer omits the key)
             data = tomldata();
             data.name = "test";
             data.optional = missing;
@@ -511,7 +511,9 @@ classdef tomltest < matlab.unittest.TestCase
             writetoml(data, filename);
 
             content = string(fileread(filename));
-            testCase.verifyTrue(contains(content, 'optional = ""'));
+            testCase.verifyTrue(contains(content, 'name = "test"'));
+            testCase.verifyFalse(contains(content, 'optional'), ...
+                "A missing value should be omitted from the output");
         end
 
         %% Input Conversion Tests
