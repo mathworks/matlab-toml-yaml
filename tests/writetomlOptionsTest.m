@@ -297,6 +297,22 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "host = ""example.com""");
         end
 
+        % --- Error wrappers ------------------------------------------------
+
+        function testUnwritablePathErrors(testCase)
+            % The counterpart of writeyamlInputTest/testUnwritablePathErrors.
+            % Note the identifier says FileOpenError while writeyaml calls
+            % the same situation FileWriteError, and neither writer opens the
+            % file itself any more; both use writelines.
+            config = tomldata();
+            config.a = 1;
+
+            testCase.verifyError(...
+                @() writetoml(config, "/nonexistent-directory-for-tests/out.toml"), ...
+                "tomlToolbox:writetoml:FileOpenError", ...
+                "A path that cannot be written should raise FileOpenError");
+        end
+
         % --- Cell values ---------------------------------------------------
 
         function testCellValueIsWrittenAsAnArray(testCase)
