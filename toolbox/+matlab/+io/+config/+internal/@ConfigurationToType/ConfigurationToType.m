@@ -1,7 +1,7 @@
 classdef (Abstract) ConfigurationToType < matlab.io.config.internal.ConfigurationStorage
     %CONFIGURATIONTOTYPE Conversion from ConfigurationData to MATLAB types
 
-    methods
+    methods (Hidden)
         k = keys(obj)
 
         tf = isfield(obj, key)

@@ -34,6 +34,19 @@ classdef (Abstract) ConfigurationData < ...
         end
     end
 
-    % properties(obj) is defined in properties.m (signature omitted here
-    % because 'properties' is a reserved keyword in classdef blocks).
+    methods (Hidden)
+        function p = properties(obj)
+            %PROPERTIES Return list of dynamic properties (keys)
+            %   Returns cell array of char for MATLAB IDE tab completion.
+            p = cellstr(keys(obj.Data));
+        end
+
+        function show(obj)
+            showImpl(obj);
+        end
+    end
+
+    methods (Access=protected)
+        showImpl(obj)
+    end
 end

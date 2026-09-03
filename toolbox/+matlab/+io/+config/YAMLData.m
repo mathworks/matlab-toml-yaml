@@ -15,8 +15,8 @@ classdef YAMLData < matlab.io.config.ConfigurationData
     %
     %   See also: YAMLDATA, READYAML, WRITEYAML
 
-    methods
-        function show(obj)
+    methods (Access=protected)
+        function showImpl(obj)
             %SHOW Display contents as YAML
             %   show(obj) displays the YAMLData object as YAML text.
             matlab.io.config.internal.showAsFormat(obj, @writeyaml);

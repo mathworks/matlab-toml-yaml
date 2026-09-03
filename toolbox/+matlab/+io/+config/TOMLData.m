@@ -18,8 +18,8 @@ classdef TOMLData < matlab.io.config.ConfigurationData
     %
     %   See also TOMLDATA, READTOML, WRITETOML
 
-    methods
-        function show(obj)
+    methods (Access=protected)
+        function showImpl(obj)
             %SHOW Display the data in TOML format
             matlab.io.config.internal.showAsFormat(obj, @writetoml, ...
                 {"TableArrayStyle", "expanded"});
