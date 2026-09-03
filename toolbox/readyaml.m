@@ -116,7 +116,6 @@ end
 function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat, datetimeType)
     %PARSEBLOCK Parse a block of YAML lines
 
-    data = struct;
     fields = {};
     values = {};
     nextLine = startLine;

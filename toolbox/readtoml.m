@@ -290,14 +290,11 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
             directParentPath = join(remainingKeys(1:end-1), ".");
             parent = getDataPathFromObj(parentElement, directParentPath);
 
+            arrayPath = tablePath;
             if ~isfield(parent, lastKey)
-                % First element
                 parent.(lastKey) = newElement;
                 arrayIndex = 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             elseif isKey(arrayOfTables, tablePath)
-                % Append to existing array
                 currentArray = parent.(lastKey);
                 if isa(currentArray, 'matlab.io.config.TOMLData')
                     parent.(lastKey) = [currentArray, newElement];
@@ -306,25 +303,21 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
                         'Key "%s" is not a TOMLData array', lastKey);
                 end
                 arrayIndex = arrayOfTables(tablePath) + 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" already exists and is not an array of tables', lastKey);
             end
+            arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
 
             % Write back the modified parent to parentElement using the path
             parentElement = setNestedValueDirect(parentElement, remainingKeys(1:end-1), parent);
         else
             % Direct child of parent element
+            arrayPath = tablePath;
             if ~isfield(parentElement, lastKey)
-                % First element
                 parentElement.(lastKey) = newElement;
                 arrayIndex = 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             elseif isKey(arrayOfTables, tablePath)
-                % Append to existing array
                 currentArray = parentElement.(lastKey);
                 if isa(currentArray, 'matlab.io.config.TOMLData')
                     parentElement.(lastKey) = [currentArray, newElement];
@@ -333,12 +326,11 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
                         'Key "%s" is not a TOMLData array', lastKey);
                 end
                 arrayIndex = arrayOfTables(tablePath) + 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" already exists and is not an array of tables', lastKey);
             end
+            arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
         end
 
         % Write the modified parent element back to the parent array
@@ -368,29 +360,24 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
         % Create new element
         newElement = matlab.io.config.TOMLData;
 
+        arrayPath = tablePath;
         if ~isfield(parent, lastKey)
-            % First element - just assign
             parent.(lastKey) = newElement;
             arrayIndex = 1;
-            arrayPath = tablePath;
-            arrayOfTables(tablePath) = arrayIndex;
         elseif isKey(arrayOfTables, tablePath)
-            % Append to existing array
             currentArray = parent.(lastKey);
             if isa(currentArray, 'matlab.io.config.TOMLData')
-                % Use vertical concatenation for column-oriented arrays (Issue #77)
                 parent.(lastKey) = [currentArray; newElement];
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" is not a TOMLData array', lastKey);
             end
             arrayIndex = arrayOfTables(tablePath) + 1;
-            arrayPath = tablePath;
-            arrayOfTables(tablePath) = arrayIndex;
         else
             error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                 'Key "%s" already exists and is not an array of tables', lastKey);
         end
+        arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
 
         % Write parent back to rootData
         if numel(keys) > 1
@@ -1091,7 +1078,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
         % Check for triple quotes first
         if i <= strlength(fullLine) - 2
             threeChars = extractBetween(fullLine, i, i+2);
-            if (threeChars == '"""' || threeChars == "'''") && ~inQuotes
+            if (threeChars == """""""" || threeChars == "'''") && ~inQuotes
                 inTripleQuotes = ~inTripleQuotes;
                 quoteChar = extractBetween(fullLine, i, i);
                 i = i + 3;
@@ -1102,7 +1089,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
         c = extractBetween(fullLine, i, i);
 
         if ~inTripleQuotes
-            if (c == '"' || c == "'") && ~inQuotes
+            if (c == """" || c == "'") && ~inQuotes
                 inQuotes = true;
                 quoteChar = c;
             elseif c == quoteChar && inQuotes
@@ -1136,7 +1123,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
             % Check for triple quotes first
             if i <= strlength(nextLine) - 2
                 threeChars = extractBetween(nextLine, i, i+2);
-                if (threeChars == '"""' || threeChars == "'''") && ~inQuotes
+                if (threeChars == """""""" || threeChars == "'''") && ~inQuotes
                     inTripleQuotes = ~inTripleQuotes;
                     quoteChar = extractBetween(nextLine, i, i);
                     i = i + 3;
@@ -1147,7 +1134,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
             c = extractBetween(nextLine, i, i);
 
             if ~inTripleQuotes
-                if (c == '"' || c == "'") && ~inQuotes
+                if (c == """" || c == "'") && ~inQuotes
                     inQuotes = true;
                     quoteChar = c;
                 elseif c == quoteChar && inQuotes

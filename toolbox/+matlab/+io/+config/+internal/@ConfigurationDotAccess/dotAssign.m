@@ -22,7 +22,7 @@ function obj = dotAssign(obj, indexOp, varargin)
             for i = 1:numElements
                 obj(i) = dotAssign(obj(i), indexOp, value(i));
             end
-        elseif isscalar(indexOp) && ~(isscalar(value) || isscalar(value))
+        elseif isscalar(indexOp) && ~isscalar(value)
             error('ConfigurationData:SizeMismatch', ...
                 'Value size (%d) does not match array size (%d).', ...
                 numel(value), numElements);

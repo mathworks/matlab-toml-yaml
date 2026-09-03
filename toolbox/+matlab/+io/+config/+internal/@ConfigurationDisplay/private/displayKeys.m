@@ -8,10 +8,10 @@ function displayKeys(obj, originalKeys)
             fieldName = char(matlab.lang.makeValidName(originalKeys(i)));
             s.(fieldName) = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, originalKeys(i));
         end
-        groups = matlab.mixin.util.PropertyGroup(s);
+        groups = matlab.mixin.util.PropertyGroup(s); %#ok<NASGU> used in evalc below
     else
         % Name-only form: just list key names
-        groups = matlab.mixin.util.PropertyGroup(cellstr(originalKeys));
+        groups = matlab.mixin.util.PropertyGroup(cellstr(originalKeys)); %#ok<NASGU> used in evalc below
     end
 
     % Capture output, restore original key names where aliased
