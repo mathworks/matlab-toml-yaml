@@ -1,6 +1,6 @@
 function [text, quoted] = formatYAMLScalar(value, precision)
-%formatYAMLScalar Format a MATLAB scalar value for YAML output.
-%   Called by writeyamlMex to convert typed values to YAML text.
+    %formatYAMLScalar Format a MATLAB scalar value for YAML output.
+    %   Called by writeyamlMex to convert typed values to YAML text.
 
     arguments
         value
@@ -102,5 +102,5 @@ function tf = looksLikeDate(str)
     end
     ch = char(str);
     tf = ch(5) == '-' && ch(8) == '-' && ...
-         all(ch([1 2 3 4 6 7 9 10]) >= '0' & ch([1 2 3 4 6 7 9 10]) <= '9');
+        all(ch([1 2 3 4 6 7 9 10]) >= '0' & ch([1 2 3 4 6 7 9 10]) <= '9');
 end
