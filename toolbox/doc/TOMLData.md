@@ -45,8 +45,6 @@ data = readtoml(filename)
 ### Data Modification
 - [`rmfield`](#rmfield) — Remove a field
 - [`remove`](#remove) — Remove a key (alias for rmfield)
-- [`copy`](#copy) — Create deep copy of object
-
 ### Display
 - [`show`](#show) — Display contents as TOML text
 
@@ -176,10 +174,6 @@ original = readtoml("config.toml");
 % Assignment creates independent copy
 copied = original;
 copied.server.port = 8081;  % Does NOT modify original
-
-% copy() method also works
-another = copy(original);
-another.server.port = 8082;  % Does NOT modify original
 ```
 
 ### Create from Struct
@@ -217,12 +211,10 @@ For comprehensive examples, see [readtomlExample.m](../../examples/readtomlExamp
 TOMLData is a value class:
 - Assignment creates independent copies
 - Modifications to one copy do not affect others
-- The `copy()` method is provided for compatibility but is equivalent to assignment
 
 ```matlab
 data1 = tomldata();
 data2 = data1;          % Independent copy
-data3 = copy(data1);    % Also independent copy
 ```
 
 ### TOML-Specific Features

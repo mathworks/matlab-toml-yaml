@@ -44,7 +44,7 @@ TOML data as a TOMLData object.
 - Dot notation for key access: `data.field`
 - Special character keys using dynamic field names: `data.("field-name")`
 - Conversion to struct: `s = struct(data)`
-- Methods: `keys`, `isfield`, `show`, `copy`
+- Methods: `keys`, `isfield`, `show`
 
 ## Examples
 

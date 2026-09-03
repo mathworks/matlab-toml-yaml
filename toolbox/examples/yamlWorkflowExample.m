@@ -23,12 +23,6 @@ iskey(steps,"with") %[output:20e7cbfe]
 %[text] `keys` on an array returns the **union** of all key names across every element — the same list shown in the display above:
 keys(steps) %[output:67d88dd6]
 %%
-%[text] A second output gives you the key set for each element individually, as a cell array the same size as `steps`:
-[allKeys, perStep] = keys(steps) %[output:5c10ae58] %[output:495f2791]
-%%
-%[text] `isequal(perStep{:})` is a concise way to check whether every element has identical keys:
-isequal(perStep{:}) %[output:8a6899e0]
-%%
 %[text] ## Find a Step by Name
 %[text] Logical indexing works on YAMLData arrays just like MATLAB numeric arrays. Combine with dot access to filter by field value.
 isMatlabSetup = steps.name == "Setup MATLAB";
@@ -76,15 +70,6 @@ delete("ci_updated.yaml")
 %---
 %[output:67d88dd6]
 %   data: {"dataType":"matrix","outputData":{"columns":3,"header":"1×3 string array","name":"ans","rows":1,"type":"string","value":[["name","uses","with"]]}}
-%---
-%[output:5c10ae58]
-%   data: {"dataType":"matrix","outputData":{"columns":3,"header":"1×3 string array","name":"allKeys","rows":1,"type":"string","value":[["name","uses","with"]]}}
-%---
-%[output:495f2791]
-%   data: {"dataType":"tabular","outputData":{"columns":4,"header":"1×4 cell array","name":"perStep","rows":1,"type":"cell","value":[["1×2 string","1×3 string","1×3 string","1×3 string"]]}}
-%---
-%[output:8a6899e0]
-%   data: {"dataType":"textualVariable","outputData":{"header":"logical","name":"ans","value":"   0\n"}}
 %---
 %[output:99d0467d]
 %   data: {"dataType":"textualVariable","outputData":{"name":"matlabStep","value":"  <a href=\"matlab:helpPopup('matlab.io.config.YAMLData')\" style=\"font-weight:bold\">YAMLData<\/a> with keys:\n\n    name: \"Setup MATLAB\"\n    uses: \"matlab-actions\/setup-matlab@v2\"\n    with: [1x1 YAMLData with 2 keys]\n\n    <a href=\"matlab:show(matlabStep)\">Show all values<\/a>\n"}}
