@@ -1,32 +1,32 @@
 classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
-    
+
     properties
         TempFolder
         LargeTomlFile
         LargeYamlFile
         LargeYamlArrayFile
     end
-    
+
     properties(Constant)
         NumArrayItems = 10000;
         NumTableKeys = 2000;
     end
-    
+
     methods(TestClassSetup)
         function setupFiles(testCase)
             import matlab.unittest.fixtures.TemporaryFolderFixture
             import matlab.unittest.fixtures.PathFixture
-            
+
             % Add toolbox to path
             toolboxPath = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'toolbox');
             testCase.applyFixture(PathFixture(toolboxPath));
-            
+
             fixture = testCase.applyFixture(TemporaryFolderFixture);
             testCase.TempFolder = fixture.Folder;
-            
+
             testCase.LargeTomlFile = fullfile(testCase.TempFolder, 'large.toml');
             generateLargeTomlFile(testCase.LargeTomlFile, testCase.NumArrayItems, testCase.NumTableKeys);
-            
+
             testCase.LargeYamlFile = fullfile(testCase.TempFolder, 'large.yaml');
             generateLargeYamlFile(testCase.LargeYamlFile, testCase.NumArrayItems, testCase.NumTableKeys);
 
@@ -34,38 +34,38 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
             generateLargeYamlArrayFile(testCase.LargeYamlArrayFile, testCase.NumArrayItems);
         end
     end
-    
+
     methods(Test)
         function testReadLargeTOML(testCase)
             testCase.startMeasuring();
             readtoml(testCase.LargeTomlFile);
-            testCase.stopMeasuring(); 
+            testCase.stopMeasuring();
         end
-        
+
         function testReadLargeYAML(testCase)
             testCase.startMeasuring();
             readyaml(testCase.LargeYamlFile);
             testCase.stopMeasuring();
         end
-        
+
         function testAccessTOML(testCase)
             data = readtoml(testCase.LargeTomlFile);
             testCase.startMeasuring();
-            val1 = data.array_section.data(end); 
+            val1 = data.array_section.data(end);
             keyName = "key" + round(testCase.NumTableKeys/2);
             val2 = data.key_section.(keyName);
             testCase.stopMeasuring();
         end
-        
+
         function testAccessYAML(testCase)
             data = readyaml(testCase.LargeYamlFile);
             testCase.startMeasuring();
             if isstruct(data.array_section.data)
-                 val1 = data.array_section.data(end);
+                val1 = data.array_section.data(end);
             elseif iscell(data.array_section.data)
-                 val1 = data.array_section.data{end};
+                val1 = data.array_section.data{end};
             else
-                 val1 = data.array_section.data(end);
+                val1 = data.array_section.data(end);
             end
             keyName = "key" + round(testCase.NumTableKeys/2);
             val2 = data.key_section.(keyName);
@@ -79,7 +79,7 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
             writetoml(data, outFile);
             testCase.stopMeasuring();
         end
-        
+
         function testWriteLargeYAML(testCase)
             data = readyaml(testCase.LargeYamlFile);
             outFile = fullfile(testCase.TempFolder, 'output.yaml');
@@ -87,7 +87,7 @@ classdef ConfigurationPerformanceTest < matlab.perftest.TestCase
             writeyaml(data, outFile);
             testCase.stopMeasuring();
         end
-        
+
         function testYAMLArrayTypeChecking(testCase)
             % Exercises cellfun type checks in readyaml.m (allText,
             % allNumeric, allLogical)

@@ -1,29 +1,29 @@
 function data = readtoml(filename, options)
-% READTOML Read TOML file and return TOMLData object
-%
-%   DATA = READTOML(FILENAME) reads a TOML file and returns a TOMLData object
-%   with dot notation access and support for special characters in field names.
-%
-%   DATA = READTOML(FILENAME, Name, Value) specifies options:
-%       DatetimeType - How to represent dates ('datetime' | 'string')
-%                      Default: 'datetime'
-%
-% Examples:
-%   Read TOML file
-%       config = readtoml('pyproject.toml');
-%       name = config.project.name;
-%       deps = config.("build-system").requires;
-%
-%   Access with special characters
-%       version = config.("project").("version");
-%
-%   Formatted Display 
-%       show(config);
-%
-%   Convert to struct
-%       s = struct(config);
-%
-% See also WRITETOML, TOMLData
+    % READTOML Read TOML file and return TOMLData object
+    %
+    %   DATA = READTOML(FILENAME) reads a TOML file and returns a TOMLData object
+    %   with dot notation access and support for special characters in field names.
+    %
+    %   DATA = READTOML(FILENAME, Name, Value) specifies options:
+    %       DatetimeType - How to represent dates ('datetime' | 'string')
+    %                      Default: 'datetime'
+    %
+    % Examples:
+    %   Read TOML file
+    %       config = readtoml('pyproject.toml');
+    %       name = config.project.name;
+    %       deps = config.("build-system").requires;
+    %
+    %   Access with special characters
+    %       version = config.("project").("version");
+    %
+    %   Formatted Display
+    %       show(config);
+    %
+    %   Convert to struct
+    %       s = struct(config);
+    %
+    % See also WRITETOML, TOMLData
 
     arguments
         filename (1,1) string {mustBeFile}
@@ -56,7 +56,7 @@ end
 
 function data = parseToml(content, datetimeType)
     % Parse TOML content string and return TOMLData object
-    
+
     % Initialize root TOMLData
     data = matlab.io.config.TOMLData;
     currentTable = data;
@@ -212,7 +212,7 @@ function data = setNestedValue(data, pathKeys, finalKey, value)
     key = char(cleanKey(strtrim(pathKeys(1))));
     nestedData = data.(key);
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % At the final level, set the value
         nestedData.(finalKey) = value;
     else
@@ -235,7 +235,7 @@ function data = setNestedValueDirect(data, pathKeys, value)
 
     key = char(cleanKey(strtrim(pathKeys(1))));
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % At the final level, set the value
         data.(key) = value;
     else
@@ -290,14 +290,11 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
             directParentPath = join(remainingKeys(1:end-1), ".");
             parent = getDataPathFromObj(parentElement, directParentPath);
 
+            arrayPath = tablePath;
             if ~isfield(parent, lastKey)
-                % First element
                 parent.(lastKey) = newElement;
                 arrayIndex = 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             elseif isKey(arrayOfTables, tablePath)
-                % Append to existing array
                 currentArray = parent.(lastKey);
                 if isa(currentArray, 'matlab.io.config.TOMLData')
                     parent.(lastKey) = [currentArray, newElement];
@@ -306,25 +303,21 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
                         'Key "%s" is not a TOMLData array', lastKey);
                 end
                 arrayIndex = arrayOfTables(tablePath) + 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" already exists and is not an array of tables', lastKey);
             end
+            arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
 
             % Write back the modified parent to parentElement using the path
             parentElement = setNestedValueDirect(parentElement, remainingKeys(1:end-1), parent);
         else
             % Direct child of parent element
+            arrayPath = tablePath;
             if ~isfield(parentElement, lastKey)
-                % First element
                 parentElement.(lastKey) = newElement;
                 arrayIndex = 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             elseif isKey(arrayOfTables, tablePath)
-                % Append to existing array
                 currentArray = parentElement.(lastKey);
                 if isa(currentArray, 'matlab.io.config.TOMLData')
                     parentElement.(lastKey) = [currentArray, newElement];
@@ -333,12 +326,11 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
                         'Key "%s" is not a TOMLData array', lastKey);
                 end
                 arrayIndex = arrayOfTables(tablePath) + 1;
-                arrayPath = tablePath;
-                arrayOfTables(tablePath) = arrayIndex;
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" already exists and is not an array of tables', lastKey);
             end
+            arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
         end
 
         % Write the modified parent element back to the parent array
@@ -368,29 +360,24 @@ function [rootData, tableRef, tablePath, arrayIndex, arrayPath] = handleArrayOfT
         % Create new element
         newElement = matlab.io.config.TOMLData;
 
+        arrayPath = tablePath;
         if ~isfield(parent, lastKey)
-            % First element - just assign
             parent.(lastKey) = newElement;
             arrayIndex = 1;
-            arrayPath = tablePath;
-            arrayOfTables(tablePath) = arrayIndex;
         elseif isKey(arrayOfTables, tablePath)
-            % Append to existing array
             currentArray = parent.(lastKey);
             if isa(currentArray, 'matlab.io.config.TOMLData')
-                % Use vertical concatenation for column-oriented arrays (Issue #77)
                 parent.(lastKey) = [currentArray; newElement];
             else
                 error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                     'Key "%s" is not a TOMLData array', lastKey);
             end
             arrayIndex = arrayOfTables(tablePath) + 1;
-            arrayPath = tablePath;
-            arrayOfTables(tablePath) = arrayIndex;
         else
             error('tomlToolbox:readtoml:InvalidArrayOfTables', ...
                 'Key "%s" already exists and is not an array of tables', lastKey);
         end
+        arrayOfTables(tablePath) = arrayIndex; %#ok<NASGU>
 
         % Write parent back to rootData
         if numel(keys) > 1
@@ -502,7 +489,7 @@ end
 
 function data = setDataPath(data, pathKeys, value)
     % Set a value at a specific path
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         data.(cleanKey(pathKeys(1))) = value;
     else
         key = char(cleanKey(pathKeys(1)));
@@ -522,7 +509,7 @@ function data = updateDataPath(data, pathKeys, value, levelsFromEnd)
     end
 
     key = char(cleanKey(pathKeys(1)));
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         data.(key) = value;
     else
         if isfield(data, key)
@@ -581,7 +568,7 @@ function data = setArrayAtPath(data, arrayPath, arrayOfTables, arrayData)
 
     pathKeys = splitDottedKey(arrayPath);
 
-    if numel(pathKeys) == 1
+    if isscalar(pathKeys)
         % Simple case - direct assignment
         data.(cleanKey(pathKeys(1))) = arrayData;
     else
@@ -617,7 +604,7 @@ end
 
 function pos = findUnquotedChar(str, char)
     % Find position of character not inside quotes
-    
+
     inQuotes = false;
     quoteChar = '';
 
@@ -640,11 +627,11 @@ end
 
 function key = cleanKey(keyStr)
     % Remove quotes from key if present
-    
+
     keyStr = strtrim(keyStr);
 
     if (startsWith(keyStr, '"') && endsWith(keyStr, '"')) || ...
-       (startsWith(keyStr, "'") && endsWith(keyStr, "'"))
+            (startsWith(keyStr, "'") && endsWith(keyStr, "'"))
         key = extractBetween(keyStr, 2, strlength(keyStr) - 1);
     else
         key = keyStr;
@@ -653,7 +640,7 @@ end
 
 function value = parseValue(valueStr, datetimeType)
     % Parse TOML value from string
-    
+
     valueStr = strtrim(valueStr);
 
     % Remove inline comments
@@ -663,21 +650,21 @@ function value = parseValue(valueStr, datetimeType)
     if startsWith(valueStr, "[")
         value = parseArray(valueStr, datetimeType);
 
-    % Inline tables  
+        % Inline tables
     elseif startsWith(valueStr, "{")
         value = parseInlineTable(valueStr, datetimeType);
 
-    % Strings
+        % Strings
     elseif startsWith(valueStr, '"') || startsWith(valueStr, "'")
         value = parseString(valueStr);
 
-    % Booleans
+        % Booleans
     elseif valueStr == "true"
         value = true;
     elseif valueStr == "false"
         value = false;
 
-    % DateTime
+        % DateTime
     elseif isDateTime(valueStr)
         if datetimeType == "datetime"
             value = parseDatetime(valueStr);
@@ -685,7 +672,7 @@ function value = parseValue(valueStr, datetimeType)
             value = char(valueStr);
         end
 
-    % Numbers
+        % Numbers
     else
         value = parseNumber(valueStr);
     end
@@ -693,7 +680,7 @@ end
 
 function valueStr = removeInlineComment(valueStr)
     % Remove inline comments from value string
-    
+
     inQuotes = false;
     quoteChar = '';
 
@@ -714,7 +701,7 @@ end
 
 function arr = parseArray(arrayStr, datetimeType)
     % Parse TOML array
-    
+
     arrayStr = strtrim(arrayStr);
 
     if ~startsWith(arrayStr, "[") || ~endsWith(arrayStr, "]")
@@ -770,7 +757,7 @@ end
 
 function elements = splitArrayElements(content)
     % Split array content by commas, respecting nesting
-    
+
     elements = string.empty;
     currentElement = "";
     depth = 0;
@@ -808,7 +795,7 @@ end
 
 function tbl = parseInlineTable(tableStr, datetimeType)
     % Parse inline table {key = value, ...} - returns TOMLData
-    
+
     tableStr = strtrim(tableStr);
 
     if ~startsWith(tableStr, "{") || ~endsWith(tableStr, "}")
@@ -966,7 +953,7 @@ end
 
 function dt = parseDatetime(str)
     % Parse datetime string
-    
+
     try
         dt = datetime(str, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ssXXX', 'TimeZone', 'UTC');
     catch
@@ -1091,7 +1078,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
         % Check for triple quotes first
         if i <= strlength(fullLine) - 2
             threeChars = extractBetween(fullLine, i, i+2);
-            if (threeChars == '"""' || threeChars == "'''") && ~inQuotes
+            if (threeChars == """""""" || threeChars == "'''") && ~inQuotes
                 inTripleQuotes = ~inTripleQuotes;
                 quoteChar = extractBetween(fullLine, i, i);
                 i = i + 3;
@@ -1102,7 +1089,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
         c = extractBetween(fullLine, i, i);
 
         if ~inTripleQuotes
-            if (c == '"' || c == "'") && ~inQuotes
+            if (c == """" || c == "'") && ~inQuotes
                 inQuotes = true;
                 quoteChar = c;
             elseif c == quoteChar && inQuotes
@@ -1136,7 +1123,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
             % Check for triple quotes first
             if i <= strlength(nextLine) - 2
                 threeChars = extractBetween(nextLine, i, i+2);
-                if (threeChars == '"""' || threeChars == "'''") && ~inQuotes
+                if (threeChars == """""""" || threeChars == "'''") && ~inQuotes
                     inTripleQuotes = ~inTripleQuotes;
                     quoteChar = extractBetween(nextLine, i, i);
                     i = i + 3;
@@ -1147,7 +1134,7 @@ function [fullLine, newIndex] = accumulateMultiLineValue(lines, startIndex)
             c = extractBetween(nextLine, i, i);
 
             if ~inTripleQuotes
-                if (c == '"' || c == "'") && ~inQuotes
+                if (c == """" || c == "'") && ~inQuotes
                     inQuotes = true;
                     quoteChar = c;
                 elseif c == quoteChar && inQuotes
