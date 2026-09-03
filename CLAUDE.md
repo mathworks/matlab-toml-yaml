@@ -10,34 +10,13 @@ This project uses the [MATLAB Agentic Toolkit](https://github.com/matlab/matlab-
 
 MATLAB toolbox for reading/writing YAML and TOML configuration files with dot notation access. No external toolboxes required. Minimum MATLAB version: R2022b (for `dictionary` type with value semantics).
 
-## Commands
+## Contributing Guidelines and Build Instructions
 
-### Setup Path
-```matlab
-openProject("matlab-toml-yaml.prj")  % or: addpath('toolbox')
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on building source code, submitting issues and pull requests.
 
-### Build Tasks
-```matlab
-buildtool           % runs default tasks: lint, test
-buildtool indent    % auto-indent all .m files (uses indentcode)
-buildtool lint      % report Code Analyzer issues
-buildtool fixLint   % auto-fix Code Analyzer issues (R2023a+)
-buildtool test      % run test suite with coverage
-buildtool all       % indent, fixLint, test
-```
-
-### MCP Server
+## MCP Server
 - `mcp__matlab__run_matlab_test_file` with `script_path` — run a single test file (or use `buildtool test` for the full suite)
 - `mcp__matlab__check_matlab_code` with `file_path` — static analysis on a single file (or use `buildtool lint` for all library files)
-
-## Branching Strategy
-All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement.
-
-## Pre-PR Checklist
-- Run `buildtool indent` and `buildtool lint` before submitting a PR. Commit any resulting changes.
-- Run `buildtool test` and verify that code coverage has not regressed compared to the base branch.
-- Before starting work on an issue, review all open and closed issues, discussions, and other open branches to check for prior work, related decisions, or overlapping efforts.
 
 ## Code style
 - Don't use ambiguous abbreviations like Arr or Ann in variable names, especially ones that are UpperCase or camelCase. When in doubt, spell out the word.
@@ -148,7 +127,6 @@ Scalar access on a missing key errors (consistent with struct, dictionary, table
 ## Known Limitations
 
 - **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
-- **Array indexing**: Cannot do `obj.field(i).subfield = value` directly; extract array first
 - **Comments**: Not preserved during round-trip
 
 ## Test Files Location
