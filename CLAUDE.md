@@ -18,6 +18,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on building source code, s
 - `mcp__matlab__run_matlab_test_file` with `script_path` — run a single test file (or use `buildtool test` for the full suite)
 - `mcp__matlab__check_matlab_code` with `file_path` — static analysis on a single file (or use `buildtool lint` for all library files)
 
+## Required skill usage
+
+When working on .m files in this project, always use the appropriate MATLAB skill:
+
+- **Before committing any .m file changes**: run /matlab-review-code
+- **When debugging errors or unexpected behavior**: run /matlab-debug-code
+- **When writing or updating tests**: run /matlab-write-test
+- **When optimizing performance**: run /matlab-optimize-performance or /matlab-write-performance-tests
+- **When modernizing deprecated patterns**: run /matlab-modernize-code
+- **When adding or editing function help text**: run /matlab-write-help
+- **When reading MathWorks documentation**: run /matlab-read-documentation
+
+Always use the MATLAB MCP tools (check_matlab_code, evaluate_matlab_code, run_matlab_test_file) to validate changes rather than guessing at MATLAB behavior.
+
 ## Code style
 - Don't use ambiguous abbreviations like Arr or Ann in variable names, especially ones that are UpperCase or camelCase. When in doubt, spell out the word.
 
