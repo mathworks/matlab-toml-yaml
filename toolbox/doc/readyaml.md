@@ -8,14 +8,14 @@ The `readyaml` function reads YAML configuration files and returns the data as a
 
 ```matlab
 data = readyaml(filename)
-data = readyaml(filename,ArrayType=rule)
+data = readyaml(filename,Name=Value)
 ```
 
 ## Description
 
 `data = readyaml(filename)` reads the YAML file specified by `filename` and returns the data as a [YAMLData](YAMLData.md) object. YAML sequences (arrays) are automatically converted to the most appropriate MATLAB&reg; array type.
 
-`data = readyaml(filename,ArrayType=rule)` controls how YAML arrays `[item1, item2, ...]` are converted to MATLAB arrays.
+`data = readyaml(filename,Name=Value)` specifies options for array conversion and datetime handling.
 
 ## Input Arguments
 
@@ -39,6 +39,16 @@ Controls array conversion behavior.
 - `"cell"` - Always returns cell arrays for consistency:
   - `[1, 2, 3]` → cell array `{1; 2; 3}`
   - `[a, b, c]` → cell array `{"a"; "b"; "c"}`
+
+#### 'DatetimeType'
+Controls how date-like string values are returned.
+*Type:* `"string"` or `"datetime"`
+*Default:* `"string"`
+
+- `"string"` - Return date-like values as strings (no detection)
+- `"datetime"` - Convert values matching ISO 8601 date patterns (`yyyy-MM-dd`, with optional time component) to MATLAB `datetime` objects
+
+YAML has no native datetime type — all values are plain strings. When `DatetimeType` is `"datetime"`, detection is heuristic: any value matching an ISO 8601 date pattern is parsed as a `datetime`. Values that do not match are returned as strings regardless of this setting. Use this option when the file is known to contain date values.
 
 ## Output Arguments
 
@@ -168,7 +178,7 @@ most commonly used in configuration files. It is **not** a fully compliant YAML
 - **Complex keys** are not supported; mapping keys must be scalar strings.
 - **Flow-style mappings** (e.g. `{name: value}`) are not robustly parsed; use block style. Nested flow-style sequences (e.g. `[[1,2],[3,4]]`) are also not fully supported.
 - **Block scalars** (`|` and `>`) are not explicitly supported and may be parsed incorrectly.
-- **Timestamps** are detected with a regular expression covering a subset of ISO 8601; other date/time formats are read as strings.
+- **Timestamps** are detected heuristically with a regular expression covering a subset of ISO 8601 (only when `DatetimeType="datetime"`); other date/time formats are read as strings.
 - **Comments** (`#`) are removed during parsing and not preserved when writing.
 
 For use cases requiring full spec compliance (for example, complex Kubernetes
