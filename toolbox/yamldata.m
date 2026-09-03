@@ -3,7 +3,7 @@ function data = yamldata(input)
 %   data = YAMLDATA() creates an empty YAMLData object.
 %
 %   data = YAMLDATA(input) creates a YAMLData object initialized from input,
-%   which can be a struct or dictionary.
+%   which can be a struct, dictionary, or containers.Map.
 %
 %   Example:
 %       % Create empty and populate
@@ -15,6 +15,10 @@ function data = yamldata(input)
 %       s.name = 'MyApp';
 %       s.version = '1.0';
 %       config = yamldata(s);
+%
+%       % Create from containers.Map
+%       m = containers.Map({'host','port'}, {'localhost',5432});
+%       config = yamldata(m);
 %
 %   See also: readyaml, writeyaml, matlab.io.config.YAMLData
 
