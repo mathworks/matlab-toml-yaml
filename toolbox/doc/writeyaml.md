@@ -145,6 +145,9 @@ MATLAB types are converted to YAML as follows:
 - `true` → `true`
 - `false` → `false`
 
+**Datetime values:**
+- Converted to YAML sequences based on `string(dt)` conversion.
+
 **Structs and objects:**
 - Converted to YAML mappings (key-value pairs)
 - Nested structs become nested YAML mappings
