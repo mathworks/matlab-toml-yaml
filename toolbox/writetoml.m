@@ -126,8 +126,8 @@ function writetoml(data, filename, options)
     try
         writelines(tomlContent, filename, WriteMode="overwrite");
     catch ME
-        error('tomlToolbox:writetoml:FileOpenError', ...
-            'Cannot open file for writing: %s', filename);
+        error('tomlToolbox:writetoml:FileWriteError', ...
+            'Unable to write to file "%s": %s', filename, ME.message);
     end
 end
 
