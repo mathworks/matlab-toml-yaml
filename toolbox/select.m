@@ -41,9 +41,16 @@ function result = select(obj, selectedKeys)
     % Build result with same class as input
     result = matlab.io.config.internal.createArray(obj);
 
+    allKeys = keys(obj);
     for i = 1:numel(selectedKeys)
         k = selectedKeys(i);
-        canonicalKey = resolveKey(obj, k);
+        canonicalKey = k;
+        for j = 1:numel(allKeys)
+            if allKeys(j) == k || matlab.lang.makeValidName(allKeys(j)) == k
+                canonicalKey = allKeys(j);
+                break;
+            end
+        end
         result.(canonicalKey) = obj.(k);
     end
 end
