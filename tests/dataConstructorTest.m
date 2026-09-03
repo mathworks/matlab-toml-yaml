@@ -72,6 +72,25 @@ classdef dataConstructorTest < matlab.unittest.TestCase
             testCase.verifyEqual(result.port, "8080");
         end
 
+        function testCreatesFromContainersMap(testCase, constructor)
+            input = containers.Map({'host', 'port'}, {'example.com', 8080});
+
+            result = constructor.make(input);
+
+            testCase.verifyClass(result, constructor.class);
+            testCase.verifyEqual(result.host, "example.com");
+            testCase.verifyEqual(result.port, 8080);
+        end
+
+        function testCreatesFromContainersMapWithSingleEntry(testCase, constructor)
+            input = containers.Map("name", "app");
+
+            result = constructor.make(input);
+
+            testCase.verifyClass(result, constructor.class);
+            testCase.verifyEqual(result.name, "app");
+        end
+
         function testUnsupportedInputErrors(testCase, constructor)
             testCase.verifyError(@() constructor.make(42), ...
                 "ConfigurationData:InvalidInput", ...
