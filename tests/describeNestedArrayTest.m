@@ -100,18 +100,15 @@ classdef describeNestedArrayTest < matlab.unittest.TestCase
 
         % --- Sections with no keys -----------------------------------------
 
-        function testEmptySectionErrorsInTextForm(testCase)
-            % Issue #38: traversing a section with no keys yields an empty
-            % line list, and join() of an empty string array returns
-            % <missing>, which fprintf refuses to print. Invert this to
-            % assert the rendered output when #38 is fixed.
+        function testEmptySectionRendersNoKeys(testCase)
             config = yamldata();
             config.name = "app";
             config.section = yamldata();
 
-            testCase.verifyError(@() describe(config), ...
-                "MATLAB:string:MissingNotSupported", ...
-                "Issue #38: an empty nested section breaks text describe");
+            output = evalc('describe(config)');
+
+            testCase.verifySubstring(output, "(no keys)", ...
+                "An empty nested section should render as '(no keys)'");
         end
 
         function testEmptySectionWorksInTableForm(testCase)

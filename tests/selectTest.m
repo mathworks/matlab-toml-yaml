@@ -161,14 +161,13 @@ classdef selectTest < matlab.unittest.TestCase
             testCase.verifyEqual(result.("build-system"), "cmake");
         end
 
-        function testAliasedKeyNameSelectsTheValue(testCase)
-            % The MATLAB-valid alias resolves to the same underlying value.
-            % Not asserting the resulting key name here: selecting by alias
-            % currently renames the key, which is tracked separately.
+        function testAliasedKeyPreservesOriginalName(testCase)
             config = testCase.makeConfig();
 
             result = select(config, "build_system");
 
+            testCase.verifyEqual(keys(result), "build-system", ...
+                "Selecting by alias should keep the original key name");
             testCase.verifyEqual(result.build_system, "cmake", ...
                 "Alias should resolve to the aliased key's value");
         end

@@ -267,21 +267,13 @@ classdef mergeTest < matlab.unittest.TestCase
                 "MATLAB:validation:UnableToConvert");
         end
 
-        function testObjectArrayBaseMergesElementwise(testCase)
-            % merge declares no size restriction on base, and applies the
-            % override to every element rather than rejecting the array.
+        function testObjectArrayBaseErrors(testCase)
             base = testCase.makeBase();
             override = yamldata();
             override.timeout = 60;
 
-            result = merge([base, base], override);
-
-            testCase.verifySize(result, [1 2], ...
-                "The result should keep the shape of the base array");
-            testCase.verifyEqual([result.timeout], [60, 60], ...
-                "The override should apply to every element");
-            testCase.verifyEqual(keys(result(1)), keys(base), ...
-                "Base-only keys should survive in each element");
+            testCase.verifyError(@() merge([base, base], override), ...
+                "MATLAB:validation:IncompatibleSize");
         end
     end
 end

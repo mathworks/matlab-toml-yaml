@@ -18,8 +18,16 @@ end
 output = evalc('matlab.mixin.CustomDisplay.displayPropertyGroups(obj, groups)');
 for i = 1:numel(originalKeys)
     validName = char(matlab.lang.makeValidName(originalKeys(i)));
-    if ~strcmp(validName, char(originalKeys(i)))
-        output = strrep(output, validName, char(originalKeys(i)));
+    origName = char(originalKeys(i));
+    if ~strcmp(validName, origName)
+        lenDiff = length(validName) - length(origName);
+        if lenDiff > 0
+            output = strrep(output, validName, [repmat(' ', 1, lenDiff) origName]);
+        elseif lenDiff < 0
+            output = strrep(output, [repmat(' ', 1, -lenDiff) validName], origName);
+        else
+            output = strrep(output, validName, origName);
+        end
     end
 end
 fprintf('%s', output);

@@ -33,8 +33,8 @@ function result = merge(base, override)
 %   See also: yamldata, tomldata, select
 
     arguments
-        base matlab.io.config.ConfigurationData
-        override matlab.io.config.ConfigurationData
+        base (1,1) matlab.io.config.ConfigurationData
+        override (1,1) matlab.io.config.ConfigurationData
     end
 
     % Start with a copy of base (same class preserved by value semantics)
