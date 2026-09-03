@@ -26,7 +26,10 @@ elseif isa(inputData, 'dictionary')
     for i = 1:numel(keyList)
         key = keyList(i);
         val = inputData(key);
-        obj.(key) = val{1};
+        if iscell(val)
+            val = val{1};
+        end
+        obj.(key) = val;
     end
 else
     error('ConfigurationData:InvalidInput', ...
