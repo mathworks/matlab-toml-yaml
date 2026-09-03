@@ -141,6 +141,6 @@ function fixLintTask(~)
 end
 
 function allTask(~)
-% Auto-format, fix lint issues, and run the test suite.
-%   Orchestrated via dependencies: indent → fixLint → test (which includes lint).
+    % Auto-format, fix lint issues, and run the test suite.
+    %   Orchestrated via dependencies: indent → fixLint → test (which includes lint).
 end

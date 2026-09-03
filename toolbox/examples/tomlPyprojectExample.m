@@ -3,7 +3,7 @@
 type pyproject.toml %[output:96068141]
 %%
 %[text] ## Read the Package File
-%[text] Read `pyproject.toml`. 
+%[text] Read `pyproject.toml`.
 pkg = readtoml("pyproject.toml") %[output:32488b5f]
 %%
 %[text] ## We are interested in the authors
@@ -41,7 +41,7 @@ type("pyproject_updated.toml") %[output:336b6a4c]
 %%
 %[text] ## Cleanup
 delete("pyproject_updated.toml")
-%[text] 
+%[text]
 
 %[appendix]{"version":"1.0"}
 %---

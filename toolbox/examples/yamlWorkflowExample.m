@@ -43,7 +43,7 @@ type("ci_updated.yaml") %[output:4c36d9c6]
 %%
 %[text] ## Cleanup
 delete("ci_updated.yaml")
-%[text] 
+%[text]
 
 %[appendix]{"version":"1.0"}
 %---
