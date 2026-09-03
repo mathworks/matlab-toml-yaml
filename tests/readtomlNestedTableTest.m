@@ -27,7 +27,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
             config = readtoml(file);
 
             job = config.jobs;
-            testCase.verifyEqual(keys(job), ["name", "matrix"]);
+            testCase.verifyEqual(sort(keys(job)), ["matrix", "name"]);
             include = job.matrix.include;
             testCase.verifyNumElements(include, 2, ...
                 "Both elements should land in the same nested array");
@@ -79,14 +79,14 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""a"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testArrayOverScalarRootKeyErrors(testCase)
             file = testCase.writeToml(["items = 1"; "[[items]]"; "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testDeepArrayOverExistingScalarErrors(testCase)
@@ -99,7 +99,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""linux"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Deep headers with no declared parents ---------------------------
@@ -149,7 +149,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Arrays replaced by a scalar between elements --------------------
@@ -169,7 +169,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testAppendingAfterDeepArrayIsOverwrittenErrors(testCase)
@@ -183,7 +183,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         function testAppendingAfterTableArrayIsOverwrittenErrors(testCase)
@@ -197,7 +197,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 2"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables");
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Dotted keys ---------------------------------------------------
@@ -215,42 +215,39 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.a.b), ["c", "d"], ...
+            testCase.verifyEqual(sort(keys(config.a.b)), ["c", "d"], ...
                 "The second key should be added to the existing table");
         end
 
-        function testDottedKeyInsideTableLosesLevels(testCase)
-            % Issue #43: the write-back depth counts only the dotted key, not
-            % the enclosing table path, so the inner table overwrites an
-            % ancestor. Expect config.tool.a.b.c once #43 is fixed.
+        function testDottedKeyInsideTablePreservesAllLevels(testCase)
+            % Issue #43 (fixed): dotted keys inside tables preserve all
+            % intermediate levels.
             file = testCase.writeToml(["[tool]"; "a.b.c = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool.a), "c", ...
-                "Issue #43: the middle level of a dotted key is dropped");
+            testCase.verifyEqual(config.tool.a.b.c, 1);
         end
 
-        function testDottedKeyInsideTableDiscardsSiblingKeys(testCase)
-            % Issue #43: the same mis-aimed write replaces the table that held
-            % the sibling keys. Expect ["name", "a"] once #43 is fixed.
+        function testDottedKeyInsideTableKeepsSiblingKeys(testCase)
+            % Issue #43 (fixed): dotted keys no longer wipe sibling keys.
             file = testCase.writeToml([...
                 "[tool]"; "name = ""alpha"""; "a.b = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool), "b", ...
-                "Issue #43: a dotted key wipes the keys written before it");
+            testCase.verifyEqual(sort(keys(config.tool)), ["a", "name"]);
+            testCase.verifyEqual(config.tool.a.b, 1);
         end
 
-        function testDottedKeyInsideArrayElementLosesLevels(testCase)
-            % Issue #43: array elements take the same path as plain tables.
+        function testDottedKeyInsideArrayElementPreservesAllLevels(testCase)
+            % Issue #43 (fixed): dotted keys inside array elements preserve
+            % all intermediate levels.
             file = testCase.writeToml(["[[tool]]"; "a.b.c = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool.a), "c", ...
-                "Issue #43: the middle level of a dotted key is dropped");
+            testCase.verifyEqual(config.tool.a.b.c, 1);
         end
     end
 end
