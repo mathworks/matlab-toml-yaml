@@ -43,7 +43,7 @@ function result = select(obj, selectedKeys)
 
     for i = 1:numel(selectedKeys)
         k = selectedKeys(i);
-        % Use dot access to go through dotReference (handles key aliasing)
-        result.(k) = obj.(k);
+        canonicalKey = resolveKey(obj, k);
+        result.(canonicalKey) = obj.(k);
     end
 end
