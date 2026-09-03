@@ -86,7 +86,7 @@ See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an in
 - [`tomlPyprojectExample.m`](toolbox/examples/tomlPyprojectExample.m) - Working with `pyproject.toml`
 
 **Demo Scripts:**
-- [`conversionExample.m`](toolbox/examples/conversionExample.m) - Converting between structs, dictionaries, and data objects
+- [`conversionExample.m`](toolbox/examples/conversionExample.m) - Converting between structs, dictionaries, containers.Map, and data objects
 
 ## Limitations
 

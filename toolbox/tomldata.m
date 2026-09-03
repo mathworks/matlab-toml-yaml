@@ -3,7 +3,7 @@ function data = tomldata(input)
 %   data = TOMLDATA() creates an empty TOMLData object.
 %
 %   data = TOMLDATA(input) creates a TOMLData object initialized from input,
-%   which can be a struct or dictionary.
+%   which can be a struct, dictionary, or containers.Map.
 %
 %   Example:
 %       % Create empty and populate
@@ -15,6 +15,10 @@ function data = tomldata(input)
 %       s.name = 'MyApp';
 %       s.version = '1.0';
 %       config = tomldata(s);
+%
+%       % Create from containers.Map
+%       m = containers.Map({'host','port'}, {'localhost',5432});
+%       config = tomldata(m);
 %
 %   See also: readtoml, writetoml, matlab.io.config.TOMLData
 
