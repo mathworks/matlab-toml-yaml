@@ -1,6 +1,6 @@
 function [keyNames, texts, quoted, kinds, values] = formatYAMLMap(obj, precision)
-%formatYAMLMap Batch-format all values in a ConfigurationData map.
-%   Called by writeyamlMex to avoid per-scalar feval overhead.
+    %formatYAMLMap Batch-format all values in a ConfigurationData map.
+    %   Called by writeyamlMex to avoid per-scalar feval overhead.
 
     arguments
         obj

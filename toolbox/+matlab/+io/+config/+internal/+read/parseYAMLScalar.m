@@ -1,6 +1,6 @@
 function value = parseYAMLScalar(text, isQuoted, datetimeType)
-%parseYAMLScalar Convert a YAML scalar string to a typed MATLAB value.
-%   Called by readyamlMex to infer types from untyped YAML scalar text.
+    %parseYAMLScalar Convert a YAML scalar string to a typed MATLAB value.
+    %   Called by readyamlMex to infer types from untyped YAML scalar text.
 
     arguments
         text (1,1) string
