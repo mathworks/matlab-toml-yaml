@@ -22,4 +22,30 @@ MathWorks maintains a set of best practices for creating MATLAB&reg; toolboxes: 
 * Examples should be written as [live scripts](https://www.mathworks.com/help/matlab/matlab_prog/what-is-a-live-script-or-function.html) and then [exported as HTML](https://www.mathworks.com/help/matlab/matlab_prog/share-live-scripts.html).
 * We adhere to the [CommonMark](https://commonmark.org/) specification where it does not conflict with GitHub rendering.  If you edit your Markdown in Visual Studio Code or a similar editor, it uses [markdownlint](https://github.com/DavidAnson/markdownlint) to highlight issues in your Markdown.
 
+## Commands
+
+### Setup Path
+```matlab
+openProject("matlab-toml-yaml.prj")  % or: addpath('toolbox')
+```
+
+### Build Tasks
+```matlab
+buildtool           % runs default tasks: lint, test
+buildtool indent    % auto-indent all .m files (uses indentcode)
+buildtool lint      % report Code Analyzer issues
+buildtool fixLint   % auto-fix Code Analyzer issues (R2023a+)
+buildtool test      % run test suite with coverage
+buildtool all       % indent, fixLint, test
+```
+
+## Branching Strategy
+All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement.
+
+## Pre-PR Checklist
+- Run `buildtool indent` and `buildtool lint` before submitting a PR. Commit any resulting changes.
+- Run `buildtool test` and verify that code coverage has not regressed compared to the base branch.
+- Before starting work on an issue, review all open and closed issues, discussions, and other open branches to check for prior work, related decisions, or overlapping efforts.
+
+
 **Again, thanks for contributing, and we look forward to your issues and pull requests!**
