@@ -2,7 +2,7 @@ classdef (Abstract) ConfigurationToType < matlab.io.config.internal.Configuratio
     %CONFIGURATIONTOTYPE Conversion from ConfigurationData to MATLAB types
 
     methods
-        [k, perElementKeys] = keys(obj)
+        k = keys(obj)
 
         tf = isfield(obj, key)
 

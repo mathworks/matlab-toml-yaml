@@ -307,23 +307,6 @@ classdef yamltest < matlab.unittest.TestCase
             testCase.verifyClass(k, 'string');
             testCase.verifyEqual(k, ["name", "uses", "with", "if"]);
 
-            % Second output: per-element cell array, same size as steps
-            [k2, perElem] = keys(steps);
-            testCase.verifyEqual(k2, k);
-            testCase.verifyEqual(size(perElem), size(steps));
-            for i = 1:numel(steps)
-                testCase.verifyClass(perElem{i}, 'string');
-            end
-
-            % First element only has "name" and "uses" (no "with" or "if")
-            testCase.verifyEqual(perElem{1}, ["name", "uses"]);
-
-            % isequal trick: false because keys vary by element
-            testCase.verifyFalse(isequal(perElem{:}));
-
-            % Scalar: second output is a 1x1 cell
-            [kScalar, perElemScalar] = keys(wf);
-            testCase.verifyEqual(perElemScalar, {kScalar});
         end
 
         function testIsFieldMethod(testCase)
