@@ -1,5 +1,5 @@
 %[text] # ReadYAMLExample - Comprehensive guide to reading YAML files
-%[text] This example demonstrates readyaml functionality, showing how to work with YAML configuration files, handle different array types, use the SequenceRule option, and work with GitHub Actions-style configurations.
+%[text] This example demonstrates readyaml functionality, showing how to work with YAML configuration files, handle different array types, use the ArrayType option, and work with GitHub Actions-style configurations.
 %%
 %[text] ## Basic YAML Reading
 %[text] Read a simple YAML file and access its contents
@@ -71,25 +71,25 @@ mixedData = readyaml("mixed_array.yaml");
 %[text] Mixed-type arrays become cell arrays
 mixedData.mixed %[output:9e77c6aa]
 %%
-%[text] ## SequenceRule Option - Auto vs Cell
+%[text] ## ArrayType Option - Auto vs Cell
 %[text] Control how arrays are converted
 yamlArrayTypes = [
     "numbers: [1, 2, 3]"
     "strings: [apple, banana, cherry]"
     "single: [value]"];
 writelines(yamlArrayTypes,"array_types.yaml");
-%[text] Default: SequenceRule="auto" - use specialized arrays when possible
+%[text] Default: ArrayType="auto" - use specialized arrays when possible
 autoData = readyaml("array_types.yaml");
-%[text] With SequenceRule="auto" (default):
+%[text] With ArrayType="auto" (default):
 autoData.numbers %[output:948071b5]
 %%
-%[text] SequenceRule="cell" - always use cell arrays for consistency
-cellData = readyaml("array_types.yaml", SequenceRule="cell");
-%[text] With SequenceRule="cell":
+%[text] ArrayType="cell" - always use cell arrays for consistency
+cellData = readyaml("array_types.yaml", ArrayType="cell");
+%[text] With ArrayType="cell":
 cellData.numbers %[output:89327b5e]
 %%
-%[text] Why use SequenceRule="cell"?
-%[text] Use SequenceRule='cell' when:
+%[text] Why use ArrayType="cell"?
+%[text] Use ArrayType='cell' when:
 %[text] - You need consistent types regardless of content
 %[text] - A file might change from single value to multiple values
 %[text] - You want predictable behavior for dynamic configurations\\ \
@@ -219,7 +219,7 @@ serverStruct %[output:26964a0f]
 %[text] Best practices for reading YAML files:
 %[text] - Use dot notation for simple keys: config.name
 %[text] - Use quoted syntax for special characters: config.("app-name")
-%[text] - Use SequenceRule='cell' for dynamic configurations
+%[text] - Use ArrayType='cell' for dynamic configurations
 %[text] - Use keys to explore unknown structures
 %[text] - Use iskey to check for optional fields
 %[text] - Reading missing keys returns `missing` — enables simplified filtering without `iskey()` guards

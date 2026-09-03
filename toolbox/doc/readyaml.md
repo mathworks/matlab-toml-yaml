@@ -8,14 +8,14 @@ The `readyaml` function reads YAML configuration files and returns the data as a
 
 ```matlab
 data = readyaml(filename)
-data = readyaml(filename,SequenceRule=rule)
+data = readyaml(filename,ArrayType=rule)
 ```
 
 ## Description
 
 `data = readyaml(filename)` reads the YAML file specified by `filename` and returns the data as a [YAMLData](YAMLData.md) object. YAML sequences (arrays) are automatically converted to the most appropriate MATLAB&reg; array type.
 
-`data = readyaml(filename,SequenceRule=rule)` controls how YAML flow-style sequences `[item1, item2, ...]` are converted to MATLAB arrays.
+`data = readyaml(filename,ArrayType=rule)` controls how YAML arrays `[item1, item2, ...]` are converted to MATLAB arrays.
 
 ## Input Arguments
 
@@ -26,7 +26,7 @@ File path to read.
 
 ### Name-Value Arguments
 
-#### 'SequenceRule'
+#### 'ArrayType'
 Controls array conversion behavior.
 *Type:* string scalar - `"auto"` or `"cell"`
 *Default:* `"auto"`
@@ -75,7 +75,7 @@ appName = config.("app-name")  % "MyApplication"
 port = config.port             % 8080
 ```
 
-### Using SequenceRule for Consistent Array Types
+### Using ArrayType for Consistent Array Types
 
 Control how arrays are returned:
 
@@ -89,7 +89,7 @@ config1 = readyaml("ports.yaml");
 config1.ports  % [8080; 8443; 9000] - numeric array
 
 % Force cell array for consistency
-config2 = readyaml("ports.yaml","SequenceRule","cell");
+config2 = readyaml("ports.yaml","ArrayType","cell");
 config2.ports  % {8080; 8443; 9000} - cell array
 ```
 
@@ -116,7 +116,7 @@ For comprehensive examples including GitHub Actions workflows and advanced array
 
 ## Tips
 
-- Use `"SequenceRule","cell"` when you need consistent array types regardless of content, making downstream processing more predictable.
+- Use `"ArrayType","cell"` when you need consistent array types regardless of content, making downstream processing more predictable.
 - Access fields with special characters (hyphens, spaces, etc.) using dynamic field names: `data.("field-name")`.
 - Convert YAMLData to standard structs using `struct(data)` for compatibility with code expecting struct inputs.
 - YAMLData is a value class. Assignment creates independent copies automatically.
@@ -144,11 +144,11 @@ YAML values are converted to MATLAB types as follows:
 **Arrays:**
 - Flow-style: `[item1, item2, item3]`
 - Block-style: List items starting with `-`
-- Both styles support SequenceRule conversion
+- Both styles support ArrayType conversion
 
 ### Array Conversion Details
 
-When `SequenceRule` is `"auto"` (default), arrays are converted based on element types:
+When `ArrayType` is `"auto"` (default), arrays are converted based on element types:
 - All elements numeric → column numeric array
 - All elements text → column string array
 - All elements logical → column logical array

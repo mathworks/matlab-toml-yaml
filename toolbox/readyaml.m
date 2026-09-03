@@ -4,8 +4,8 @@ function data = readyaml(filename, options)
 %   returns the data as a YAMLData object with dot notation access and support
 %   for special characters in field names.
 %
-%   DATA = READYAML(FILENAME, 'SequenceRule', RULE) controls how YAML
-%   flow-style sequences [item1, item2, ...] are converted to MATLAB:
+%   DATA = READYAML(FILENAME, 'ArrayType', TYPE) controls how YAML
+%   arrays [item1, item2, ...] are converted to MATLAB:
 %
 %   'auto' (default) - Automatically use specialized arrays when possible:
 %                      [1, 2, 3]        → numeric array [1, 2, 3]
@@ -37,7 +37,7 @@ function data = readyaml(filename, options)
 %       config.ports  % [8080, 8443] - numeric array
 %
 %       % Force cell arrays for consistency
-%       config = readyaml('config.yaml', 'SequenceRule', 'cell');
+%       config = readyaml('config.yaml', 'ArrayType', 'cell');
 %       config.ports  % {8080, 8443} - cell array
 %
 %       % Parse ISO 8601 date strings as MATLAB datetime objects
@@ -50,7 +50,7 @@ function data = readyaml(filename, options)
 
     arguments
         filename {mustBeTextScalar, mustBeNonzeroLengthText, mustBeFile}
-        options.SequenceRule {mustBeMember(options.SequenceRule, ["auto", "cell"])} = "auto"
+        options.ArrayType {mustBeMember(options.ArrayType, ["auto", "cell"])} = "auto"
         options.DatetimeType {mustBeMember(options.DatetimeType, ["datetime", "string"])} = "string"
     end
 
@@ -64,7 +64,7 @@ function data = readyaml(filename, options)
 
     % Parse YAML content
     try
-        data = parseYAML(fileContent, options.SequenceRule, options.DatetimeType);
+        data = parseYAML(fileContent, options.ArrayType, options.DatetimeType);
     catch ME
         error('yamlToolbox:readyaml:ParseError', ...
             'Error parsing YAML file "%s": %s', filename, ME.message);
