@@ -12,13 +12,9 @@ MATLAB toolbox for reading/writing YAML and TOML configuration files with dot no
 
 ## Commands
 
-### Run Tests
+### Setup Path
 ```matlab
-% via MCP Server
-run_matlab_test_file('tests/yamltest.m')
-run_matlab_test_file('tests/tomltest.m')
-run_matlab_test_file('tests/subsasgnTest.m')
-run_matlab_test_file('tests/ConfigurationPerformanceTest.m')
+openProject("matlab-toml-yaml.prj")  % or: addpath('toolbox')
 ```
 
 ### Build Tasks
@@ -31,17 +27,9 @@ buildtool test      % run test suite with coverage
 buildtool all       % indent, fixLint, test
 ```
 
-### Setup Path
-```matlab
-addpath('toolbox')
-% Or openProject("matlab-toml-yaml.prj")
-```
-
-### Static Analysis
-```matlab
-% Via MCP server
-mcp__matlab__check_matlab_code('toolbox/readyaml.m')
-```
+### MCP Server
+- `mcp__matlab__run_matlab_test_file` with `script_path` — run a single test file (or use `buildtool test` for the full suite)
+- `mcp__matlab__check_matlab_code` with `file_path` — static analysis on a single file (or use `buildtool lint` for all library files)
 
 ## Branching Strategy
 All work must be done on a branch, not on main. Create a new branch for new work, or switch to an appropriate existing branch for refinement.
