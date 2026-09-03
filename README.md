@@ -92,7 +92,7 @@ See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an in
 
 This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
 
-- **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.).
+- **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.). Being addressed in the [cpp-parser-serializer](https://github.com/mathworks/matlab-toml-yaml/tree/cpp-parser-serializer) branch.
 
 ## Requirements
 
