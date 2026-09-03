@@ -119,34 +119,29 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
             testCase.verifyEqual(readtoml(file).ports, [80; 443]);
         end
 
-        function testMultilineArrayWithTrailingCommentErrors(testCase)
-            % Issue #37: a comment at the end of a continuation line is not
-            % stripped, so the commented-out text is spliced into the value
-            % and the bracket-depth scan stops early. Valid TOML. Invert
-            % this assertion when #37 is fixed.
+        function testMultilineArrayWithTrailingComment(testCase)
+            % Issue #37 (fixed): trailing comments inside multi-line arrays
+            % are valid TOML and now parse correctly with toml11.
             file = testCase.writeToml([...
                 "ports = ["; ...
                 "  80,   # http"; ...
                 "  443,"; ...
                 "]"]);
 
-            testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArray", ...
-                "Issue #37: trailing comments inside multi-line arrays fail");
+            testCase.verifyEqual(readtoml(file).ports, [80; 443]);
         end
 
-        function testMultilineInlineTable(testCase)
-            % The same accumulator handles inline tables spanning lines.
+        function testMultilineInlineTableErrors(testCase)
+            % Multiline inline tables are not valid in TOML v1.0; toml11
+            % correctly rejects them.
             file = testCase.writeToml([...
                 "server = {"; ...
                 "  host = ""alpha"","; ...
                 "  port = 80"; ...
                 "}"]);
 
-            config = readtoml(file);
-
-            testCase.verifyEqual(config.server.host, "alpha");
-            testCase.verifyEqual(config.server.port, 80);
+            testCase.verifyError(@() readtoml(file), ...
+                "MATLAB:mex:CppMexException");
         end
 
         % --- Arrays of tables ---------------------------------------------
@@ -223,7 +218,7 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
             file = testCase.writeToml(["valid = 1"; "garbage"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidSyntax", ...
+                "MATLAB:mex:CppMexException", ...
                 "A non key-value line should be reported as invalid syntax");
         end
 
@@ -236,7 +231,7 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
                 "name = ""alpha"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "tomlToolbox:readtoml:InvalidArrayOfTables", ...
+                "MATLAB:mex:CppMexException", ...
                 "Reusing a scalar key as an array of tables should error");
         end
     end

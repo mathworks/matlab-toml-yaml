@@ -59,8 +59,8 @@ classdef displayTest < matlab.unittest.TestCase
 
             output = evalc('show(config)');
 
-            testCase.verifyEmpty(strtrim(output), ...
-                "An empty object should show as empty output");
+            testCase.verifyEqual(strtrim(output), '{}', ...
+                "An empty object should show as empty mapping");
         end
 
         % --- show: object arrays ----------------------------------------
