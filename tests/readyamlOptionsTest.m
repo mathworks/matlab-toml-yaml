@@ -32,10 +32,8 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
             config = readyaml(file, "DatetimeType", "datetime");
 
-            testCase.verifyClass(config.created, "string", ...
-                "Issue #36: the datetime is stringified on storage");
-            testCase.verifyEqual(config.created, "2020-01-15T00:00:00", ...
-                "Issue #36: a date-only value gains a midnight component");
+            testCase.verifyClass(config.created, "datetime");
+            testCase.verifyEqual(config.created, datetime(2020, 01, 15));
         end
 
         function testDatetimeTypeStringifiesDatetimeWithoutZone(testCase)
@@ -43,8 +41,7 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
             config = readyaml(file, "DatetimeType", "datetime");
 
-            testCase.verifyEqual(config.created, "2020-01-15T10:30:00", ...
-                "A zoneless timestamp survives the round trip unchanged");
+            testCase.verifyEqual(config.created, datetime(2020, 01, 15, 10, 30, 0));
         end
 
         function testDatetimeTypeDropsTimeZone(testCase)
@@ -54,8 +51,7 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
             config = readyaml(file, "DatetimeType", "datetime");
 
-            testCase.verifyEqual(config.created, "2020-01-15T10:30:00", ...
-                "Issue #36: the UTC offset is silently dropped");
+            testCase.verifyEqual(config.created, datetime(2020, 01, 15, 10, 30, 0, 0, TimeZone="UTC"));
         end
 
         function testDatetimeTypeLeavesNonDateStringsAlone(testCase)

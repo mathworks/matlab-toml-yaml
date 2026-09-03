@@ -215,15 +215,15 @@ classdef yamltest < matlab.unittest.TestCase
         function testRoundTripSimple(testCase)
             % Test simple round-trip
             original = yamldata();
-            original.name = 'Test';
+            original.name = "Test";
             original.value = 123;
+            original.time = datetime(2012, 03, 10);
 
             filename = fullfile(pwd, 'test.yaml');
             writeyaml(original, filename);
             restored = readyaml(filename);
 
-            testCase.verifyEqual(restored.name, string(original.name));
-            testCase.verifyEqual(restored.value, original.value);
+            testCase.verifyEqual(restored, original);
         end
 
         function testRoundTripNested(testCase)

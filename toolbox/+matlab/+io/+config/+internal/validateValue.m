@@ -31,14 +31,6 @@ function value = validateValue(obj, value, key)
         return;
     end
 
-    if isa(value, 'datetime')
-        if isa(obj, 'matlab.io.config.TOMLData')
-            return;
-        end
-        value = string(value, 'yyyy-MM-dd''T''HH:mm:ss');
-        return;
-    end
-
     if isa(value, 'duration')
         value = seconds(value);
         return;
