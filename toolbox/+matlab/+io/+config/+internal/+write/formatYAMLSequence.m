@@ -1,6 +1,6 @@
 function [texts, quoted] = formatYAMLSequence(arr, precision)
-%formatYAMLSequence Batch-format all elements of a typed array.
-%   Called by writeyamlMex to avoid per-element feval overhead.
+    %formatYAMLSequence Batch-format all elements of a typed array.
+    %   Called by writeyamlMex to avoid per-element feval overhead.
 
     arguments
         arr
