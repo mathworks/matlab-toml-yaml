@@ -24,6 +24,6 @@ void throwMexError(
     matlab::data::ArrayFactory& factory,
     const std::string& id,
     const std::string& msg) {
-    engine.feval(u"error",
+    engine.feval(u"error", 0,
         {factory.createCharArray(id), factory.createCharArray(msg)});
 }
