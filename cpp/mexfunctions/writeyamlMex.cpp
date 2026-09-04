@@ -59,7 +59,7 @@ public:
         std::ofstream ofs(filename, std::ios::binary);
         if (!ofs) {
             throwMexError(*engine, factory,
-                "writeyamlMex:FileError",
+                "yamlToolbox:writeyaml:FileWriteError",
                 "Cannot open file for writing: " + filename);
             return;
         }
