@@ -26,11 +26,13 @@ classdef FunctionHandleVisitor < matlab.io.config.internal.ConfigurationVisitor
         end
 
         function result = visitNode(obj, key, childObj, depth)
-            if isempty(obj.NodeFcn)
-                result = traverse(childObj, obj, depth + 1);
-            else
+            if ~isempty(obj.NodeFcn)
                 result = obj.NodeFcn(key, childObj, depth);
+                return;
             end
+
+            % Forward to superclass impl for visitNode.
+            result = visitNode@matlab.io.config.internal.ConfigurationVisitor(obj, key, childObj, depth);
         end
 
         function result = visitLeaf(obj, key, value, depth)

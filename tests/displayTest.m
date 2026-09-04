@@ -192,6 +192,16 @@ classdef displayTest < matlab.unittest.TestCase
                 "A nested object array should report its dimensions");
         end
 
+        function testCompactColumnRepresentation(testCase)
+            % compactRepresentationForColumn was redefined to hide the
+            % method - cover that code with a test.
+            t = table(yamldata());
+
+            output = evalc('disp(t)');
+
+            testCase.verifySubstring(output, sprintf("1%s1 YAMLData", char(215)));
+        end
+
         function testNestedTOMLObjectUsesShortClassName(testCase)
             config = tomldata();
             config.database.host = "localhost";
