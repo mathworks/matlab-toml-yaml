@@ -7,13 +7,6 @@ classdef yamltest < matlab.unittest.TestCase
         SectionSpacing = {'loose', 'compact'}
     end
 
-    methods (TestClassSetup)
-        function addToPath(testCase)
-            % Add toolbox folder to path
-            testCase.applyFixture(matlab.unittest.fixtures.PathFixture('../toolbox'));
-        end
-    end
-
     methods (TestMethodSetup)
         function createTempDir(testCase)
             testCase.applyFixture(matlab.unittest.fixtures.WorkingFolderFixture);
@@ -276,11 +269,7 @@ classdef yamltest < matlab.unittest.TestCase
         %% YAMLData Methods Tests
         function testShowMethod(testCase)
             % Test show method exists and runs without error
-            data = yamldata();
-            data.test = 'value';
-
-            % Should not error (use function syntax for method call)
-            testCase.verifyWarningFree(@() show(data));
+            testCase.verifyWarningFree(@() evalc('show(yamldata(struct(test="value")))'));
         end
 
         function testKeysMethod(testCase)
@@ -475,88 +464,7 @@ classdef yamltest < matlab.unittest.TestCase
             restored = readyaml(tempFile);
 
             % Compare semantically
-            testCase.verifyDataEqual(original, restored, filename);
-        end
-
-        function verifyDataEqual(testCase, original, restored, context)
-            % Recursively compare two ConfigurationData objects
-            % Allows for key reordering but requires same keys and values
-
-            % Handle arrays of ConfigurationData (sequence of mappings)
-            if isa(original, 'ConfigurationData') && numel(original) > 1
-                testCase.verifyEqual(numel(restored), numel(original), ...
-                    sprintf('Array length mismatch for %s', context));
-                for j = 1:numel(original)
-                    testCase.verifyDataEqual(original(j), restored(j), ...
-                        sprintf('%s(%d)', context, j));
-                end
-                return;
-            end
-
-            origKeys = sort(keys(original));
-            restKeys = sort(keys(restored));
-
-            testCase.verifyEqual(restKeys, origKeys, ...
-                sprintf('Keys mismatch in %s', context));
-
-            for i = 1:length(origKeys)
-                key = origKeys(i);
-                origVal = original.(key);
-                restVal = restored.(key);
-
-                keyContext = sprintf('%s.%s', context, key);
-
-                if isa(origVal, 'ConfigurationData')
-                    % Recursive comparison for nested objects (includes subclasses like YAMLData)
-                    testCase.verifyTrue(isa(restVal, 'ConfigurationData'), ...
-                        sprintf('Expected ConfigurationData for %s', keyContext));
-                    if isa(restVal, 'ConfigurationData')
-                        testCase.verifyDataEqual(origVal, restVal, keyContext);
-                    end
-                elseif isnumeric(origVal)
-                    % Compare numeric values (allow row/column differences)
-                    testCase.verifyEqual(restVal(:), origVal(:), ...
-                        'AbsTol', 1e-10, ...
-                        sprintf('Numeric mismatch for %s', keyContext));
-                elseif islogical(origVal)
-                    testCase.verifyEqual(restVal, origVal, ...
-                        sprintf('Logical mismatch for %s', keyContext));
-                elseif iscell(origVal)
-                    % Cell arrays (mixed type arrays)
-                    testCase.verifyEqual(numel(restVal), numel(origVal), ...
-                        sprintf('Cell array length mismatch for %s', keyContext));
-                    for j = 1:numel(origVal)
-                        if isa(origVal{j}, 'ConfigurationData')
-                            testCase.verifyDataEqual(origVal{j}, restVal{j}, ...
-                                sprintf('%s{%d}', keyContext, j));
-                        else
-                            testCase.verifyEqual(restVal{j}, origVal{j}, ...
-                                sprintf('Cell element mismatch for %s{%d}', keyContext, j));
-                        end
-                    end
-                elseif isstring(origVal) || ischar(origVal)
-                    % Handle case where restored may be ConfigurationData but original is string
-                    if isa(restVal, 'ConfigurationData')
-                        testCase.verifyFail(sprintf('Type mismatch for %s: expected string, got ConfigurationData', keyContext));
-                    else
-                        testCase.verifyEqual(string(restVal), string(origVal), ...
-                            sprintf('String mismatch for %s', keyContext));
-                    end
-                else
-                    % Generic comparison - but check for ConfigurationData first
-                    if isa(origVal, 'ConfigurationData') || isa(restVal, 'ConfigurationData')
-                        % One is ConfigurationData but we didn't catch it earlier
-                        testCase.verifyTrue(isa(origVal, 'ConfigurationData') && isa(restVal, 'ConfigurationData'), ...
-                            sprintf('Type mismatch for %s: one is ConfigurationData, other is not', keyContext));
-                        if isa(origVal, 'ConfigurationData') && isa(restVal, 'ConfigurationData')
-                            testCase.verifyDataEqual(origVal, restVal, keyContext);
-                        end
-                    else
-                        testCase.verifyEqual(restVal, origVal, ...
-                            sprintf('Value mismatch for %s', keyContext));
-                    end
-                end
-            end
+            testCase.verifyEqual(original, restored, "File didn't round-trip: " + filename);
         end
     end
 end
