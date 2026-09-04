@@ -60,7 +60,7 @@ public:
         std::ofstream ofs(filename, std::ios::binary);
         if (!ofs) {
             throwMexError(*engine, factory,
-                "writetomlMex:FileError",
+                "tomlToolbox:writetoml:FileWriteError",
                 "Cannot open file for writing: " + filename);
             return;
         }
