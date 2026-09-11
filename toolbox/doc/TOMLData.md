@@ -45,6 +45,11 @@ data = readtoml(filename)
 ### Data Modification
 - [`rmfield`](#rmfield) — Remove a field
 - [`remove`](#remove) — Remove a key (alias for rmfield)
+### Format Metadata
+- [`getformat`](getformat.md) — Query format metadata
+- [`setformat`](setformat.md) — Set format metadata
+- [`resetformat`](resetformat.md) — Reset format metadata to defaults
+
 ### Display
 - [`show`](#show) — Display contents as TOML text
 
@@ -191,6 +196,28 @@ config.project.version  % "1.0.0"
 
 % Write struct directly (auto-converted)
 writetoml(s, 'pyproject.toml');
+```
+
+### Metadata-Aware Round-Trip
+
+Format metadata (hex integers, comments, inline tables) is preserved automatically:
+
+```matlab
+% Read TOML with special formatting
+toml = ["# Color in hex", "color = 0xFF", "point = {x = 1, y = 2}"];
+writelines(toml, "config.toml");
+data = readtoml("config.toml");
+
+% Inspect metadata
+getformat(data, "color").IntegerFormat   % "hex"
+getformat(data, "point").TableFormat     % "inline"
+
+% Modify a value, write back — formatting survives
+data.color = 128;
+writetoml(data, "config.toml");
+% # Color in hex
+% color = 0x80
+% point = {x = 1, y = 2}
 ```
 
 For comprehensive examples, see [readtomlExample.m](../../examples/readtomlExample.m).
