@@ -30,11 +30,6 @@ function value = parseYAMLScalar(text, isQuoted, datetimeType)
         value = false;
         return
     end
-    if ismember(lower_text, ["null", "~", ""])
-        value = [];
-        return
-    end
-
     numValue = str2double(text);
     if ~isnan(numValue)
         value = numValue;

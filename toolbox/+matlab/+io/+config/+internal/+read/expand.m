@@ -83,17 +83,9 @@ function result = parseYAMLSequence(values, datetimeType)
         parsed{j} = matlab.io.config.internal.read.parseYAMLScalar( ...
             values(j), false, datetimeType);
     end
-    if isempty(parsed)
-        result = parsed;
-        return
-    end
     firstClass = class(parsed{1});
     if all(cellfun(@(x) isa(x, firstClass), parsed))
-        try
-            result = vertcat(parsed{:});
-        catch
-            result = parsed;
-        end
+        result = vertcat(parsed{:});
     else
         result = parsed;
     end
