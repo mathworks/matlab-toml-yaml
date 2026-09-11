@@ -55,12 +55,169 @@ private:
         }
     }
 
+    matlab::data::Array emptyArray() {
+        return factory.createArray<double>({0, 0});
+    }
+
+    // --- Style struct helpers ---
+
+    matlab::data::Array commentsToArray(const toml::value& val) {
+        const auto& comments = val.comments();
+        size_t nc = comments.size();
+        if (nc == 0) {
+            return factory.createArray<matlab::data::MATLABString>({0, 0});
+        }
+        auto arr = factory.createArray<matlab::data::MATLABString>(
+            {nc, 1});
+        for (size_t j = 0; j < nc; ++j) {
+            arr[j][0] = matlab::data::MATLABString(
+                factory.createCharArrayFromUTF8(comments[j]).toUTF16());
+        }
+        return arr;
+    }
+
+    matlab::data::Array makeTOMLStyleStruct(
+            const std::string& containerStyle,
+            const std::string& scalarStyle,
+            bool isArray,
+            const std::string& integerFormat,
+            const std::string& floatFormat,
+            bool stringMultiline,
+            const std::string& tableFormat,
+            bool arrayOfTables,
+            matlab::data::Array comments,
+            const std::string& trailingComment) {
+        auto s = factory.createStructArray({1, 1},
+            {"ContainerStyle", "ScalarStyle", "IsArray",
+             "IntegerFormat", "FloatFormat", "StringMultiline",
+             "TableFormat", "ArrayOfTables",
+             "Comments", "TrailingComment"});
+        s[0]["ContainerStyle"] = makeString(factory, containerStyle);
+        s[0]["ScalarStyle"] = makeString(factory, scalarStyle);
+        s[0]["IsArray"] = factory.createScalar<bool>(isArray);
+        s[0]["IntegerFormat"] = makeString(factory, integerFormat);
+        s[0]["FloatFormat"] = makeString(factory, floatFormat);
+        s[0]["StringMultiline"] = factory.createScalar<bool>(stringMultiline);
+        s[0]["TableFormat"] = makeString(factory, tableFormat);
+        s[0]["ArrayOfTables"] = factory.createScalar<bool>(arrayOfTables);
+        s[0]["Comments"] = std::move(comments);
+        s[0]["TrailingComment"] = makeString(factory, trailingComment);
+        return s;
+    }
+
+    matlab::data::Array extractScalarStyle(const toml::value& val) {
+        std::string scalarStyle = "auto";
+        std::string integerFormat = "dec";
+        std::string floatFormat = "default";
+        bool stringMultiline = false;
+        bool nonDefault = false;
+
+        switch (val.type()) {
+            case toml::value_t::integer: {
+                auto fmt = val.as_integer_fmt().fmt;
+                if (fmt == toml::integer_format::hex) {
+                    integerFormat = "hex"; nonDefault = true;
+                } else if (fmt == toml::integer_format::oct) {
+                    integerFormat = "oct"; nonDefault = true;
+                } else if (fmt == toml::integer_format::bin) {
+                    integerFormat = "bin"; nonDefault = true;
+                }
+                break;
+            }
+            case toml::value_t::floating: {
+                auto fmt = val.as_floating_fmt().fmt;
+                if (fmt == toml::floating_format::fixed) {
+                    floatFormat = "fixed"; nonDefault = true;
+                } else if (fmt == toml::floating_format::scientific) {
+                    floatFormat = "scientific"; nonDefault = true;
+                }
+                break;
+            }
+            case toml::value_t::string: {
+                auto fmt = val.as_string_fmt().fmt;
+                if (fmt == toml::string_format::literal) {
+                    scalarStyle = "single-quoted"; nonDefault = true;
+                } else if (fmt == toml::string_format::multiline_basic) {
+                    stringMultiline = true; nonDefault = true;
+                } else if (fmt == toml::string_format::multiline_literal) {
+                    scalarStyle = "single-quoted";
+                    stringMultiline = true; nonDefault = true;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+        if (!nonDefault && val.comments().empty()) {
+            return emptyArray();
+        }
+
+        return makeTOMLStyleStruct(
+            "block", scalarStyle, false,
+            integerFormat, floatFormat, stringMultiline,
+            "expanded", false,
+            commentsToArray(val), "");
+    }
+
+    matlab::data::Array extractArrayStyle(const toml::value& val) {
+        auto afmt = val.as_array_fmt().fmt;
+
+        std::string containerStyle = "block";
+        bool arrayOfTables = false;
+
+        if (afmt == toml::array_format::oneline) {
+            containerStyle = "flow";
+        } else if (afmt == toml::array_format::array_of_tables) {
+            arrayOfTables = true;
+        }
+
+        bool nonDefault = (containerStyle != "block") || arrayOfTables;
+        if (!nonDefault && val.comments().empty()) {
+            return emptyArray();
+        }
+
+        return makeTOMLStyleStruct(
+            containerStyle, "auto", true,
+            "dec", "default", false,
+            "expanded", arrayOfTables,
+            commentsToArray(val), "");
+    }
+
+    matlab::data::Array extractTableNodeStyle(const toml::value& table) {
+        auto tfmt = table.as_table_fmt().fmt;
+
+        std::string containerStyle = "block";
+        std::string tableFormat = "expanded";
+
+        if (tfmt == toml::table_format::oneline) {
+            containerStyle = "flow";
+            tableFormat = "inline";
+        } else if (tfmt == toml::table_format::dotted) {
+            tableFormat = "dotted";
+        }
+
+        bool nonDefault = (tableFormat != "expanded");
+        if (!nonDefault && table.comments().empty()) {
+            return emptyArray();
+        }
+
+        return makeTOMLStyleStruct(
+            containerStyle, "auto", false,
+            "dec", "default", false,
+            tableFormat, false,
+            commentsToArray(table), "");
+    }
+
+    // --- Main conversion ---
+
     matlab::data::Array tableToCompactStruct(const toml::value& table) {
         const auto& tbl = table.as_table();
         size_t n = tbl.size();
 
         auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
         auto values = factory.createArray<matlab::data::Array>({1, n});
+        auto keyStyles = factory.createArray<matlab::data::Array>({1, n});
         std::vector<double> nullIdx, datetimeIdx;
 
         size_t i = 0;
@@ -72,11 +229,14 @@ private:
                 values[0][i] = tableToCompactStruct(val);
             } else if (val.type() == toml::value_t::array) {
                 values[0][i] = convertArray(val.as_array());
+                keyStyles[0][i] = extractArrayStyle(val);
             } else if (isDatetimeType(val.type())) {
                 datetimeIdx.push_back(static_cast<double>(i + 1));
                 values[0][i] = makeString(factory, datetimeToString(val));
+                keyStyles[0][i] = extractScalarStyle(val);
             } else {
                 values[0][i] = convertScalar(val);
+                keyStyles[0][i] = extractScalarStyle(val);
             }
             ++i;
         }
@@ -84,8 +244,10 @@ private:
         auto nullArr = toDoubleArray(nullIdx);
         auto dtArr = toDoubleArray(datetimeIdx);
         auto emptyArr = factory.createArray<double>({1, 0});
+        auto nodeStyle = extractTableNodeStyle(table);
 
-        return makeCompactStruct(factory, keys, values, nullArr, dtArr, emptyArr);
+        return makeCompactStruct(factory, keys, values, nullArr, dtArr,
+                                 emptyArr, nodeStyle, keyStyles);
     }
 
     matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
@@ -111,13 +273,13 @@ private:
             case toml::value_t::string:
                 return makeString(factory, val.as_string());
             default:
-                return factory.createArray<double>({0, 0});
+                return emptyArray();
         }
     }
 
     matlab::data::Array convertArray(const toml::array& arr) {
         if (arr.empty()) {
-            return factory.createArray<double>({0, 0});
+            return emptyArray();
         }
 
         auto firstType = arr.front().type();

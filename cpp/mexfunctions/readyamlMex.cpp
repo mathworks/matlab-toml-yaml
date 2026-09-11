@@ -60,12 +60,47 @@ private:
         return std::string(s.data(), s.size());
     }
 
+    matlab::data::Array emptyArray() {
+        return factory.createArray<double>({0, 0});
+    }
+
+    // --- Style struct helpers ---
+
+    static bool isFlowContainer(ryml::ConstNodeRef node) {
+        return (node.type().m_bits & ryml::CONTAINER_STYLE_FLOW) != 0;
+    }
+
+    static std::string valScalarStyle(ryml::ConstNodeRef node) {
+        auto bits = node.type().m_bits;
+        if (bits & ryml::VAL_SQUO)    return "single-quoted";
+        if (bits & ryml::VAL_DQUO)    return "double-quoted";
+        if (bits & ryml::VAL_LITERAL)  return "literal";
+        if (bits & ryml::VAL_FOLDED)   return "folded";
+        return "";
+    }
+
+    matlab::data::Array makeYAMLStyleStruct(
+            const std::string& containerStyle,
+            const std::string& scalarStyle,
+            bool isArray) {
+        auto s = factory.createStructArray({1, 1},
+            {"ContainerStyle", "ScalarStyle", "IsArray"});
+        s[0]["ContainerStyle"] = makeString(factory, containerStyle);
+        s[0]["ScalarStyle"] = makeString(factory, scalarStyle);
+        s[0]["IsArray"] = factory.createScalar<bool>(isArray);
+        return s;
+    }
+
+    // --- Compact struct ---
+
     matlab::data::Array makeEmptyCompactStruct() {
         auto keys = factory.createArray<matlab::data::MATLABString>({1, 0});
         auto values = factory.createArray<matlab::data::Array>({1, 0});
         auto empty = factory.createArray<double>({1, 0});
+        auto emptyKS = factory.createArray<matlab::data::Array>({1, 0});
 
-        return makeCompactStruct(factory, keys, values, empty, empty, empty);
+        return makeCompactStruct(factory, keys, values, empty, empty, empty,
+                                 emptyArray(), emptyKS);
     }
 
     matlab::data::Array convertNode(ryml::ConstNodeRef node) {
@@ -86,6 +121,7 @@ private:
 
         auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
         auto values = factory.createArray<matlab::data::Array>({1, n});
+        auto keyStyles = factory.createArray<matlab::data::Array>({1, n});
         std::vector<double> nullIdx, quotedIdx;
 
         size_t i = 0;
@@ -98,20 +134,29 @@ private:
                 values[0][i] = convertMap(child);
             } else if (child.is_seq()) {
                 values[0][i] = convertSequence(child);
+                if (isFlowContainer(child)) {
+                    keyStyles[0][i] = makeYAMLStyleStruct(
+                        "flow", "auto", true);
+                }
             } else if (child.has_val()) {
                 if (child.val_is_null()) {
                     nullIdx.push_back(static_cast<double>(i + 1));
-                    values[0][i] = factory.createArray<double>({0, 0});
+                    values[0][i] = emptyArray();
                 } else {
                     std::string s = toStdString(child.val());
                     values[0][i] = makeString(factory, s);
                     if (child.is_val_quoted()) {
                         quotedIdx.push_back(static_cast<double>(i + 1));
                     }
+                    std::string style = valScalarStyle(child);
+                    if (!style.empty()) {
+                        keyStyles[0][i] = makeYAMLStyleStruct(
+                            "block", style, false);
+                    }
                 }
             } else {
                 nullIdx.push_back(static_cast<double>(i + 1));
-                values[0][i] = factory.createArray<double>({0, 0});
+                values[0][i] = emptyArray();
             }
             ++i;
         }
@@ -120,7 +165,13 @@ private:
         auto quotedArr = toDoubleArray(quotedIdx);
         auto emptyArr = factory.createArray<double>({1, 0});
 
-        return makeCompactStruct(factory, keys, values, nullArr, emptyArr, quotedArr);
+        matlab::data::Array nodeStyle = emptyArray();
+        if (isFlowContainer(node)) {
+            nodeStyle = makeYAMLStyleStruct("flow", "auto", false);
+        }
+
+        return makeCompactStruct(factory, keys, values, nullArr, emptyArr,
+                                 quotedArr, nodeStyle, keyStyles);
     }
 
     matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
@@ -137,7 +188,7 @@ private:
     matlab::data::Array convertSequence(ryml::ConstNodeRef node) {
         size_t count = node.num_children();
         if (count == 0) {
-            return factory.createArray<double>({0, 0});
+            return emptyArray();
         }
 
         bool allMaps = true;
@@ -207,7 +258,7 @@ private:
 
     matlab::data::Array convertScalar(ryml::ConstNodeRef node) {
         if (node.val_is_null()) {
-            return factory.createArray<double>({0, 0});
+            return emptyArray();
         }
         return makeString(factory, toStdString(node.val()));
     }
