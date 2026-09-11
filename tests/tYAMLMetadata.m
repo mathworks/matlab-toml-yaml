@@ -168,6 +168,177 @@ classdef tYAMLMetadata < ConfigurationFileTestCase
             testCase.verifySubstring(text, "- 2");
         end
 
+        % --- Coverage: getformat branches ---
+
+        function testGetFormatDisplaysWithNoOutput(testCase)
+            data = yamldata(struct("a", 1, "b", "text"));
+            data = setformat(data, "b", ScalarStyle="single-quoted");
+
+            getformat(data);
+        end
+
+        function testGetFormatMultipleKeys(testCase)
+            data = yamldata(struct("a", 1, "b", "text"));
+            data = setformat(data, "a", ContainerStyle="flow");
+
+            result = getformat(data, ["a", "b"]);
+
+            testCase.verifyLength(result, 2);
+            testCase.verifyEqual(result(1).ContainerStyle, "flow");
+        end
+
+        function testGetFormatDotPathTraversesNested(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+            data = setformat(data, "server.host", ScalarStyle="single-quoted");
+
+            meta = getformat(data, "server.host");
+
+            testCase.verifyEqual(meta.ScalarStyle, "single-quoted");
+        end
+
+        function testGetFormatDotPathMissingIntermediate(testCase)
+            data = yamldata(struct("a", 1));
+
+            meta = getformat(data, "nokey.child");
+
+            testCase.verifyEqual(meta.ContainerStyle, "block");
+            testCase.verifyEqual(meta.ScalarStyle, "auto");
+        end
+
+        function testGetFormatDotPathIntermediateNotNested(testCase)
+            data = yamldata(struct("a", 42));
+
+            meta = getformat(data, "a.child");
+
+            testCase.verifyEqual(meta.ContainerStyle, "block");
+        end
+
+        function testGetFormatMissingLeafKey(testCase)
+            data = yamldata(struct("a", 1));
+
+            meta = getformat(data, "nonexistent");
+
+            testCase.verifyEqual(meta.ScalarStyle, "auto");
+        end
+
+        function testGetFormatNestedObjectWithMetadata(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+            data.server = setformat(data.server, "host", ScalarStyle="single-quoted");
+            inner = data.server;
+            inner = setmetadata(inner, matlab.io.config.YAMLMetadata(ContainerStyle="flow"));
+            data.server = inner;
+
+            meta = getformat(data, "server");
+
+            testCase.verifyEqual(meta.ContainerStyle, "flow");
+        end
+
+        % --- Coverage: setformat branches ---
+
+        function testSetFormatDotPath(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+
+            data = setformat(data, "server.host", ScalarStyle="single-quoted");
+
+            meta = getformat(data.server, "host");
+            testCase.verifyEqual(meta.ScalarStyle, "single-quoted");
+        end
+
+        function testSetFormatMissingKeyErrors(testCase)
+            data = yamldata(struct("a", 1));
+
+            testCase.verifyError(@() setformat(data, "nokey", ContainerStyle="flow"), ...
+                "setformat:InvalidKey");
+        end
+
+        function testSetFormatOnNestedObject(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+
+            data = setformat(data, "server", ContainerStyle="flow");
+
+            meta = getformat(data, "server");
+            testCase.verifyEqual(meta.ContainerStyle, "flow");
+        end
+
+        function testSetFormatNestedPathMissingKeyErrors(testCase)
+            data = yamldata(struct("a", 1));
+
+            testCase.verifyError(@() setformat(data, "nokey.child", ContainerStyle="flow"), ...
+                "setformat:InvalidKey");
+        end
+
+        function testSetFormatNestedPathNotNestedErrors(testCase)
+            data = yamldata(struct("a", 42));
+
+            testCase.verifyError(@() setformat(data, "a.child", ContainerStyle="flow"), ...
+                "setformat:InvalidKey");
+        end
+
+        % --- Coverage: resetformat branches ---
+
+        function testResetFormatNoArgClearsAll(testCase)
+            data = yamldata(struct("a", 1));
+            data = setformat(data, "a", ContainerStyle="flow");
+
+            data = resetformat(data);
+
+            meta = getformat(data, "a");
+            testCase.verifyEqual(meta.ContainerStyle, "block");
+        end
+
+        function testResetFormatDotPath(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+            data = setformat(data, "server.host", ScalarStyle="single-quoted");
+
+            data = resetformat(data, "server.host");
+
+            meta = getformat(data.server, "host");
+            testCase.verifyEqual(meta.ScalarStyle, "auto");
+        end
+
+        function testResetFormatMissingKeyIsNoop(testCase)
+            data = yamldata(struct("a", 1));
+
+            data = resetformat(data, "nonexistent");
+
+            testCase.verifyEqual(keys(data), "a");
+        end
+
+        function testResetFormatOnNestedObject(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+            data = setformat(data, "server", ContainerStyle="flow");
+
+            data = resetformat(data, "server");
+
+            meta = getformat(data, "server");
+            testCase.verifyEqual(meta.ContainerStyle, "block");
+        end
+
+        function testResetFormatDotPathMissingKeyIsNoop(testCase)
+            data = yamldata();
+            data.server.host = "localhost";
+
+            data = resetformat(data, "nokey.child");
+
+            testCase.verifyEqual(keys(data), ["server"]);
+        end
+
+        function testResetFormatDotPathNotNestedIsNoop(testCase)
+            data = yamldata(struct("a", 42));
+
+            data = resetformat(data, "a.child");
+
+            testCase.verifyEqual(data.a, 42);
+        end
+
+        % --- Existing nested read test ---
+
         function testMetadataPreservedThroughNestedRead(testCase)
             file = testCase.writeTempFile("test.yaml", ...
                 ["server:", ...
