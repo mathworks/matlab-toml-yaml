@@ -1,15 +1,17 @@
 function cs = compact(obj, format, precision)
-    %compact Convert ConfigurationData to a CompactStruct for MEX serialization.
-    %   cs = compact(obj, format) returns a struct with fields:
-    %     Keys           - (1×n string) key names in insertion order
-    %     Values         - (1×n cell) scalar values or nested CompactStructs
-    %     NullIndices    - (1×m double) indices where value is null
-    %     DatetimeIndices - (1×m double) indices where value is a datetime
-    %     QuotedIndices  - (1×m double) indices where scalar needs quoting (YAML only)
-    %
-    %   format is "yaml" or "toml". When "yaml", scalar Values are pre-formatted
-    %   strings and QuotedIndices is populated. When "toml", scalar Values are
-    %   raw typed MATLAB values and QuotedIndices is empty.
+%compact Convert ConfigurationData to a CompactStruct for MEX serialization.
+%   cs = compact(obj, format) returns a struct with fields:
+%     Keys           - (1×n string) key names in insertion order
+%     Values         - (1×n cell) scalar values or nested CompactStructs
+%     NullIndices    - (1×m double) indices where value is null
+%     DatetimeIndices - (1×m double) indices where value is a datetime
+%     QuotedIndices  - (1×m double) indices where scalar needs quoting (YAML only)
+%     NodeStyle      - struct or [] — per-node format metadata
+%     KeyStyles      - (1×n cell) per-key format metadata ([] for defaults)
+%
+%   format is "yaml" or "toml". When "yaml", scalar Values are pre-formatted
+%   strings and QuotedIndices is populated. When "toml", scalar Values are
+%   raw typed MATLAB values and QuotedIndices is empty.
 
     arguments
         obj (1,1) matlab.io.config.ConfigurationData
@@ -25,6 +27,10 @@ function cs = compact(obj, format, precision)
     nullIndices = [];
     datetimeIndices = [];
     quotedIndices = [];
+    keyStyles = cell(1, n);
+
+    meta = getmetadata(obj);
+    hasMetadata = ~isempty(meta);
 
     for i = 1:n
         val = obj.(k(i));
@@ -65,6 +71,11 @@ function cs = compact(obj, format, precision)
         else
             values{i} = val;
         end
+
+        if hasMetadata && ~isa(val, 'matlab.io.config.ConfigurationData') ...
+                && isKey(meta.Keys, k(i))
+            keyStyles{i} = metadataToStyleStruct(meta.Keys{k(i)}, format);
+        end
     end
 
     cs.Keys = k(:)';
@@ -72,6 +83,27 @@ function cs = compact(obj, format, precision)
     cs.NullIndices = nullIndices;
     cs.DatetimeIndices = datetimeIndices;
     cs.QuotedIndices = quotedIndices;
+    if hasMetadata
+        cs.NodeStyle = metadataToStyleStruct(meta, format);
+    else
+        cs.NodeStyle = [];
+    end
+    cs.KeyStyles = keyStyles;
+end
+
+function s = metadataToStyleStruct(meta, format)
+    s.ContainerStyle = meta.ContainerStyle;
+    s.ScalarStyle = meta.ScalarStyle;
+    s.IsArray = meta.IsArray;
+    if format == "toml"
+        s.IntegerFormat = meta.IntegerFormat;
+        s.FloatFormat = meta.FloatFormat;
+        s.StringMultiline = meta.StringMultiline;
+        s.TableFormat = meta.TableFormat;
+        s.ArrayOfTables = meta.ArrayOfTables;
+        s.Comments = meta.Comments;
+        s.TrailingComment = meta.TrailingComment;
+    end
 end
 
 function c = compactCell(c, format, precision)

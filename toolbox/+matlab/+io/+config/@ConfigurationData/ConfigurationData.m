@@ -45,6 +45,14 @@ classdef (Abstract) ConfigurationData < ...
         function show(obj)
             showImpl(obj);
         end
+
+        function meta = getmetadata(obj)
+            meta = obj.Metadata;
+        end
+
+        function obj = setmetadata(obj, meta)
+            obj.Metadata = meta;
+        end
     end
 
     methods (Access=protected)
