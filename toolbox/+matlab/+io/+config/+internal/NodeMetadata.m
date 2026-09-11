@@ -1,4 +1,4 @@
-classdef NodeMetadata
+classdef (Abstract) NodeMetadata
     %NODEMETADATA Per-node format metadata for configuration data
     %   Stores style and formatting attributes for a single node in a
     %   ConfigurationData tree. Child metadata overrides are stored in the
@@ -9,7 +9,7 @@ classdef NodeMetadata
     %   value walking up the tree wins; the writer's global default is the
     %   final fallback.
     %
-    %   See also: YAMLMetadata, TOMLMetadata, getformat, setformat
+    %   See also YAMLMetadata, TOMLMetadata, getformat, setformat
 
     properties
         ContainerStyle  (1,1) string = "block"

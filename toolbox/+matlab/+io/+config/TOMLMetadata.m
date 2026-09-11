@@ -1,9 +1,9 @@
-classdef TOMLMetadata < matlab.io.config.NodeMetadata
+classdef TOMLMetadata < matlab.io.config.internal.NodeMetadata
     %TOMLMETADATA TOML-specific format metadata
     %   Extends NodeMetadata with properties for TOML integer/float formats,
     %   multiline strings, table rendering style, and array-of-tables syntax.
     %
-    %   See also: NodeMetadata, YAMLMetadata, TOMLData
+    %   See also: YAMLMetadata, TOMLData, getformat, setformat
 
     properties
         IntegerFormat   (1,1) string = "dec"
@@ -38,7 +38,7 @@ classdef TOMLMetadata < matlab.io.config.NodeMetadata
                     baseArgs = [baseArgs, fields(i), {nvargs.(fields{i})}]; %#ok<AGROW>
                 end
             end
-            obj@matlab.io.config.NodeMetadata(baseArgs{:});
+            obj@matlab.io.config.internal.NodeMetadata(baseArgs{:});
             for i = 1:numel(fields)
                 if ismember(fields{i}, tomlFields)
                     obj.(fields{i}) = nvargs.(fields{i});
