@@ -483,7 +483,7 @@ classdef yamltest < matlab.unittest.TestCase
             % Allows for key reordering but requires same keys and values
 
             % Handle arrays of ConfigurationData (sequence of mappings)
-            if isa(original, 'ConfigurationData') && numel(original) > 1
+            if isa(original, 'matlab.io.config.ConfigurationData') && numel(original) > 1
                 testCase.verifyEqual(numel(restored), numel(original), ...
                     sprintf('Array length mismatch for %s', context));
                 for j = 1:numel(original)
@@ -506,11 +506,11 @@ classdef yamltest < matlab.unittest.TestCase
 
                 keyContext = sprintf('%s.%s', context, key);
 
-                if isa(origVal, 'ConfigurationData')
+                if isa(origVal, 'matlab.io.config.ConfigurationData')
                     % Recursive comparison for nested objects (includes subclasses like YAMLData)
-                    testCase.verifyTrue(isa(restVal, 'ConfigurationData'), ...
+                    testCase.verifyTrue(isa(restVal, 'matlab.io.config.ConfigurationData'), ...
                         sprintf('Expected ConfigurationData for %s', keyContext));
-                    if isa(restVal, 'ConfigurationData')
+                    if isa(restVal, 'matlab.io.config.ConfigurationData')
                         testCase.verifyDataEqual(origVal, restVal, keyContext);
                     end
                 elseif isnumeric(origVal)
@@ -526,7 +526,7 @@ classdef yamltest < matlab.unittest.TestCase
                     testCase.verifyEqual(numel(restVal), numel(origVal), ...
                         sprintf('Cell array length mismatch for %s', keyContext));
                     for j = 1:numel(origVal)
-                        if isa(origVal{j}, 'ConfigurationData')
+                        if isa(origVal{j}, 'matlab.io.config.ConfigurationData')
                             testCase.verifyDataEqual(origVal{j}, restVal{j}, ...
                                 sprintf('%s{%d}', keyContext, j));
                         else
@@ -536,7 +536,7 @@ classdef yamltest < matlab.unittest.TestCase
                     end
                 elseif isstring(origVal) || ischar(origVal)
                     % Handle case where restored may be ConfigurationData but original is string
-                    if isa(restVal, 'ConfigurationData')
+                    if isa(restVal, 'matlab.io.config.ConfigurationData')
                         testCase.verifyFail(sprintf('Type mismatch for %s: expected string, got ConfigurationData', keyContext));
                     else
                         testCase.verifyEqual(string(restVal), string(origVal), ...
@@ -544,11 +544,11 @@ classdef yamltest < matlab.unittest.TestCase
                     end
                 else
                     % Generic comparison - but check for ConfigurationData first
-                    if isa(origVal, 'ConfigurationData') || isa(restVal, 'ConfigurationData')
+                    if isa(origVal, 'matlab.io.config.ConfigurationData') || isa(restVal, 'matlab.io.config.ConfigurationData')
                         % One is ConfigurationData but we didn't catch it earlier
-                        testCase.verifyTrue(isa(origVal, 'ConfigurationData') && isa(restVal, 'ConfigurationData'), ...
+                        testCase.verifyTrue(isa(origVal, 'matlab.io.config.ConfigurationData') && isa(restVal, 'matlab.io.config.ConfigurationData'), ...
                             sprintf('Type mismatch for %s: one is ConfigurationData, other is not', keyContext));
-                        if isa(origVal, 'ConfigurationData') && isa(restVal, 'ConfigurationData')
+                        if isa(origVal, 'matlab.io.config.ConfigurationData') && isa(restVal, 'matlab.io.config.ConfigurationData')
                             testCase.verifyDataEqual(origVal, restVal, keyContext);
                         end
                     else
