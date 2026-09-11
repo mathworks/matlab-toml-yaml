@@ -298,7 +298,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
                 "The file is still readable, so this path cannot be reached");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:FileOpenError");
         end
     end
 end
