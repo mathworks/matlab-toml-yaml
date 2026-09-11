@@ -55,6 +55,12 @@ classdef (Abstract) ConfigurationData < ...
         end
     end
 
+    methods (Hidden)
+        result = getformat(obj, keyPath)
+        obj = setformat(obj, keyPath, nvargs)
+        obj = resetformat(obj, keyPath)
+    end
+
     methods (Access=protected)
         showImpl(obj)
     end
