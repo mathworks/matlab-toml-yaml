@@ -78,9 +78,7 @@ function c = compactCell(c, format, precision)
     for j = 1:numel(c)
         elem = c{j};
         if isa(elem, 'matlab.io.config.ConfigurationData')
-            if isempty(elem)
-                c{j} = [];
-            elseif isscalar(elem)
+            if isscalar(elem)
                 c{j} = matlab.io.config.internal.write.compact(elem, format, precision);
             else
                 nc = numel(elem);

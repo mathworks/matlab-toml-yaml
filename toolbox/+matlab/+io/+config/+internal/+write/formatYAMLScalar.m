@@ -7,12 +7,6 @@ function [text, quoted] = formatYAMLScalar(value, precision)
         precision (1,1) double = 6
     end
 
-    if isa(value, 'missing') || isempty(value)
-        text = "null";
-        quoted = false;
-        return
-    end
-
     if islogical(value)
         if value
             text = "true";
