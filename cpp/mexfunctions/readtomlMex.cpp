@@ -2,6 +2,7 @@
 #include "mexAdapter.hpp"
 #include "toml.hpp"
 
+#include <sstream>
 #include <vector>
 
 class MexFunction : public matlab::mex::Function {
@@ -11,17 +12,22 @@ class MexFunction : public matlab::mex::Function {
 public:
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
-        if (inputs.size() < 1) {
+        if (inputs.size() < 2) {
             throwMexError(*engine, factory,
-                "readtomlMex:InvalidInput", "Filename required.");
+                "readtomlMex:InvalidInput",
+                "File content and filename required.");
             return;
         }
 
+        matlab::data::TypedArray<uint8_t> contentArr = inputs[0];
+        std::string content(contentArr.begin(), contentArr.end());
+
         matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
-            inputs[0];
+            inputs[1];
         std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
-        toml::value data = toml::parse(filename);
+        std::istringstream iss(std::move(content));
+        toml::value data = toml::parse(iss, filename);
 
         outputs[0] = tableToCompactStruct(data);
     }
