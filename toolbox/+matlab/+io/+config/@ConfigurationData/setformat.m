@@ -38,7 +38,6 @@ end
 function obj = setOneKey(obj, keyPath, nvargs)
 parts = split(keyPath, ".");
 if numel(parts) > 1
-    parentPath = join(parts(1:end-1), ".");
     obj = setNestedKey(obj, parts, nvargs);
     return;
 end
