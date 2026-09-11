@@ -45,6 +45,11 @@ data = readyaml(filename)
 ### Data Modification
 - [`rmfield`](#rmfield) — Remove a field
 - [`remove`](#remove) — Remove a key (alias for rmfield)
+### Format Metadata
+- [`getformat`](getformat.md) — Query format metadata
+- [`setformat`](setformat.md) — Set format metadata
+- [`resetformat`](resetformat.md) — Reset format metadata to defaults
+
 ### Display
 - [`show`](#show) — Display contents as YAML text
 
@@ -179,6 +184,26 @@ config.cache.ttl = 7200;
 
 % Write back to file
 writeyaml(config, "config_updated.yaml");
+```
+
+### Metadata-Aware Round-Trip
+
+Format metadata (flow arrays, quoted strings) is preserved automatically:
+
+```matlab
+% Read YAML with flow-style array
+yaml = ["name: MyApp", "ports: [8080, 8443]"];
+writelines(yaml, "config.yaml");
+data = readyaml("config.yaml");
+
+% Inspect metadata
+meta = getformat(data, "ports");
+meta.ContainerStyle  % "flow"
+
+% Modify a value, write back — flow style survives
+data.ports = [data.ports; 9000];
+writeyaml(data, "config.yaml");
+% ports: [8080, 8443, 9000]
 ```
 
 For comprehensive examples, see [readyamlExample.m](../../examples/readyamlExample.m).
