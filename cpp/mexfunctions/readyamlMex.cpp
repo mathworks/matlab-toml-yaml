@@ -2,8 +2,6 @@
 #include "mexAdapter.hpp"
 #include "ryml_util.hpp"
 
-#include <fstream>
-#include <sstream>
 #include <vector>
 
 class MexFunction : public matlab::mex::Function {
@@ -16,36 +14,29 @@ public:
 
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
-        if (inputs.size() < 1) {
+        if (inputs.size() < 2) {
             throwMexError(*engine, factory,
-                "readyamlMex:InvalidInput", "Filename required.");
+                "readyamlMex:InvalidInput",
+                "File content and filename required.");
             return;
         }
 
+        matlab::data::TypedArray<uint8_t> contentArr = inputs[0];
+        std::string content(contentArr.begin(), contentArr.end());
+
         matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
-            inputs[0];
+            inputs[1];
         std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
         sequenceAsCell = false;
-        if (inputs.size() > 1) {
-            matlab::data::StructArray opts(inputs[1]);
+        if (inputs.size() > 2) {
+            matlab::data::StructArray opts(inputs[2]);
 
             matlab::data::TypedArray<matlab::data::MATLABString> seqRule =
                 opts[0]["SequenceRule"];
             sequenceAsCell =
                 (matlabStringToUtf8(factory, seqRule[0]) == "cell");
         }
-
-        std::ifstream ifs(filename, std::ios::binary);
-        if (!ifs) {
-            throwMexError(*engine, factory,
-                "readyamlMex:FileError",
-                "Cannot open file: " + filename);
-            return;
-        }
-        std::ostringstream ss;
-        ss << ifs.rdbuf();
-        std::string content = ss.str();
 
         ryml::Tree tree = ryml::parse_in_arena(
             ryml::csubstr(filename.data(), filename.size()),

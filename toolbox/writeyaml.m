@@ -58,5 +58,12 @@ function writeyaml(data, filename, options)
     end
 
     cs = matlab.io.config.internal.write.compact(data, "yaml", options.Precision);
-    writeyamlMex(cs, filename, options);
+    bytes = writeyamlMex(cs, options);
+
+    [fid, msg] = fopen(filename, 'w');
+    if fid < 0
+        error('writeyaml:FileWriteError', '%s', msg);
+    end
+    cleanup = onCleanup(@() fclose(fid));
+    fwrite(fid, bytes);
 end
