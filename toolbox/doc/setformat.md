@@ -62,7 +62,7 @@ Inline comment after the value.
 
 #### TOML-Specific Properties
 
-These properties are only valid on TOMLData objects.
+These properties are only valid on TOMLData objects. Passing them to `setformat` on a YAMLData object errors because [YAMLMetadata](YAMLMetadata.md) does not define these properties.
 
 ##### IntegerFormat
 Integer rendering format.
@@ -139,6 +139,7 @@ data = setformat(data, "server.ports", ContainerStyle="flow", IsArray=true);
 - Always capture the return value: `data = setformat(data, ...)`. Calling without assignment has no effect because ConfigurationData is a value class.
 - Multiple properties can be set in a single call using multiple name-value pairs.
 - Setting metadata on a key that already has metadata merges the new properties with the existing ones.
+- **Per-key metadata takes precedence over global writer options.** For example, if a key has `ContainerStyle="flow"` from `setformat`, passing `ArrayStyle="block"` to `writeyaml` does not override it. Keys without metadata fall back to the global option, then to the built-in default.
 
 ## See Also
 
