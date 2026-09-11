@@ -13,7 +13,7 @@ function obj = setformat(obj, keyPath, nvargs)
 %   Example:
 %       data = setformat(data, "ports", ContainerStyle="flow", IsArray=true);
 %
-%   See also: getformat, resetformat, NodeMetadata
+%   See also: getformat, resetformat, YAMLMetadata, TOMLMetadata
 
 arguments
     obj

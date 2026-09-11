@@ -6,7 +6,7 @@ function obj = resetformat(obj, keyPath)
 %
 %   Returns a modified copy (value class semantics).
 %
-%   See also: getformat, setformat, NodeMetadata
+%   See also: getformat, setformat, YAMLMetadata, TOMLMetadata
 
 if nargin < 2
     obj.Metadata = [];

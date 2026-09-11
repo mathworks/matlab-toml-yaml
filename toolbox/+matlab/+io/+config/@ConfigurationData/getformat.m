@@ -9,7 +9,7 @@ function result = getformat(obj, keyPath)
 %   Resolved values reflect inheritance — the metadata the writer would
 %   actually use. Keys with no explicit metadata inherit from the parent.
 %
-%   See also: setformat, resetformat, NodeMetadata
+%   See also: setformat, resetformat, YAMLMetadata, TOMLMetadata
 
 if nargin < 2
     result = buildSummaryTable(obj);

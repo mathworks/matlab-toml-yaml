@@ -1,9 +1,9 @@
-classdef YAMLMetadata < matlab.io.config.NodeMetadata
+classdef YAMLMetadata < matlab.io.config.internal.NodeMetadata
     %YAMLMETADATA YAML-specific format metadata
     %   All YAML style bits (flow/block, plain/quoted/literal/folded) are
     %   covered by NodeMetadata properties. No YAML-specific additions needed.
     %
-    %   See also: NodeMetadata, TOMLMetadata, YAMLData
+    %   See also: TOMLMetadata, YAMLData, getformat, setformat
 
     methods
         function obj = YAMLMetadata(nvargs)
@@ -15,7 +15,7 @@ classdef YAMLMetadata < matlab.io.config.NodeMetadata
                 nvargs.TrailingComment
             end
             args = namedargs2cell(nvargs);
-            obj@matlab.io.config.NodeMetadata(args{:});
+            obj@matlab.io.config.internal.NodeMetadata(args{:});
         end
     end
 end
