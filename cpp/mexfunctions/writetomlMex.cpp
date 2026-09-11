@@ -110,6 +110,86 @@ private:
         return flags;
     }
 
+    // --- Style helpers ---
+
+    std::string getStyleString(const matlab::data::StructArray& style,
+                               const std::string& field) {
+        matlab::data::TypedArray<matlab::data::MATLABString> arr =
+            style[0][field];
+        return matlabStringToUtf8(factory, arr[0]);
+    }
+
+    bool getStyleBool(const matlab::data::StructArray& style,
+                      const std::string& field) {
+        matlab::data::TypedArray<bool> arr = style[0][field];
+        return static_cast<bool>(arr[0]);
+    }
+
+    static bool hasStyle(const matlab::data::Array& arr) {
+        return arr.getType() == ArrayType::STRUCT &&
+               arr.getNumberOfElements() > 0;
+    }
+
+    void applyKeyStyle(toml::ordered_value& val,
+                       const matlab::data::StructArray& style) {
+        if (val.is_integer()) {
+            std::string fmt = getStyleString(style, "IntegerFormat");
+            if (fmt == "hex")
+                val.as_integer_fmt().fmt = toml::integer_format::hex;
+            else if (fmt == "oct")
+                val.as_integer_fmt().fmt = toml::integer_format::oct;
+            else if (fmt == "bin")
+                val.as_integer_fmt().fmt = toml::integer_format::bin;
+        }
+        else if (val.is_floating()) {
+            std::string fmt = getStyleString(style, "FloatFormat");
+            if (fmt == "fixed")
+                val.as_floating_fmt().fmt = toml::floating_format::fixed;
+            else if (fmt == "scientific")
+                val.as_floating_fmt().fmt = toml::floating_format::scientific;
+        }
+        else if (val.is_string()) {
+            std::string scalar = getStyleString(style, "ScalarStyle");
+            bool multiline = getStyleBool(style, "StringMultiline");
+            bool literal = (scalar == "single-quoted");
+            if (multiline && literal)
+                val.as_string_fmt().fmt =
+                    toml::string_format::multiline_literal;
+            else if (multiline)
+                val.as_string_fmt().fmt =
+                    toml::string_format::multiline_basic;
+            else if (literal)
+                val.as_string_fmt().fmt = toml::string_format::literal;
+        }
+        else if (val.is_array()) {
+            std::string container = getStyleString(style, "ContainerStyle");
+            bool aot = getStyleBool(style, "ArrayOfTables");
+            if (aot)
+                val.as_array_fmt().fmt =
+                    toml::array_format::array_of_tables;
+            else if (container == "flow")
+                val.as_array_fmt().fmt = toml::array_format::oneline;
+        }
+        else if (val.is_table()) {
+            std::string tableFmt = getStyleString(style, "TableFormat");
+            if (tableFmt == "inline")
+                val.as_table_fmt().fmt = toml::table_format::oneline;
+            else if (tableFmt == "dotted")
+                val.as_table_fmt().fmt = toml::table_format::dotted;
+        }
+
+        matlab::data::Array commentsArr = style[0]["Comments"];
+        if (commentsArr.getType() == ArrayType::MATLAB_STRING &&
+            commentsArr.getNumberOfElements() > 0) {
+            matlab::data::TypedArray<matlab::data::MATLABString> comments =
+                commentsArr;
+            for (const auto& c : comments) {
+                val.comments().push_back(
+                    matlabStringToUtf8(factory, c));
+            }
+        }
+    }
+
     // --- Conversion from CompactStruct ---
 
     toml::ordered_value convertTable(const matlab::data::Array& csArr) {
@@ -124,6 +204,10 @@ private:
         auto isNull = buildIndexSet(cs[0]["NullIndices"], n);
         auto isDt = buildIndexSet(cs[0]["DatetimeIndices"], n);
 
+        matlab::data::Array nodeStyleArr = cs[0]["NodeStyle"];
+        matlab::data::TypedArray<matlab::data::Array> keyStylesArr =
+            cs[0]["KeyStyles"];
+
         toml::ordered_table tbl;
         for (size_t i = 0; i < n; ++i) {
             std::string key = matlabStringToUtf8(keys[i]);
@@ -133,15 +217,46 @@ private:
             }
 
             matlab::data::Array val = values[i];
+            toml::ordered_value tomlVal;
 
             if (isDt[i + 1]) {
-                tbl.push_back({key, convertDatetime(val)});
+                tomlVal = convertDatetime(val);
             } else {
-                tbl.push_back({key, convert(val)});
+                tomlVal = convert(val);
+            }
+
+            matlab::data::Array ksArr = keyStylesArr[i];
+            if (hasStyle(ksArr)) {
+                matlab::data::StructArray ks(ksArr);
+                applyKeyStyle(tomlVal, ks);
+            }
+
+            tbl.push_back({key, std::move(tomlVal)});
+        }
+
+        auto result = toml::ordered_value(std::move(tbl));
+
+        if (hasStyle(nodeStyleArr)) {
+            matlab::data::StructArray ns(nodeStyleArr);
+            std::string tableFmt = getStyleString(ns, "TableFormat");
+            if (tableFmt == "inline")
+                result.as_table_fmt().fmt = toml::table_format::oneline;
+            else if (tableFmt == "dotted")
+                result.as_table_fmt().fmt = toml::table_format::dotted;
+
+            matlab::data::Array commentsArr = ns[0]["Comments"];
+            if (commentsArr.getType() == ArrayType::MATLAB_STRING &&
+                commentsArr.getNumberOfElements() > 0) {
+                matlab::data::TypedArray<matlab::data::MATLABString>
+                    comments = commentsArr;
+                for (const auto& c : comments) {
+                    result.comments().push_back(
+                        matlabStringToUtf8(factory, c));
+                }
             }
         }
 
-        return toml::ordered_value(std::move(tbl));
+        return result;
     }
 
     toml::ordered_value convert(const matlab::data::Array& val) {
