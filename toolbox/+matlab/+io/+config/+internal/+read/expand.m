@@ -1,20 +1,22 @@
 function obj = expand(cs, format, options)
-    %expand Convert a CompactStruct to a ConfigurationData object.
-    %   obj = expand(cs, format) returns a YAMLData or TOMLData object.
-    %
-    %   cs is a struct with fields:
-    %     Keys           - (1×n string) key names
-    %     Values         - (1×n cell) scalar values or nested CompactStructs
-    %     NullIndices    - (1×m double) indices where value is null
-    %     DatetimeIndices - (1×m double) indices where value is a datetime
-    %     QuotedIndices  - (1×m double) indices where scalar was quoted (YAML only)
-    %
-    %   format is "yaml" or "toml".
-    %
-    %   Optional name-value:
-    %     DatetimeType - "string" (default) or "datetime". When "datetime" and
-    %                    format is "yaml", quoted scalars that look like dates
-    %                    are parsed as datetime objects.
+%expand Convert a CompactStruct to a ConfigurationData object.
+%   obj = expand(cs, format) returns a YAMLData or TOMLData object.
+%
+%   cs is a struct with fields:
+%     Keys           - (1×n string) key names
+%     Values         - (1×n cell) scalar values or nested CompactStructs
+%     NullIndices    - (1×m double) indices where value is null
+%     DatetimeIndices - (1×m double) indices where value is a datetime
+%     QuotedIndices  - (1×m double) indices where scalar was quoted (YAML only)
+%     NodeStyle      - (optional) struct or [] — per-node format metadata
+%     KeyStyles      - (optional, 1×n cell) per-key format metadata
+%
+%   format is "yaml" or "toml".
+%
+%   Optional name-value:
+%     DatetimeType - "string" (default) or "datetime". When "datetime" and
+%                    format is "yaml", quoted scalars that look like dates
+%                    are parsed as datetime objects.
 
     arguments
         cs (1,1) struct
@@ -74,6 +76,57 @@ function obj = expand(cs, format, options)
         else
             obj.(key) = val;
         end
+    end
+
+    obj = applyStyles(obj, cs, format);
+end
+
+function obj = applyStyles(obj, cs, format)
+    hasNodeStyle = isfield(cs, 'NodeStyle') && ~isempty(cs.NodeStyle);
+    hasKeyStyles = isfield(cs, 'KeyStyles');
+    if ~hasNodeStyle && ~hasKeyStyles
+        return
+    end
+
+    meta = [];
+    if hasNodeStyle
+        meta = styleStructToMetadata(cs.NodeStyle, format);
+    end
+
+    if hasKeyStyles
+        for i = 1:numel(cs.KeyStyles)
+            if ~isempty(cs.KeyStyles{i})
+                if isempty(meta)
+                    meta = makeDefaultMetadata(format);
+                end
+                meta.Keys{cs.Keys(i)} = styleStructToMetadata(cs.KeyStyles{i}, format);
+            end
+        end
+    end
+
+    if ~isempty(meta)
+        obj = setmetadata(obj, meta);
+    end
+end
+
+function meta = styleStructToMetadata(s, format)
+    args = {};
+    fields = fieldnames(s);
+    for i = 1:numel(fields)
+        args = [args, fields(i), {s.(fields{i})}]; %#ok<AGROW>
+    end
+    if format == "toml"
+        meta = matlab.io.config.TOMLMetadata(args{:});
+    else
+        meta = matlab.io.config.YAMLMetadata(args{:});
+    end
+end
+
+function meta = makeDefaultMetadata(format)
+    if format == "toml"
+        meta = matlab.io.config.TOMLMetadata();
+    else
+        meta = matlab.io.config.YAMLMetadata();
     end
 end
 
