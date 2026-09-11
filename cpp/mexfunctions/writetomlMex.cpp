@@ -2,7 +2,6 @@
 #include "mexAdapter.hpp"
 #include "toml.hpp"
 
-#include <fstream>
 #include <cmath>
 #include <vector>
 
@@ -24,17 +23,14 @@ class MexFunction : public matlab::mex::Function {
 public:
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
-        if (inputs.size() < 2) {
+        if (inputs.size() < 1) {
             throwMexError(*engine, factory,
                 "writetomlMex:InvalidInput",
-                "Data and filename required.");
+                "CompactStruct data required.");
             return;
         }
 
         matlab::data::Array data = inputs[0];
-        matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
-            inputs[1];
-        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
         arrayStyle = "auto";
         tableStyle = "auto";
@@ -45,8 +41,8 @@ public:
         indentSize = 2;
         precision = 6;
 
-        if (inputs.size() > 2) {
-            parseOptions(inputs[2]);
+        if (inputs.size() > 1) {
+            parseOptions(inputs[1]);
         }
 
         toml::ordered_value root = convertTable(data);
@@ -57,14 +53,11 @@ public:
             content = removeBlankLines(content);
         }
 
-        std::ofstream ofs(filename, std::ios::binary);
-        if (!ofs) {
-            throwMexError(*engine, factory,
-                "tomlToolbox:writetoml:FileWriteError",
-                "Cannot open file for writing: " + filename);
-            return;
-        }
-        ofs << content;
+        auto output = factory.createArray<uint8_t>(
+            {1, content.size()});
+        std::copy(content.begin(), content.end(),
+            output.begin());
+        outputs[0] = std::move(output);
     }
 
 private:
