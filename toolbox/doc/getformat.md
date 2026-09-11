@@ -43,7 +43,12 @@ Resolved metadata for the requested key. The type matches the object:
 - [YAMLMetadata](YAMLMetadata.md) for YAMLData objects
 - [TOMLMetadata](TOMLMetadata.md) for TOMLData objects
 
-Keys with no explicit metadata return a default metadata object. Inherited properties (ContainerStyle, ScalarStyle) are resolved from the parent node.
+Keys with no explicit metadata return a default metadata object. The resolution order is:
+
+1. **Node metadata** -- If the key holds a nested object that has its own Metadata, that metadata is returned.
+2. **Parent key override** -- If the parent node's Metadata.Keys dictionary has an entry for this key, that entry is returned.
+3. **Parent inheritance** -- If the parent node has Metadata but no key-specific entry, ContainerStyle and ScalarStyle are inherited from the parent.
+4. **Default** -- A default [YAMLMetadata](YAMLMetadata.md) or [TOMLMetadata](TOMLMetadata.md) with all properties at their default values.
 
 ### tbl
 Summary table with columns: Key, ContainerStyle, ScalarStyle, IsArray.
