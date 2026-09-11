@@ -104,5 +104,12 @@ function writetoml(data, filename, options)
     end
 
     cs = matlab.io.config.internal.write.compact(data, "toml", options.Precision);
-    writetomlMex(cs, filename, options);
+    bytes = writetomlMex(cs, options);
+
+    [fid, msg] = fopen(filename, 'w');
+    if fid < 0
+        error('writetoml:FileWriteError', '%s', msg);
+    end
+    cleanup = onCleanup(@() fclose(fid));
+    fwrite(fid, bytes);
 end

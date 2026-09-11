@@ -3,7 +3,6 @@
 #include "mexAdapter.hpp"
 #include "ryml_util.hpp"
 
-#include <fstream>
 #include <vector>
 
 using matlab::data::ArrayType;
@@ -22,23 +21,20 @@ public:
 
     void operator()(matlab::mex::ArgumentList outputs,
                     matlab::mex::ArgumentList inputs) {
-        if (inputs.size() < 2) {
+        if (inputs.size() < 1) {
             throwMexError(*engine, factory,
                 "writeyamlMex:InvalidInput",
-                "Data and filename required.");
+                "CompactStruct data required.");
             return;
         }
 
         matlab::data::Array data = inputs[0];
-        matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
-            inputs[1];
-        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
 
         flowArrays = false;
         sectionSpacing = true;
         precision = 6;
-        if (inputs.size() > 2) {
-            parseOptions(inputs[2]);
+        if (inputs.size() > 1) {
+            parseOptions(inputs[1]);
         }
 
         tree.clear();
@@ -56,14 +52,11 @@ public:
             yaml = insertSectionSpacing(yaml);
         }
 
-        std::ofstream ofs(filename, std::ios::binary);
-        if (!ofs) {
-            throwMexError(*engine, factory,
-                "yamlToolbox:writeyaml:FileWriteError",
-                "Cannot open file for writing: " + filename);
-            return;
-        }
-        ofs << yaml;
+        auto output = factory.createArray<uint8_t>(
+            {1, yaml.size()});
+        std::copy(yaml.begin(), yaml.end(),
+            output.begin());
+        outputs[0] = std::move(output);
     }
 
 private:

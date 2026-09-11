@@ -54,8 +54,15 @@ function data = readyaml(filename, options)
             {mustBeMember(options.DatetimeType, ["datetime", "string"])} = "string"
     end
 
+    [fid, msg] = fopen(filename, 'r');
+    if fid < 0
+        error('readyaml:FileOpenError', '%s', msg);
+    end
+    cleanup = onCleanup(@() fclose(fid));
+    bytes = fread(fid, '*uint8')';
+
     mexOptions = struct("SequenceRule", options.ArrayType);
-    cs = readyamlMex(filename, mexOptions);
+    cs = readyamlMex(bytes, filename, mexOptions);
     data = matlab.io.config.internal.read.expand(cs, "yaml", ...
         DatetimeType=options.DatetimeType);
 end
