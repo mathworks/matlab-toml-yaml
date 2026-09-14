@@ -146,18 +146,36 @@ end
 
 function dt = parseTOMLDatetime(str)
     offsetPat = characterListPattern("+-") + digitsPattern(2) + ":" + digitsPattern(2);
+    hasFrac = contains(str, ".");
+    if hasFrac
+        str = normalizeFrac(str);
+    end
     if contains(str, "T")
+        baseFmt = "uuuu-MM-dd'T'HH:mm:ss";
+        if hasFrac
+            baseFmt = baseFmt + ".SSSSSS";
+        end
         if endsWith(str, "Z")
-            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone="UTC");
+            dt = datetime(str, InputFormat=baseFmt+"XXX", TimeZone="UTC");
         elseif endsWith(str, offsetPat)
             offset = extractAfter(str, strlength(str) - 6);
-            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone=offset);
+            dt = datetime(str, InputFormat=baseFmt+"XXX", TimeZone=offset);
         else
-            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ss");
+            dt = datetime(str, InputFormat=baseFmt);
         end
     elseif contains(str, ":")
-        dt = datetime(str, InputFormat="HH:mm:ss");
+        baseFmt = "HH:mm:ss";
+        if hasFrac
+            baseFmt = baseFmt + ".SSSSSS";
+        end
+        dt = datetime(str, InputFormat=baseFmt);
     else
         dt = datetime(str, InputFormat="uuuu-MM-dd");
     end
+end
+
+function str = normalizeFrac(str)
+    original = extract(str, "." + digitsPattern);
+    normalized = extractBefore(pad(original, 7, 'right', '0'), 8);
+    str = replace(str, original, normalized);
 end
