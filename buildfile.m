@@ -51,7 +51,7 @@ function mltbxTask(~)
     % Package toolbox/ into a .mltbx artifact.
     % Temporarily copy LICENSE into toolbox/ so it is bundled in the .mltbx.
     licDest = fullfile("toolbox", "LICENSE");
-    copyfile("LICENSE", licDest);
+    copyfile("license.txt", licDest);
     cleanup = onCleanup(@() delete(licDest));
 
     opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
