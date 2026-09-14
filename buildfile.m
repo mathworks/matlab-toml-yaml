@@ -100,7 +100,11 @@ function lintTask(~)
         return
     end
 
-    disp(t(:, ["Location", "Severity", "Fixability", "CheckID", "Description"]));
+    columns = ["Location", "Severity", "CheckID", "Description"];
+    if ismember("Fixability", t.Properties.VariableNames)
+        columns = ["Location", "Severity", "Fixability", "CheckID", "Description"];
+    end
+    disp(t(:, columns));
     nWarnings = sum(t.Severity == "warning");
     nInfo = height(t) - nWarnings;
     fprintf("\n%d warning(s), %d info\n", nWarnings, nInfo);
