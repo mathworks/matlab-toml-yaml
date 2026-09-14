@@ -49,8 +49,8 @@ end
 
 function mltbxTask(~)
     % Package toolbox/ into a .mltbx artifact.
-    % Temporarily copy LICENSE into toolbox/ so it is bundled in the .mltbx.
-    licDest = fullfile("toolbox", "LICENSE");
+    % Temporarily copy license.txt into toolbox/ so it is bundled in the .mltbx.
+    licDest = fullfile("toolbox", "license.txt");
     copyfile("license.txt", licDest);
     cleanup = onCleanup(@() delete(licDest));
 
