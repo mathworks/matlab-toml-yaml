@@ -29,9 +29,9 @@ classdef TOMLMetadata < matlab.io.config.internal.NodeMetadata
             end
             baseArgs = {};
             baseFields = ["ContainerStyle", "ScalarStyle", "IsArray", ...
-                          "Comments", "TrailingComment"];
+                "Comments", "TrailingComment"];
             tomlFields = ["IntegerFormat", "FloatFormat", "StringMultiline", ...
-                          "TableFormat", "ArrayOfTables"];
+                "TableFormat", "ArrayOfTables"];
             fields = fieldnames(nvargs);
             for i = 1:numel(fields)
                 if ismember(fields{i}, baseFields)
