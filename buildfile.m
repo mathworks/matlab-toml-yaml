@@ -11,7 +11,7 @@ function plan = buildfile
 
     plan("test").Dependencies = "lint";
     plan("fixLint").Dependencies = "indent";
-    plan("all").Dependencies = ["indent", "fixLint", "test"];
+    plan("all").Dependencies = ["indent", "fixLint", "mex", "test"];
 
     mexOutputFolder = fullfile("toolbox", "derived");
     includeFolder   = fullfile("cpp", "include");

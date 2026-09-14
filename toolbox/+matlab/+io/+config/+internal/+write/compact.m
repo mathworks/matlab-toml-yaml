@@ -1,17 +1,17 @@
 function cs = compact(obj, format, precision)
-%compact Convert ConfigurationData to a CompactStruct for MEX serialization.
-%   cs = compact(obj, format) returns a struct with fields:
-%     Keys           - (1×n string) key names in insertion order
-%     Values         - (1×n cell) scalar values or nested CompactStructs
-%     NullIndices    - (1×m double) indices where value is null
-%     DatetimeIndices - (1×m double) indices where value is a datetime
-%     QuotedIndices  - (1×m double) indices where scalar needs quoting (YAML only)
-%     NodeStyle      - struct or [] — per-node format metadata
-%     KeyStyles      - (1×n cell) per-key format metadata ([] for defaults)
-%
-%   format is "yaml" or "toml". When "yaml", scalar Values are pre-formatted
-%   strings and QuotedIndices is populated. When "toml", scalar Values are
-%   raw typed MATLAB values and QuotedIndices is empty.
+    %compact Convert ConfigurationData to a CompactStruct for MEX serialization.
+    %   cs = compact(obj, format) returns a struct with fields:
+    %     Keys           - (1×n string) key names in insertion order
+    %     Values         - (1×n cell) scalar values or nested CompactStructs
+    %     NullIndices    - (1×m double) indices where value is null
+    %     DatetimeIndices - (1×m double) indices where value is a datetime
+    %     QuotedIndices  - (1×m double) indices where scalar needs quoting (YAML only)
+    %     NodeStyle      - struct or [] — per-node format metadata
+    %     KeyStyles      - (1×n cell) per-key format metadata ([] for defaults)
+    %
+    %   format is "yaml" or "toml". When "yaml", scalar Values are pre-formatted
+    %   strings and QuotedIndices is populated. When "toml", scalar Values are
+    %   raw typed MATLAB values and QuotedIndices is empty.
 
     arguments
         obj (1,1) matlab.io.config.ConfigurationData

@@ -43,7 +43,7 @@ classdef (Abstract) NodeMetadata
         function obj = set.ScalarStyle(obj, val)
             val = validatestring(val, ...
                 ["auto", "plain", "double-quoted", "single-quoted", ...
-                 "literal", "folded"]);
+                "literal", "folded"]);
             obj.ScalarStyle = val;
         end
     end
