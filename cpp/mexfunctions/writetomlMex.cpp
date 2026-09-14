@@ -379,8 +379,12 @@ private:
             tzStr = matlabStringToUtf8(tz.toUTF16());
         }
 
+        auto [ldt, precision] = extractLocalDatetime(val);
+
         if (tzStr.empty()) {
-            return toml::ordered_value(extractLocalDatetime(val));
+            auto result = toml::ordered_value(ldt);
+            result.as_local_datetime_fmt().subsecond_precision = precision;
+            return result;
         }
 
         matlab::data::Array offsetDuration = engine->feval(u"tzoffset", {val});
@@ -390,39 +394,58 @@ private:
         auto h = std::chrono::duration_cast<std::chrono::hours>(totalOffset);
         auto m = totalOffset - h;
 
-        toml::local_datetime ldt = extractLocalDatetime(val);
-        return toml::ordered_value(toml::offset_datetime(
+        auto result = toml::ordered_value(toml::offset_datetime(
             ldt.date, ldt.time,
             toml::time_offset(h.count(), std::abs(m.count()))));
+        result.as_offset_datetime_fmt().subsecond_precision = precision;
+        return result;
     }
 
-    toml::local_datetime extractLocalDatetime(
+    std::pair<toml::local_datetime, std::size_t> extractLocalDatetime(
             const matlab::data::Array& val) {
-        auto intField = [&](const char16_t* fn) -> int {
-            matlab::data::TypedArray<double> r =
-                engine->feval(fn, {val});
-            return static_cast<int>(r[0]);
-        };
+        matlab::data::TypedArray<double> dv =
+            engine->feval(u"datevec", {val});
+        int y  = static_cast<int>(dv[0]);
+        int mo = static_cast<int>(dv[1]);
+        int d  = static_cast<int>(dv[2]);
+        int h  = static_cast<int>(dv[3]);
+        int mi = static_cast<int>(dv[4]);
+        double sec = dv[5];
 
-        int y  = intField(u"year");
-        int mo = intField(u"month");
-        int d  = intField(u"day");
-        int h  = intField(u"hour");
-        int mi = intField(u"minute");
-
-        matlab::data::TypedArray<double> secArr =
-            engine->feval(u"second", {val});
-        double sec = secArr[0];
         int wholeSec = static_cast<int>(sec);
-        int microseconds = static_cast<int>(
+        int totalUs = static_cast<int>(
             std::round((sec - wholeSec) * 1e6));
+        int ms = totalUs / 1000;
+        int us = totalUs % 1000;
 
-        return toml::local_datetime(
-            toml::local_date(y, static_cast<toml::month_t>(mo - 1), d),
-            toml::local_time(h, mi, wholeSec, microseconds * 1000, 0));
+        std::size_t precision = 0;
+        if (us != 0) precision = 6;
+        else if (ms != 0) precision = 3;
+
+        return {
+            toml::local_datetime(
+                toml::local_date(y, static_cast<toml::month_t>(mo - 1), d),
+                toml::local_time(h, mi, wholeSec, ms, us)),
+            precision
+        };
     }
 
     // --- Array converters ---
+
+    template <typename Func>
+    toml::ordered_value buildArray(size_t n, Func&& convertElem,
+                                   bool isTableArray = false) {
+        toml::ordered_array tomlArr;
+        tomlArr.reserve(n);
+        for (size_t i = 0; i < n; ++i) {
+            tomlArr.push_back(convertElem(i));
+        }
+        toml::array_format_info fmt;
+        fmt.body_indent = indentSize;
+        fmt.fmt = isTableArray ? resolveTableArrayFormat(tomlArr)
+                               : resolveArrayFormat(tomlArr);
+        return toml::ordered_value(std::move(tomlArr), fmt);
+    }
 
     template <typename T>
     toml::ordered_value convertIntType(const matlab::data::Array& val,
@@ -439,97 +462,52 @@ private:
     toml::ordered_value convertNumericArray(
             const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<T> arr = val;
-        toml::ordered_array tomlArr;
-        tomlArr.reserve(numel);
-
-        for (auto elem : arr) {
+        return buildArray(numel, [&](size_t i) -> toml::ordered_value {
             if constexpr (std::is_same_v<T, bool>) {
-                tomlArr.push_back(toml::ordered_value(
-                    static_cast<bool>(elem)));
+                return toml::ordered_value(static_cast<bool>(arr[i]));
             } else if constexpr (std::is_floating_point_v<T>) {
-                tomlArr.push_back(convertDouble(
-                    static_cast<double>(elem)));
+                return convertDouble(static_cast<double>(arr[i]));
             } else {
-                tomlArr.push_back(toml::ordered_value(
-                    static_cast<toml::ordered_value::integer_type>(
-                        elem)));
+                return toml::ordered_value(
+                    static_cast<toml::ordered_value::integer_type>(arr[i]));
             }
-        }
-
-        toml::array_format_info fmt;
-        fmt.fmt = resolveArrayFormat(tomlArr);
-        fmt.body_indent = indentSize;
-        return toml::ordered_value(std::move(tomlArr), fmt);
+        });
     }
 
     toml::ordered_value convertStringArray(
             const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-        toml::ordered_array tomlArr;
-        tomlArr.reserve(numel);
-
         toml::string_format_info strFmt;
         strFmt.fmt = resolveStringFormat();
-        for (const auto& ms : arr) {
-            std::string s = matlabStringToUtf8(ms);
-            tomlArr.push_back(toml::ordered_value(std::move(s), strFmt));
-        }
-
-        toml::array_format_info fmt;
-        fmt.fmt = resolveArrayFormat(tomlArr);
-        fmt.body_indent = indentSize;
-        return toml::ordered_value(std::move(tomlArr), fmt);
+        return buildArray(numel, [&](size_t i) {
+            std::string s = matlabStringToUtf8(arr[i]);
+            return toml::ordered_value(std::move(s), strFmt);
+        });
     }
 
     toml::ordered_value convertCellArray(
             const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<matlab::data::Array> cells = val;
-        toml::ordered_array tomlArr;
-        tomlArr.reserve(numel);
-
-        for (size_t i = 0; i < numel; ++i) {
-            tomlArr.push_back(convert(cells[i]));
-        }
-
-        toml::array_format_info fmt;
-        fmt.fmt = resolveArrayFormat(tomlArr);
-        fmt.body_indent = indentSize;
-        return toml::ordered_value(std::move(tomlArr), fmt);
+        return buildArray(numel, [&](size_t i) {
+            return convert(cells[i]);
+        });
     }
 
     toml::ordered_value convertObjectArray(
             const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<matlab::data::Array> cells = val;
-
-        toml::ordered_array tomlArr;
-        tomlArr.reserve(numel);
-
-        for (size_t i = 0; i < numel; ++i) {
-            tomlArr.push_back(convertTable(cells[i]));
-        }
-
-        toml::array_format_info fmt;
-        fmt.body_indent = indentSize;
-        fmt.fmt = resolveTableArrayFormat(tomlArr);
-        return toml::ordered_value(std::move(tomlArr), fmt);
+        return buildArray(numel, [&](size_t i) {
+            return convertTable(cells[i]);
+        }, true);
     }
 
     toml::ordered_value convertDatetimeArray(
             const matlab::data::Array& val, size_t numel) {
         matlab::data::TypedArray<matlab::data::Array> cells =
             engine->feval(u"num2cell", {val});
-
-        toml::ordered_array tomlArr;
-        tomlArr.reserve(numel);
-
-        for (size_t i = 0; i < numel; ++i) {
-            tomlArr.push_back(convertDatetime(cells[i]));
-        }
-
-        toml::array_format_info fmt;
-        fmt.fmt = resolveArrayFormat(tomlArr);
-        fmt.body_indent = indentSize;
-        return toml::ordered_value(std::move(tomlArr), fmt);
+        return buildArray(numel, [&](size_t i) {
+            return convertDatetime(cells[i]);
+        });
     }
 
     // --- Format resolution ---
