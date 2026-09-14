@@ -49,6 +49,11 @@ end
 
 function mltbxTask(~)
     % Package toolbox/ into a .mltbx artifact.
+    % Temporarily copy LICENSE into toolbox/ so it is bundled in the .mltbx.
+    licDest = fullfile("toolbox", "LICENSE");
+    copyfile("LICENSE", licDest);
+    cleanup = onCleanup(@() delete(licDest));
+
     opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
         "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
         ToolboxName="MATLAB Toolbox for TOML and YAML");
