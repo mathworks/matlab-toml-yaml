@@ -48,7 +48,7 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
         function testWritesDictionary(testCase)
             % A dictionary is converted to a YAMLData object first. Only
             % cell-valued dictionaries are supported (issue #26).
-            data = configureDictionary("string", "cell");
+            data = dictionary(string.empty, cell.empty);
             data("alpha") = {1};
             data("beta") = {"two"};
 

@@ -4,6 +4,7 @@ function plan = buildfile
     %   available tasks.
 
     addpath("buildUtilities");
+    addpath("toolbox");
 
     plan = buildplan(localfunctions);
 

@@ -76,8 +76,10 @@ classdef typeConversionTest < matlab.unittest.TestCase
 
             result = dictionary(config);
 
-            testCase.verifyEqual(result{"host"}, "example.com");
-            testCase.verifyEqual(result{"port"}, 8080);
+            import matlab.io.config.internal.lookupCellDictionaryKey
+
+            testCase.verifyEqual(lookupCellDictionaryKey(result, "host"), "example.com");
+            testCase.verifyEqual(lookupCellDictionaryKey(result, "port"), 8080);
         end
 
         function testDictionaryRecursesIntoNestedObjects(testCase)
@@ -86,10 +88,11 @@ classdef typeConversionTest < matlab.unittest.TestCase
 
             result = dictionary(config);
 
-            nested = result{"nested"};
+            import matlab.io.config.internal.lookupCellDictionaryKey
+            nested = lookupCellDictionaryKey(result, "nested");
             testCase.verifyClass(nested, "dictionary", ...
                 "Nested objects should convert recursively");
-            testCase.verifyEqual(nested{"inner"}, 42);
+            testCase.verifyEqual(lookupCellDictionaryKey(nested, "inner"), 42);
         end
 
         function testDictionaryPreservesArrayValues(testCase)
@@ -98,7 +101,8 @@ classdef typeConversionTest < matlab.unittest.TestCase
 
             result = dictionary(config);
 
-            testCase.verifyEqual(result{"ports"}, [8080; 8443]);
+            import matlab.io.config.internal.lookupCellDictionaryKey
+            testCase.verifyEqual(lookupCellDictionaryKey(result, "ports"), [8080; 8443]);
         end
 
         % --- map --------------------------------------------------------

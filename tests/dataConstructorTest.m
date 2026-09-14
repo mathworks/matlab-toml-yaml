@@ -51,7 +51,7 @@ classdef dataConstructorTest < matlab.unittest.TestCase
         end
 
         function testCreatesFromCellValuedDictionary(testCase, constructor)
-            input = configureDictionary("string", "cell");
+            input = dictionary(string.empty, cell.empty);
             input("host") = {"example.com"};
             input("port") = {8080};
 

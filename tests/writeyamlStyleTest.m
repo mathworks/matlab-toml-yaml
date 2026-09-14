@@ -76,7 +76,7 @@ classdef writeyamlStyleTest < ConfigurationFileTestCase
         function testNestedObjectValueInsideDictionaryGoesOnItsOwnLines(testCase)
             inner = yamldata();
             inner.port = 8080;
-            data = configureDictionary("string", "cell");
+            data = dictionary(string.empty, cell.empty);
             data("database") = {inner};
 
             text = testCase.writeAndRead(data);
