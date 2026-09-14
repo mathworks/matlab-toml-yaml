@@ -145,9 +145,13 @@ function result = parseYAMLSequence(values, datetimeType)
 end
 
 function dt = parseTOMLDatetime(str)
+    offsetPat = characterListPattern("+-") + digitsPattern(2) + ":" + digitsPattern(2);
     if contains(str, "T")
-        if endsWith(str, "Z") || ~isempty(regexp(str, '[+-]\d{2}:\d{2}$', 'once'))
+        if endsWith(str, "Z")
             dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone="UTC");
+        elseif endsWith(str, offsetPat)
+            offset = extractAfter(str, strlength(str) - 6);
+            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone=offset);
         else
             dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ss");
         end

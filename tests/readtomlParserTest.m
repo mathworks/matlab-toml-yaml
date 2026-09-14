@@ -124,6 +124,39 @@ classdef readtomlParserTest < ConfigurationFileTestCase
                 "An explicit offset should be retained as a time zone");
         end
 
+        function testNegativeOffsetPreservesTimezone(testCase)
+            file = testCase.writeToml("at = 1979-05-27T07:32:00-08:00");
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(config.at.TimeZone, '-08:00');
+            testCase.verifyEqual(hour(config.at), 7, ...
+                "Hour should reflect the original offset, not UTC");
+        end
+
+        function testPositiveOffsetPreservesTimezone(testCase)
+            file = testCase.writeToml("at = 2024-01-15T16:00:00+05:30");
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(config.at.TimeZone, '+05:30');
+            testCase.verifyEqual(hour(config.at), 16);
+        end
+
+        function testOffsetDatetimeRoundTrip(testCase)
+            file = testCase.writeToml("at = 1979-05-27T07:32:00-08:00");
+            config = readtoml(file);
+
+            outFile = [tempname '.toml'];
+            testCase.addTeardown(@() delete(outFile));
+            writetoml(config, outFile);
+            result = readtoml(outFile);
+
+            testCase.verifyEqual(result.at.TimeZone, '-08:00', ...
+                "Offset should survive a read-write-read round trip");
+            testCase.verifyEqual(result.at, config.at);
+        end
+
         function testDateLikeValueThatCannotParseErrors(testCase)
             % Matches the date shape, so datetime parsing is attempted, but
             % every candidate format fails.

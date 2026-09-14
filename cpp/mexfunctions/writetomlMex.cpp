@@ -2,6 +2,7 @@
 #include "mexAdapter.hpp"
 #include "toml.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <vector>
 
@@ -379,13 +380,17 @@ private:
             return toml::ordered_value(extractLocalDatetime(val));
         }
 
-        matlab::data::Array utcVal = engine->feval(u"datetime",
-            {val, factory.createCharArray("TimeZone"),
-             factory.createCharArray("UTC")});
+        matlab::data::Array offsetDuration = engine->feval(u"tzoffset", {val});
+        matlab::data::TypedArray<double> offsetMin =
+            engine->feval(u"minutes", {offsetDuration});
+        auto totalOffset = std::chrono::minutes(static_cast<int>(offsetMin[0]));
+        auto h = std::chrono::duration_cast<std::chrono::hours>(totalOffset);
+        auto m = totalOffset - h;
 
-        toml::local_datetime ldt = extractLocalDatetime(utcVal);
+        toml::local_datetime ldt = extractLocalDatetime(val);
         return toml::ordered_value(toml::offset_datetime(
-            ldt.date, ldt.time, toml::time_offset(0, 0)));
+            ldt.date, ldt.time,
+            toml::time_offset(h.count(), std::abs(m.count()))));
     }
 
     toml::local_datetime extractLocalDatetime(
