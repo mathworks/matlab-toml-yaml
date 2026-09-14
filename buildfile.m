@@ -11,7 +11,7 @@ function plan = buildfile
 
     plan.DefaultTasks = ["lint", "test"];
 
-    plan("test").Dependencies = ["lint" "mex"];
+    plan("test").Dependencies = ["lint", "mex"];
     plan("fixLint").Dependencies = "indent";
     plan("all").Dependencies = ["indent", "fixLint", "test"];
     plan("mex").Dependencies = "fetch";
