@@ -1,20 +1,22 @@
-function showAsFormat(obj, writeFcn, writerArgs)
+function showAsFormat(obj, writeFcn, varargin)
     %SHOWASFORMAT Display ConfigurationData by writing to temp file
     %   Shared logic for YAMLData.show() and TOMLData.show().
     arguments
         obj
         writeFcn function_handle
-        writerArgs cell = {}
+    end
+    arguments (Repeating)
+        varargin
     end
 
     tempFile = tempname;
     try
         if isscalar(obj)
-            writeFcn(obj, tempFile, writerArgs{:});
+            writeFcn(obj, tempFile, varargin{:});
         else
             wrapper = matlab.io.config.internal.createArray(obj);
             wrapper.item = obj;
-            writeFcn(wrapper, tempFile, writerArgs{:});
+            writeFcn(wrapper, tempFile, varargin{:});
         end
         content = fileread(tempFile);
         fprintf('%s\n', content);

@@ -22,7 +22,7 @@ classdef TOMLData < matlab.io.config.ConfigurationData
         function showImpl(obj)
             %SHOW Display the data in TOML format
             matlab.io.config.internal.showAsFormat(obj, @writetoml, ...
-                {"TableArrayStyle", "expanded"});
+                TableArrayStyle="expanded");
         end
     end
 
