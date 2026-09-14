@@ -9,7 +9,7 @@ function plan = buildfile
 
     plan.DefaultTasks = ["mex", "lint", "test"];
 
-    plan("test").Dependencies = "lint";
+    plan("test").Dependencies = ["lint", "mex"];
     plan("fixLint").Dependencies = "indent";
     plan("all").Dependencies = ["indent", "fixLint", "mex", "test"];
 
