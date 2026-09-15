@@ -17,8 +17,13 @@ function plan = buildfile
     mexOutputFolder = fullfile("toolbox", "derived");
     includeFolder   = fullfile("cpp", "include");
 
-    mexOptions = ["-I" + includeFolder, ...
-        "CXXFLAGS=$CXXFLAGS -std=c++17", staticLibcxxFlags()];
+    if ispc
+        cxx17Flag = "COMPFLAGS=$COMPFLAGS /std:c++17";
+    else
+        cxx17Flag = "CXXFLAGS=$CXXFLAGS -std=c++17";
+    end
+
+    mexOptions = ["-I" + includeFolder, cxx17Flag, staticLibcxxFlags()];
 
     mexSrcFolder = fullfile("cpp", "mexfunctions");
     allPaths = plan.files(fullfile(mexSrcFolder, "*.cpp")).paths;
