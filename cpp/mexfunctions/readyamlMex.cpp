@@ -197,7 +197,8 @@ private:
             for (size_t i = 0; i < count; ++i) {
                 matlab::data::TypedArray<matlab::data::MATLABString> v =
                     elems[i];
-                arr[i][0] = static_cast<matlab::data::MATLABString>(v[0]);
+                matlab::data::MATLABString val = v[0];
+                arr[i][0] = val;
             }
             return arr;
         }
