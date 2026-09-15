@@ -258,7 +258,10 @@ private:
     toml::ordered_value convertDatetime(const matlab::data::Array& val) {
         matlab::data::CharArray tz(engine->feval(u"getfield",
             {val, factory.createCharArray("TimeZone")}));
-        std::string tzStr = tz.toUTF8();
+        std::string tzStr;
+        if (tz.getNumberOfElements() > 0) {
+            tzStr = tz.toUTF8();
+        }
 
         if (tzStr.empty()) {
             return toml::ordered_value(extractLocalDatetime(val));

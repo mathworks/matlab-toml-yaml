@@ -6,7 +6,11 @@ std::string matlabStringToUtf8(
     if (!ms.has_value()) {
         return {};
     }
-    return factory.createCharArray(*ms).toUTF8();
+    const auto& str = *ms;
+    if (str.empty()) {
+        return {};
+    }
+    return factory.createCharArray(str).toUTF8();
 }
 
 matlab::data::Array makeString(

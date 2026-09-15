@@ -18,7 +18,8 @@ classdef readtomlMultilineStringTest < ConfigurationFileTestCase
 
     methods(Access = private)
         function file = writeToml(testCase, text)
-            file = testCase.writeTempFile("in.toml", text);
+            file = testCase.writeTempFile("in.toml", text, ...
+                LineEnding=newline);
         end
     end
 
