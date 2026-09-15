@@ -17,7 +17,8 @@ function plan = buildfile
     mexOutputFolder = fullfile("toolbox", "derived");
     includeFolder   = fullfile("cpp", "include");
 
-    mexOptions = ["-I" + includeFolder, staticLibcxxFlags()];
+    mexOptions = ["-I" + includeFolder, ...
+        "CXXFLAGS=$CXXFLAGS -std=c++17", staticLibcxxFlags()];
 
     mexSrcFolder = fullfile("cpp", "mexfunctions");
     allPaths = plan.files(fullfile(mexSrcFolder, "*.cpp")).paths;
