@@ -5,6 +5,7 @@ function plan = buildfile
 
     addpath("buildUtilities");
     addpath("toolbox");
+    addpath("toolbox/derived");
 
     plan = buildplan(localfunctions);
 

@@ -149,6 +149,19 @@ classdef tomltest < matlab.unittest.TestCase
             data = readtoml(filename);
             testCase.verifyClass(data.date, 'datetime');
         end
+        function testLocalDatetimeRoundtrip(testCase)
+            tomlContent = ['ldt = 1979-05-27T07:32:00' newline ...
+                'ld = 1979-05-27' newline ...
+                'lt = 07:32:00'];
+            filename = 'test.toml';
+            writelines(tomlContent, filename);
+            data = readtoml(filename);
+            writetoml(data, filename);
+            restored = readtoml(filename);
+            testCase.verifyEqual(restored.ldt, data.ldt);
+            testCase.verifyEqual(restored.ld, data.ld);
+            testCase.verifyEqual(restored.lt, data.lt);
+        end
         function testDottedKeys(testCase)
             % Test dotted keys (a.b = value creates nested structure)
             tomlContent = 'a.b.c = "nested value"';
