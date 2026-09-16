@@ -3,13 +3,10 @@
 #include "mex.hpp"
 #include <string>
 
-std::string matlabStringToUtf8(
-    matlab::data::ArrayFactory& factory,
-    const matlab::data::MATLABString& ms);
+// MATLABString is a typedef to optional<u16string>.
+std::string matlabStringToUtf8(const matlab::data::MATLABString& ms);
 
-matlab::data::Array makeString(
-    matlab::data::ArrayFactory& factory,
-    const std::string& utf8);
+matlab::data::MATLABString utf8ToMATLABString(const std::string& utf8);
 
 void throwMexError(
     matlab::engine::MATLABEngine& engine,

@@ -1,8 +1,7 @@
 #include "util.hpp"
+#include "cppmex/detail/mexExceptionImpl.hpp"
 
-std::string matlabStringToUtf8(
-    matlab::data::ArrayFactory& factory,
-    const matlab::data::MATLABString& ms) {
+std::string matlabStringToUtf8(const matlab::data::MATLABString& ms) {
     if (!ms.has_value()) {
         return {};
     }
@@ -10,17 +9,11 @@ std::string matlabStringToUtf8(
     if (str.empty()) {
         return {};
     }
-    return factory.createCharArray(str).toUTF8();
+    return matlab::engine::convertUTF16StringToUTF8String(str);
 }
 
-matlab::data::Array makeString(
-    matlab::data::ArrayFactory& factory,
-    const std::string& utf8) {
-    matlab::data::CharArray ca = factory.createCharArrayFromUTF8(utf8);
-    std::u16string u16(ca.begin(), ca.end());
-    auto arr = factory.createArray<matlab::data::MATLABString>({1, 1});
-    arr[0] = matlab::data::MATLABString(std::move(u16));
-    return arr;
+matlab::data::MATLABString utf8ToMATLABString(const std::string& utf8) {
+    return matlab::data::MATLABString(matlab::engine::convertUTF8StringToUTF16String(utf8));
 }
 
 void throwMexError(

@@ -68,7 +68,7 @@ private:
                                 const std::string& field) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr =
             opts[0][field];
-        return matlabStringToUtf8(factory, arr[0]);
+        return matlabStringToUtf8(arr[0]);
     }
 
     double getOptionDouble(const matlab::data::StructArray& opts,
@@ -126,7 +126,7 @@ private:
 
         toml::ordered_table tbl;
         for (size_t i = 0; i < n; ++i) {
-            std::string key = matlabStringToUtf8(factory, keys[i]);
+            std::string key = matlabStringToUtf8(keys[i]);
 
             if (isNull[i + 1]) {
                 continue;
@@ -236,7 +236,7 @@ private:
 
     toml::ordered_value convertString(const matlab::data::Array& val) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-        std::string s = matlabStringToUtf8(factory, arr[0]);
+        std::string s = matlabStringToUtf8(arr[0]);
 
         toml::string_format_info fmt;
         fmt.fmt = resolveStringFormat();
@@ -260,7 +260,7 @@ private:
             {val, factory.createCharArray("TimeZone")}));
         std::string tzStr;
         if (tz.getNumberOfElements() > 0) {
-            tzStr = tz.toUTF8();
+            tzStr = matlabStringToUtf8(tz.toUTF16());
         }
 
         if (tzStr.empty()) {
@@ -351,7 +351,7 @@ private:
         toml::string_format_info strFmt;
         strFmt.fmt = resolveStringFormat();
         for (const auto& ms : arr) {
-            std::string s = matlabStringToUtf8(factory, ms);
+            std::string s = matlabStringToUtf8(ms);
             tomlArr.push_back(toml::ordered_value(std::move(s), strFmt));
         }
 

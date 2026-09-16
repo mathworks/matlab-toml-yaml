@@ -68,12 +68,12 @@ private:
 
         matlab::data::TypedArray<matlab::data::MATLABString> as =
             opts[0]["ArrayStyle"];
-        flowArrays = (matlabStringToUtf8(factory, as[0]) == "flow");
+        flowArrays = (matlabStringToUtf8(as[0]) == "flow");
 
         matlab::data::TypedArray<matlab::data::MATLABString> ss =
             opts[0]["SectionSpacing"];
         sectionSpacing =
-            (matlabStringToUtf8(factory, ss[0]) == "loose");
+            (matlabStringToUtf8(ss[0]) == "loose");
 
         matlab::data::TypedArray<double> prec = opts[0]["Precision"];
         precision = static_cast<int>(prec[0]);
@@ -133,7 +133,7 @@ private:
         auto isQuoted = buildIndexSet(cs[0]["QuotedIndices"], n);
 
         for (size_t i = 0; i < n; ++i) {
-            std::string key = matlabStringToUtf8(factory, keys[i]);
+            std::string key = matlabStringToUtf8(keys[i]);
 
             ryml::NodeRef child = mapNode.append_child();
             child.set_key(toArena(key));
@@ -162,7 +162,7 @@ private:
                 matlab::data::TypedArray<matlab::data::MATLABString>
                     strArr = val;
                 setNodeValue(child,
-                    matlabStringToUtf8(factory, strArr[0]),
+                    matlabStringToUtf8(strArr[0]),
                     isQuoted[i + 1]);
             } else if (numel > 1) {
                 buildTypedSequence(child, val);
@@ -200,7 +200,7 @@ private:
         for (size_t i = 0; i < numel; ++i) {
             ryml::NodeRef item = node.append_child();
             setNodeValue(item,
-                matlabStringToUtf8(factory, texts[i]),
+                matlabStringToUtf8(texts[i]),
                 static_cast<bool>(quoted[i]));
         }
     }
@@ -264,7 +264,7 @@ private:
         matlab::data::TypedArray<matlab::data::MATLABString> t = results[0];
         matlab::data::TypedArray<bool> q = results[1];
         setNodeValue(node,
-            matlabStringToUtf8(factory, t[0]),
+            matlabStringToUtf8(t[0]),
             static_cast<bool>(q[0]));
     }
 
