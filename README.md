@@ -2,6 +2,7 @@
 
 The MATLAB&reg; Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
 
+<!-- markdownlint-disable-next-line MD033 -->
 <img src="images/matlab-toml-yaml.png" alt="MATLAB Toolbox for TOML and YAML" width="200"/>
 
 [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=mathworks/matlab-toml-yaml)
@@ -60,12 +61,14 @@ writetoml(config, "my_config.toml");
 ## Main Functions
 
 ### YAML
-- [`readyaml`](toolbox/doc/readyaml.md) - Read YAML file 
+
+- [`readyaml`](toolbox/doc/readyaml.md) - Read YAML file
 - [`writeyaml`](toolbox/doc/writeyaml.md) - Write YAML file
 - [`yamldata`](toolbox/doc/YAMLData.md) - Create `matlab.io.config.YAMLData` datatype
-- [`matlab.io.config.YAMLData`](toolbox/doc/YAMLData.md) - Struct-like datatype for YAML 
+- [`matlab.io.config.YAMLData`](toolbox/doc/YAMLData.md) - Struct-like datatype for YAML
 
 ### TOML
+
 - [`readtoml`](toolbox/doc/readtoml.md) - Read TOML file
 - [`writetoml`](toolbox/doc/writetoml.md) - Write TOML file
 - [`tomldata`](toolbox/doc/TOMLData.md) - Create `matlab.io.config.TOMLData` datatype
@@ -76,16 +79,19 @@ writetoml(config, "my_config.toml");
 See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an introductory walkthrough, or explore the `toolbox/examples/` folder:
 
 **YAML Examples:**
+
 - [`readyamlExample.m`](toolbox/examples/readyamlExample.m) - Reading YAML files
 - [`writeyamlExample.m`](toolbox/examples/writeyamlExample.m) - Writing YAML files
 - [`yamlWorkflowExample.m`](toolbox/examples/yamlWorkflowExample.m) - End-to-end read/modify/write workflow
 
 **TOML Examples:**
+
 - [`readtomlExample.m`](toolbox/examples/readtomlExample.m) - Reading TOML files
 - [`writetomlExample.m`](toolbox/examples/writetomlExample.m) - Writing TOML files
 - [`tomlPyprojectExample.m`](toolbox/examples/tomlPyprojectExample.m) - Working with `pyproject.toml`
 
 **Demo Scripts:**
+
 - [`conversionExample.m`](toolbox/examples/conversionExample.m) - Converting between structs, dictionaries, containers.Map, and data objects
 
 ## Limitations
