@@ -21,9 +21,6 @@ jobs:
             # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+).
           - os: macos-latest
             release: R2022b
-        include:
-          - os: ubuntu-latest
-            release: R2023a
         # Disabled: macos-13 runners are slow to provision.
         # include:
         #   - os: macos-13
@@ -31,8 +28,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: ${{ matrix.os }}-${{ matrix.release }}
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
@@ -44,14 +39,13 @@ jobs:
         uses: matlab-actions/run-build@v3
         with:
           tasks: test
-          startup-options: -sd ${{ matrix.os }}-${{ matrix.release }}
 
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.os }}-${{ matrix.release }}
-          path: ${{ matrix.os }}-${{ matrix.release }}/coverage/
+          path: coverage/
           if-no-files-found: error
 
   coverage:
@@ -79,18 +73,10 @@ jobs:
         with:
           command: |
             addpath("buildUtilities");
-            mergeCoverageReports("coverage-reports", ...
-                OutputHtml="coverage-combined/html", ...
-                OutputMarkdown="coverage-combined/summary.md");
+            mergeCoverageReports("coverage-reports", "coverage-combined/summary.md");
 
       - name: Write summary to job page
         run: cat coverage-combined/summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload combined coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-combined
-          path: coverage-combined/
 
   package:
     runs-on: ubuntu-latest
@@ -115,4 +101,3 @@ jobs:
         with:
           name: MATLAB_Toolbox_for_TOML_and_YAML.mltbx
           path: release/MATLAB_Toolbox_for_TOML_and_YAML.mltbx
-

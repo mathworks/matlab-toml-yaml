@@ -1,111 +1,145 @@
-function summary = mergeCoverageReports(artifactsDir, options)
-%MERGECOVERAGEREPORTS Merge coverage results and produce HTML + Markdown reports.
-%   SUMMARY = MERGECOVERAGEREPORTS(ARTIFACTSDIR) searches ARTIFACTSDIR
-%   recursively for result.mat files (saved by the test task on R2023a+),
-%   merges them using the + operator on matlab.coverage.Result, and returns
-%   a Markdown summary string.
-%
-%   MERGECOVERAGEREPORTS(..., OutputHtml=DIR) generates an interactive HTML
-%   coverage report in DIR using generateHTMLReport.
-%
-%   MERGECOVERAGEREPORTS(..., OutputXml=PATH) generates a combined Cobertura
-%   XML report at PATH using generateCoberturaReport.
-%
-%   MERGECOVERAGEREPORTS(..., OutputMarkdown=PATH) writes the Markdown
-%   summary to PATH.
+function summary = mergeCoverageReports(artifactsDir, outputMarkdown)
+%MERGECOVERAGEREPORTS Merge Cobertura XML coverage reports into a Markdown summary.
+%   SUMMARY = MERGECOVERAGEREPORTS(ARTIFACTSDIR, OUTPUTMARKDOWN) searches
+%   ARTIFACTSDIR recursively for cobertura.xml files, merges line hits
+%   across all reports (taking the max hit count per line per file), writes
+%   a Markdown summary to OUTPUTMARKDOWN, and returns it as a string.
 
     arguments
         artifactsDir (1,1) string
-        options.OutputHtml (1,1) string = string(missing)
-        options.OutputXml (1,1) string = string(missing)
-        options.OutputMarkdown (1,1) string = string(missing)
+        outputMarkdown (1,1) string
     end
 
-    merged = loadAndCombine(artifactsDir);
+    fileMap = loadAndMergeXml(artifactsDir);
 
-    summary = buildMarkdownSummary(merged);
+    summary = buildMarkdown(fileMap);
     fprintf("\n%s\n", summary);
 
-    % Generate optional outputs.
-    if ~ismissing(options.OutputHtml)
-        if ~isfolder(options.OutputHtml)
-            mkdir(options.OutputHtml);
-        end
-        [~] = generateHTMLReport(merged, options.OutputHtml);
-        fprintf("Wrote HTML report to %s\n", options.OutputHtml);
+    parentDir = fileparts(outputMarkdown);
+    if strlength(parentDir) > 0 && ~isfolder(parentDir)
+        mkdir(parentDir);
     end
+    writelines(summary, outputMarkdown);
+    fprintf("Wrote %s\n", outputMarkdown);
+end
 
-    if ~ismissing(options.OutputXml)
-        parentDir = fileparts(options.OutputXml);
-        if strlength(parentDir) > 0 && ~isfolder(parentDir)
-            mkdir(parentDir);
-        end
-        generateCoberturaReport(merged, options.OutputXml);
-        fprintf("Wrote %s\n", options.OutputXml);
-    end
+function fileMap = loadAndMergeXml(artifactsDir)
+    xmlFiles = dir(fullfile(artifactsDir, '**', 'cobertura.xml'));
+    assert(~isempty(xmlFiles), "mergeCoverageReports:noFiles", ...
+        "No cobertura.xml files found in %s", artifactsDir);
+    fprintf("Merging %d Cobertura XML report(s)\n", numel(xmlFiles));
 
-    if ~ismissing(options.OutputMarkdown)
-        parentDir = fileparts(options.OutputMarkdown);
-        if strlength(parentDir) > 0 && ~isfolder(parentDir)
-            mkdir(parentDir);
+    fileMap = dictionary(string.empty, cell.empty);
+
+    for i = 1:numel(xmlFiles)
+        xmlPath = fullfile(xmlFiles(i).folder, xmlFiles(i).name);
+        fprintf("  %s\n", xmlPath);
+        doc = xmlread(xmlPath);
+
+        classes = doc.getElementsByTagName("class");
+        for c = 0:classes.getLength()-1
+            classNode = classes.item(c);
+            filename = string(classNode.getAttribute("filename"));
+            filename = replace(filename, "\", "/");
+
+            lines = classNode.getElementsByTagName("line");
+            for l = 0:lines.getLength()-1
+                lineNode = lines.item(l);
+                num = int32(str2double(lineNode.getAttribute("number")));
+                hits = int32(str2double(lineNode.getAttribute("hits")));
+
+                if isKey(fileMap, filename)
+                    lineData = fileMap{filename};
+                else
+                    lineData = dictionary(int32.empty, int32.empty);
+                end
+
+                if isKey(lineData, num)
+                    lineData(num) = max(lineData(num), hits);
+                else
+                    lineData(num) = hits;
+                end
+                fileMap(filename) = {lineData};
+            end
         end
-        writelines(summary, options.OutputMarkdown);
-        fprintf("Wrote %s\n", options.OutputMarkdown);
     end
 end
 
-function merged = loadAndCombine(artifactsDir)
-    matFiles = dir(fullfile(artifactsDir, '**', 'result.mat'));
-    assert(~isempty(matFiles), "mergeCoverageReports:noFiles", ...
-        "No result.mat files found in %s", artifactsDir);
-    fprintf("Merging %d coverage result(s)\n", numel(matFiles));
+function summary = buildMarkdown(fileMap)
+    filenames = sort(keys(fileMap));
+    coveredTotal = 0;
+    linesTotal = 0;
 
-    merged = matlab.coverage.Result.empty;
-    for i = 1:numel(matFiles)
-        matPath = fullfile(matFiles(i).folder, matFiles(i).name);
-        fprintf("  %s\n", matPath);
-        data = load(matPath, "result");
-        if isempty(merged)
-            merged = data.result;
-        else
-            merged = merged + data.result;
-        end
-    end
-end
-
-function summary = buildMarkdownSummary(merged)
-    summaryMatrix = coverageSummary(merged, "statement");
-    filenames = [merged.Filename]';
-    filenames = replace(filenames, "\", "/");
-    toolboxIdx = strfind(filenames, "toolbox/");
+    rows = strings(1, numel(filenames));
+    details = strings(1, numel(filenames));
     for i = 1:numel(filenames)
-        if ~isempty(toolboxIdx{i})
-            filenames(i) = extractAfter(filenames(i), toolboxIdx{i}(1) + strlength("toolbox/") - 1);
+        lineData = fileMap{filenames(i)};
+        lineNums = sort(keys(lineData));
+        hitsArray = lineData(lineNums);
+        nTotal = numel(lineNums);
+        nCovered = sum(hitsArray > 0);
+        coveredTotal = coveredTotal + nCovered;
+        linesTotal = linesTotal + nTotal;
+
+        if nTotal == 0
+            rows(i) = sprintf("| %s | N/A | 0/0 |", filenames(i));
+        else
+            rate = nCovered / nTotal * 100;
+            rows(i) = sprintf("| %s | %.1f%% | %d/%d |", ...
+                filenames(i), rate, nCovered, nTotal);
+        end
+
+        uncoveredLines = lineNums(hitsArray == 0);
+        if ~isempty(uncoveredLines)
+            lineList = join(string(uncoveredLines), ", ");
+            details(i) = sprintf( ...
+                "<details><summary>%s — %d uncovered line(s)</summary>\n\nLines: %s\n\n</details>", ...
+                filenames(i), numel(uncoveredLines), lineList);
         end
     end
-    executed = summaryMatrix(:, 1);
-    total = summaryMatrix(:, 2);
 
-    coveredLines = sum(executed);
-    totalLines = sum(total);
-    overallRate = coveredLines / totalLines * 100;
+    overallRate = coveredTotal / linesTotal * 100;
+    isPartial = false(1, numel(filenames));
+    for i = 1:numel(filenames)
+        lineData = fileMap{filenames(i)};
+        lineNums = keys(lineData);
+        hitsArray = lineData(lineNums);
+        nTotal = numel(lineNums);
+        nCovered = sum(hitsArray > 0);
+        isPartial(i) = nTotal > 0 && nCovered < nTotal;
+    end
 
     md = strings(0);
     md(end+1) = "### Combined Code Coverage";
     md(end+1) = "";
     md(end+1) = sprintf("**Overall: %.1f%% statement coverage (%d/%d)**", ...
-        overallRate, coveredLines, totalLines);
+        overallRate, coveredTotal, linesTotal);
+
+    if any(isPartial)
+        md(end+1) = "";
+        md(end+1) = "#### Files Without Full Coverage";
+        md(end+1) = "";
+        md(end+1) = "| File | Coverage | Statements |";
+        md(end+1) = "|------|-------:|-----------:|";
+        md = [md, rows(isPartial)];
+    end
+
+    hasDetails = strlength(details) > 0;
+    if any(hasDetails)
+        md(end+1) = "";
+        md(end+1) = "#### Uncovered Lines";
+        md(end+1) = "";
+        md = [md, details(hasDetails)];
+    end
+
+    md(end+1) = "";
+    md(end+1) = "<details><summary><strong>All Files</strong></summary>";
     md(end+1) = "";
     md(end+1) = "| File | Coverage | Statements |";
     md(end+1) = "|------|-------:|-----------:|";
-    for i = 1:numel(filenames)
-        if total(i) == 0
-            md(end+1) = sprintf("| %s | N/A | 0/0 |", filenames(i)); %#ok<AGROW>
-        else
-            rate = executed(i) / total(i) * 100;
-            md(end+1) = sprintf("| %s | %.1f%% | %d/%d |", ...
-                filenames(i), rate, executed(i), total(i)); %#ok<AGROW>
-        end
-    end
+    md = [md, rows];
+    md(end+1) = "";
+    md(end+1) = "</details>";
+
     summary = join(md, newline);
 end
