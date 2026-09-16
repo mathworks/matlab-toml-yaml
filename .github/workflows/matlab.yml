@@ -20,10 +20,11 @@ jobs:
         exclude:
           - os: macos-latest
             release: R2022b
-        include:
-          # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+)
-          - os: macos-13
-            release: R2022b
+        # include:
+        #   # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+).
+        #   # Disabled: macos-13 runners are slow to provision.
+        #   - os: macos-13
+        #     release: R2022b
 
     steps:
       - uses: actions/checkout@v4
