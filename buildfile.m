@@ -9,14 +9,22 @@ function plan = buildfile
 
     plan = buildplan(localfunctions);
 
-    plan.DefaultTasks = ["mex", "lint", "test"];
+    plan.DefaultTasks = ["lint", "test"];
 
     plan("test").Dependencies = ["lint" "mex"];
     plan("fixLint").Dependencies = "indent";
-    plan("all").Dependencies = ["indent", "fixLint", "mex", "test"];
+    plan("all").Dependencies = ["indent", "fixLint", "test"];
+    plan("mex").Dependencies = "fetch";
+    plan("mex").Description = "Build MEX functions";
 
-    mexOutputFolder = fullfile("toolbox", "derived");
-    includeFolder   = fullfile("cpp", "include");
+    if ~isMATLABReleaseOlderThan("R2025a")
+        plan("clean") = matlab.buildtool.tasks.CleanTask;
+    end
+end
+
+function cfg = mexSourcesAndOptions()
+    cfg.OutputFolder = fullfile("toolbox", "derived");
+    includeFolder = fullfile("cpp", "include");
 
     if ispc
         cxx17Flag = "COMPFLAGS=$COMPFLAGS /std:c++17";
@@ -24,22 +32,47 @@ function plan = buildfile
         cxx17Flag = "CXXFLAGS=$CXXFLAGS -std=c++17";
     end
 
-    mexOptions = ["-I" + includeFolder, cxx17Flag, staticLibcxxFlags()];
+    cfg.Options = ["-I" + includeFolder, cxx17Flag, staticLibcxxFlags()];
 
-    mexSrcFolder = fullfile("cpp", "mexfunctions");
-    allPaths = plan.files(fullfile(mexSrcFolder, "*.cpp")).paths;
-    isMex = allPaths.endsWith("Mex.cpp");
-    supportSrc = allPaths(~isMex);
-    for cppFile = allPaths(isMex)
-        [~, fileName] = fileparts(cppFile);
-        plan("mex:" + fileName) = matlab.buildtool.tasks.MexTask( ...
-            [cppFile, supportSrc], ...
-            mexOutputFolder, ...
-            Options=mexOptions);
+    srcFolder = fullfile("cpp", "mexfunctions");
+    fs = matlab.io.datastore.FileSet(srcFolder, FileExtensions=".cpp");
+    allPaths = fs.FileInfo.Filename;
+    isMexEntry = endsWith(allPaths, "Mex.cpp");
+    cfg.MexEntries = allPaths(isMexEntry);
+    cfg.SupportSrc = allPaths(~isMexEntry);
+end
+
+function mexModernTask(context)
+    if isMATLABReleaseOlderThan("R2025a")
+        return;
     end
-    plan("mex").Dependencies = "fetch";
-    plan("mex").Description = "Build MEX functions";
-    plan("clean") = matlab.buildtool.tasks.CleanTask;
+
+    cfg = mexSourcesAndOptions();
+    plan = context.Plan;
+    plan("mexModernForEach") = matlab.buildtool.tasks.MexTask.forEachFile( ...
+        cfg.MexEntries, cfg.OutputFolder, ...
+        CommonSourceFiles=cfg.SupportSrc, ...
+        Options=cfg.Options);
+    plan.run("mexModernForEach");
+end
+
+function mexLegacyTask(~)
+
+    cfg = mexSourcesAndOptions();
+    flags = cellstr(["-v", "-outdir", cfg.OutputFolder, cfg.Options]);
+    supportArgs = cellstr(cfg.SupportSrc);
+    for i = 1:numel(cfg.MexEntries)
+        fprintf("  Building %s\n", cfg.MexEntries(i));
+        mex(flags{:}, cfg.MexEntries(i), supportArgs{:});
+    end
+end
+
+function mexTask(context)
+    if isMATLABReleaseOlderThan("R2025a")
+        context.Plan.run("mexLegacy");
+    else
+        context.Plan.run("mexModern");
+    end
 end
 
 function fetchTask(~)
@@ -189,7 +222,7 @@ function fixLintTask(~)
     %   excluding example and doc scripts. Remaining manual-fix issues are
     %   reported but not modified.
     if isMATLABReleaseOlderThan("R2023a")
-        error("fixLint:release", "The fixLint task requires R2023a or later.");
+        return;
     end
 
     issues = codeIssues(libraryFiles());
