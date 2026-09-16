@@ -101,7 +101,7 @@ This toolbox implements a simplified YAML parser optimized for configuration fil
 
 ## License
 
-Copyright 2026 The MathWorks, Inc. See [LICENSE](LICENSE) for details.
+Copyright 2026 The MathWorks, Inc. See [license.txt](license.txt) for details.
 
 ## Contributing
 
