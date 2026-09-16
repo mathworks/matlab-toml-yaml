@@ -68,6 +68,9 @@ jobs:
           pattern: coverage-*
           path: coverage-reports/
 
+      - name: Install fonts for Java AWT
+        run: sudo apt-get install -y --no-install-recommends fonts-dejavu-core
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
