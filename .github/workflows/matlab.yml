@@ -18,11 +18,14 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         release: [R2022b, latest]
         exclude:
+            # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+).
           - os: macos-latest
             release: R2022b
+        include:
+          - os: ubuntu-latest
+            release: R2023a
+        # Disabled: macos-13 runners are slow to provision.
         # include:
-        #   # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+).
-        #   # Disabled: macos-13 runners are slow to provision.
         #   - os: macos-13
         #     release: R2022b
 
@@ -54,25 +57,38 @@ jobs:
     if: always()
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download all coverage artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: coverage-*
           path: coverage-reports/
 
-      - name: Merge and summarize coverage
-        run: |
-          pip install pycobertura
-          find coverage-reports -name 'cobertura.xml' > xml_list.txt
-          cat xml_list.txt
-          pycobertura merge $(cat xml_list.txt | tr '\n' ' ') -o combined-cobertura.xml
-          pycobertura show combined-cobertura.xml --format markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: latest
+          cache: true
+
+      - name: Merge coverage reports
+        uses: matlab-actions/run-command@v3
+        with:
+          command: |
+            addpath("buildUtilities");
+            mergeCoverageReports("coverage-reports", ...
+                OutputHtml="coverage-combined/html", ...
+                OutputXml="coverage-combined/cobertura.xml", ...
+                OutputMarkdown="coverage-combined/summary.md");
+
+      - name: Write summary to job page
+        run: cat coverage-combined/summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload combined coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-combined
-          path: combined-cobertura.xml
+          path: coverage-combined/
 
   package:
     runs-on: ubuntu-latest

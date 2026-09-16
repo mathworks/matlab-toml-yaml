@@ -35,9 +35,11 @@ function testTask(~)
 
     formats = CoberturaFormat(fullfile(coverageFolder, "cobertura.xml"));
     if ~isMATLABReleaseOlderThan("R2023a")
+        coverageResult = matlab.unittest.plugins.codecoverage.CoverageResult;
         formats = [formats, ...
             matlab.unittest.plugins.codecoverage.CoverageReport( ...
-            fullfile(coverageFolder, "html"))];
+            fullfile(coverageFolder, "html")), ...
+            coverageResult];
     end
 
     suite = TestSuite.fromFolder("tests");
@@ -45,6 +47,11 @@ function testTask(~)
     runner.addPlugin(CodeCoveragePlugin.forFile(libraryFiles(), Producing=formats));
     results = runner.run(suite);
     assertSuccess(results);
+
+    if ~isMATLABReleaseOlderThan("R2023a")
+        result = coverageResult.Result; %#ok<NASGU>
+        save(fullfile(coverageFolder, "result.mat"), "result");
+    end
 end
 
 function mltbxTask(~)
