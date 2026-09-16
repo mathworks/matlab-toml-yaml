@@ -24,7 +24,7 @@ public:
 
         matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
             inputs[1];
-        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
+        std::string filename = matlabStringToUtf8(filenameArr[0]);
 
         std::istringstream iss(std::move(content));
         toml::value data = toml::parse(iss, filename);
@@ -65,8 +65,7 @@ private:
 
         size_t i = 0;
         for (const auto& [key, val] : tbl) {
-            keys[0][i] = matlab::data::MATLABString(
-                factory.createCharArrayFromUTF8(key).toUTF16());
+            keys[0][i] = utf8ToMATLABString(key);
 
             if (val.type() == toml::value_t::table) {
                 values[0][i] = tableToCompactStruct(val);
@@ -74,7 +73,7 @@ private:
                 values[0][i] = convertArray(val.as_array());
             } else if (isDatetimeType(val.type())) {
                 datetimeIdx.push_back(static_cast<double>(i + 1));
-                values[0][i] = makeString(factory, datetimeToString(val));
+                values[0][i] = factory.createScalar(utf8ToMATLABString(datetimeToString(val)));
             } else {
                 values[0][i] = convertScalar(val);
             }
@@ -109,7 +108,7 @@ private:
             case toml::value_t::floating:
                 return factory.createScalar<double>(val.as_floating());
             case toml::value_t::string:
-                return makeString(factory, val.as_string());
+                return factory.createScalar(*(utf8ToMATLABString(val.as_string())));
             default:
                 return factory.createArray<double>({0, 0});
         }
@@ -163,9 +162,7 @@ private:
             auto out = factory.createArray<matlab::data::MATLABString>(
                 {1, arr.size()});
             for (size_t i = 0; i < arr.size(); ++i) {
-                out[0][i] = matlab::data::MATLABString(
-                    factory.createCharArrayFromUTF8(
-                        arr[i].as_string()).toUTF16());
+                out[0][i] = utf8ToMATLABString(arr[i].as_string());
             }
             return out;
         }
@@ -178,7 +175,7 @@ private:
             } else if (elem.type() == toml::value_t::array) {
                 elems.push_back(convertArray(elem.as_array()));
             } else if (isDatetimeType(elem.type())) {
-                elems.push_back(makeString(factory, datetimeToString(elem)));
+                elems.push_back(factory.createScalar(utf8ToMATLABString(datetimeToString(elem))));
             } else {
                 elems.push_back(convertScalar(elem));
             }

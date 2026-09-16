@@ -1,9 +1,9 @@
 function summary = mergeCoverageReports(artifactsDir, outputMarkdown)
-%MERGECOVERAGEREPORTS Merge Cobertura XML coverage reports into a Markdown summary.
-%   SUMMARY = MERGECOVERAGEREPORTS(ARTIFACTSDIR, OUTPUTMARKDOWN) searches
-%   ARTIFACTSDIR recursively for cobertura.xml files, merges line hits
-%   across all reports (taking the max hit count per line per file), writes
-%   a Markdown summary to OUTPUTMARKDOWN, and returns it as a string.
+    %MERGECOVERAGEREPORTS Merge Cobertura XML coverage reports into a Markdown summary.
+    %   SUMMARY = MERGECOVERAGEREPORTS(ARTIFACTSDIR, OUTPUTMARKDOWN) searches
+    %   ARTIFACTSDIR recursively for cobertura.xml files, merges line hits
+    %   across all reports (taking the max hit count per line per file), writes
+    %   a Markdown summary to OUTPUTMARKDOWN, and returns it as a string.
 
     arguments
         artifactsDir (1,1) string

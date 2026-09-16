@@ -26,7 +26,7 @@ public:
 
         matlab::data::TypedArray<matlab::data::MATLABString> filenameArr =
             inputs[1];
-        std::string filename = matlabStringToUtf8(factory, filenameArr[0]);
+        std::string filename = matlabStringToUtf8(filenameArr[0]);
 
         sequenceAsCell = false;
         if (inputs.size() > 2) {
@@ -35,7 +35,7 @@ public:
             matlab::data::TypedArray<matlab::data::MATLABString> seqRule =
                 opts[0]["SequenceRule"];
             sequenceAsCell =
-                (matlabStringToUtf8(factory, seqRule[0]) == "cell");
+                (matlabStringToUtf8(seqRule[0]) == "cell");
         }
 
         ryml::Tree tree = ryml::parse_in_arena(
@@ -90,9 +90,7 @@ private:
 
         size_t i = 0;
         for (ryml::ConstNodeRef child : node.children()) {
-            keys[0][i] = matlab::data::MATLABString(
-                factory.createCharArrayFromUTF8(
-                    toStdString(child.key())).toUTF16());
+            keys[0][i] = utf8ToMATLABString(toStdString(child.key()));
 
             if (child.is_map()) {
                 values[0][i] = convertMap(child);
@@ -104,7 +102,7 @@ private:
                     values[0][i] = factory.createArray<double>({0, 0});
                 } else {
                     std::string s = toStdString(child.val());
-                    values[0][i] = makeString(factory, s);
+                    values[0][i] = factory.createScalar(utf8ToMATLABString(s));
                     if (child.is_val_quoted()) {
                         quotedIdx.push_back(static_cast<double>(i + 1));
                     }
@@ -210,6 +208,6 @@ private:
         if (node.val_is_null()) {
             return factory.createArray<double>({0, 0});
         }
-        return makeString(factory, toStdString(node.val()));
+        return factory.createScalar(utf8ToMATLABString(toStdString(node.val())));
     }
 };
