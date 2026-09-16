@@ -49,10 +49,11 @@ end
 
 function mltbxTask(~)
     % Package toolbox/ into a .mltbx artifact.
-    % Temporarily copy license.txt into toolbox/ so it is bundled in the .mltbx.
-    licDest = fullfile("toolbox", "license.txt");
-    copyfile("license.txt", licDest);
-    cleanup = onCleanup(@() delete(licDest));
+    % Temporarily copy license.txt and README.md into toolbox/ so it is bundled in the .mltbx.
+    sourcePath = ["license.txt" "README.md"];
+    destPathFcn = @(filename) fullfile("toolbox", filename);
+    arrayfun(@(filename) copyfile(filename, destPathFcn(filename)), sourcePath);
+    cleanup = onCleanup(@() delete(destPathFcn(sourcePath)));
 
     opts = matlab.addons.toolbox.ToolboxOptions("toolbox", ...
         "1dd978f7-c76b-4b6c-a0f6-b1bf82118978", ...
@@ -65,10 +66,10 @@ function mltbxTask(~)
     opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
     opts.Summary = "Read and write TOML and YAML configuration files with dot notation access.";
     opts.Description = fileread("README.md");
-    if isfile(fullfile("images", "matlab-toml-yaml.png"))
-        opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
-    end
+    opts.ToolboxImageFile = fullfile("images", "matlab-toml-yaml.png");
     opts.ToolboxGettingStartedGuide = fullfile("toolbox", "doc", "GettingStarted.mlx");
+    opts.AuthorCompany = "MathWorks";
+    opts.AuthorName = "Aylin Dmello, Jeremy Hughes, Michelle Hirsch";
     matlab.addons.toolbox.packageToolbox(opts);
 end
 
