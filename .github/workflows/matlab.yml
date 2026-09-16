@@ -76,8 +76,6 @@ jobs:
 
       - name: Merge coverage reports
         uses: matlab-actions/run-command@v3
-        env:
-          JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
         with:
           command: |
             addpath("buildUtilities");

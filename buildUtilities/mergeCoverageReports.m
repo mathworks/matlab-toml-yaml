@@ -31,7 +31,7 @@ function summary = mergeCoverageReports(artifactsDir, options)
         if ~isfolder(options.OutputHtml)
             mkdir(options.OutputHtml);
         end
-        generateHTMLReport(merged, options.OutputHtml);
+        [~] = generateHTMLReport(merged, options.OutputHtml);
         fprintf("Wrote HTML report to %s\n", options.OutputHtml);
     end
 
