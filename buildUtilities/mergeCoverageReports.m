@@ -28,11 +28,18 @@ function summary = mergeCoverageReports(artifactsDir, options)
 
     % Generate optional outputs.
     if ~ismissing(options.OutputHtml)
+        if ~isfolder(options.OutputHtml)
+            mkdir(options.OutputHtml);
+        end
         generateHTMLReport(merged, options.OutputHtml);
         fprintf("Wrote HTML report to %s\n", options.OutputHtml);
     end
 
     if ~ismissing(options.OutputXml)
+        parentDir = fileparts(options.OutputXml);
+        if strlength(parentDir) > 0 && ~isfolder(parentDir)
+            mkdir(parentDir);
+        end
         generateCoberturaReport(merged, options.OutputXml);
         fprintf("Wrote %s\n", options.OutputXml);
     end
