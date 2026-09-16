@@ -11,10 +11,19 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         release: [R2022b, latest]
+        exclude:
+          - os: macos-latest
+            release: R2022b
+        include:
+          # macos-latest is ARM; R2022b predates Apple Silicon support (R2023b+)
+          - os: macos-13
+            release: R2022b
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +43,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.release }}
+          name: coverage-${{ matrix.os }}-${{ matrix.release }}
           path: coverage/
           if-no-files-found: error
 
