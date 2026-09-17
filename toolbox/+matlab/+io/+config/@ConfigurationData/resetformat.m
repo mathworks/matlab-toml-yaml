@@ -41,7 +41,7 @@ function obj = resetOneKey(obj, keyPath)
 
     if ~isempty(obj.Metadata) && isConfigured(obj.Metadata.Keys) ...
             && isKey(obj.Metadata.Keys, resolved)
-        obj.Metadata.Keys = remove(obj.Metadata.Keys, resolved);
+        obj.Metadata.Keys(resolved) = [];
     end
 end
 
