@@ -89,14 +89,12 @@ function obj = applyStyles(obj, cs, format)
         meta = styleStructToMetadata(cs.NodeStyle, format);
     end
 
-    if hasKeyStyles
-        for i = 1:numel(cs.KeyStyles)
-            if ~isempty(cs.KeyStyles{i})
-                if isempty(meta)
-                    meta = makeDefaultMetadata(format);
-                end
-                meta.Keys = matlab.io.config.internal.assignCellDictionaryKey(meta.Keys, cs.Keys(i), styleStructToMetadata(cs.KeyStyles{i}, format));
+    for i = 1:numel(cs.KeyStyles)
+        if ~isempty(cs.KeyStyles{i})
+            if isempty(meta)
+                meta = makeDefaultMetadata(format);
             end
+            meta.Keys = matlab.io.config.internal.assignCellDictionaryKey(meta.Keys, cs.Keys(i), styleStructToMetadata(cs.KeyStyles{i}, format));
         end
     end
 
