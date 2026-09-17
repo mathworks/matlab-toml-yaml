@@ -376,7 +376,7 @@ private:
             {val, factory.createCharArray("TimeZone")}));
         std::string tzStr;
         if (tz.getNumberOfElements() > 0) {
-            tzStr = matlabStringToUtf8(tz.toUTF16());
+            tzStr = tz.toAscii();
         }
 
         auto [ldt, precision] = extractLocalDatetime(val);

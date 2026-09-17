@@ -70,8 +70,7 @@ private:
         auto arr = factory.createArray<matlab::data::MATLABString>(
             {nc, 1});
         for (size_t j = 0; j < nc; ++j) {
-            arr[j][0] = matlab::data::MATLABString(
-                factory.createCharArrayFromUTF8(comments[j]).toUTF16());
+            arr[j][0] = utf8ToMATLABString(comments[j]);
         }
         return arr;
     }
