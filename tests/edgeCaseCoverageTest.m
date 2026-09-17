@@ -172,6 +172,18 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyClass(obj.t, 'datetime');
         end
 
+        function testReadTOMLFractionalOffsetDatetime(testCase)
+            text = testCase.writeTempFile("ts = 2024-01-15T10:30:00.123Z", '.toml');
+            obj = readtoml(text);
+            testCase.verifyClass(obj.ts, 'datetime');
+        end
+
+        function testReadTOMLFractionalLocalTime(testCase)
+            text = testCase.writeTempFile("t = 10:30:00.456", '.toml');
+            obj = readtoml(text);
+            testCase.verifyClass(obj.t, 'datetime');
+        end
+
         %% readyaml — parseYAMLScalar paths
 
         function testReadYAMLQuotedDateStaysString(testCase)

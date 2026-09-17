@@ -82,11 +82,7 @@ function obj = expand(cs, format, options)
 end
 
 function obj = applyStyles(obj, cs, format)
-    hasNodeStyle = isfield(cs, 'NodeStyle') && ~isempty(cs.NodeStyle);
-    hasKeyStyles = isfield(cs, 'KeyStyles');
-    if ~hasNodeStyle && ~hasKeyStyles
-        return
-    end
+    hasNodeStyle = ~isempty(cs.NodeStyle);
 
     meta = [];
     if hasNodeStyle
