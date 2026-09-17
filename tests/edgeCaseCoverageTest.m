@@ -266,6 +266,16 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyNotEmpty(output);
         end
 
+        function testDisplayKeyWithSpace(testCase)
+            yaml = "hello world: 42";
+            file = [tempname, '.yaml'];
+            testCase.addTeardown(@() delete(file));
+            writelines(yaml, file);
+            obj = readyaml(file);
+            output = evalc('disp(obj)');
+            testCase.verifySubstring(output, "hello world");
+        end
+
     end
 
     methods (Access = private)

@@ -4,7 +4,7 @@ function [text, quoted] = formatYAMLScalar(value, precision)
 
     arguments
         value
-        precision (1,1) double = 6
+        precision (1,1) double
     end
 
     if islogical(value)

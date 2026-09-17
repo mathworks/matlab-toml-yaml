@@ -4,7 +4,7 @@ function [texts, quoted] = formatYAMLSequence(arr, precision)
 
     arguments
         arr
-        precision (1,1) double = 6
+        precision (1,1) double
     end
 
     n = numel(arr);
