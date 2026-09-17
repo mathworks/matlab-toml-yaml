@@ -3,11 +3,6 @@ function result = tryConcatenate(~, values, fieldName)
     %   Returns typed array if all values have same type, otherwise errors.
     %   Missing values coerce to NaN (double/single) or <missing> (string).
 
-    if isempty(values)
-        result = [];
-        return;
-    end
-
     inputShape = size(values);
 
     % Identify missing values
