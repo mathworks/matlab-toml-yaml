@@ -42,37 +42,40 @@ function cfg = mexSourcesAndOptions()
     cfg.SupportSrc = allPaths(~isMexEntry);
 end
 
-function mexModernTask(context)
-    if isMATLABReleaseOlderThan("R2025a")
-        return;
-    end
-
+function mexTask(~)
     cfg = mexSourcesAndOptions();
-    plan = context.Plan;
-    plan("mexModernForEach") = matlab.buildtool.tasks.MexTask.forEachFile( ...
-        cfg.MexEntries, cfg.OutputFolder, ...
-        CommonSourceFiles=cfg.SupportSrc, ...
-        Options=cfg.Options);
-    plan.run("mexModernForEach");
-end
+    includeDir = fullfile("cpp", "include");
+    hppInfo = dir(fullfile(includeDir, "*.hpp"));
+    headers = fullfile(string({hppInfo.folder}), string({hppInfo.name}));
+    sharedSources = [cfg.SupportSrc; headers(:)];
 
-function mexLegacyTask(~)
-
-    cfg = mexSourcesAndOptions();
-    flags = cellstr(["-v", "-outdir", cfg.OutputFolder, cfg.Options]);
+    flags = cellstr(["-outdir", cfg.OutputFolder, cfg.Options]);
     supportArgs = cellstr(cfg.SupportSrc);
     for i = 1:numel(cfg.MexEntries)
-        fprintf("  Building %s\n", cfg.MexEntries(i));
+        [~, name] = fileparts(cfg.MexEntries(i));
+        outputFile = fullfile(cfg.OutputFolder, name + "." + mexext);
+        if isMexUpToDate(outputFile, [cfg.MexEntries(i); sharedSources])
+            fprintf("  %s — up to date\n", name);
+            continue
+        end
+        fprintf("  Building %s\n", name);
         mex(flags{:}, cfg.MexEntries(i), supportArgs{:});
     end
 end
 
-function mexTask(context)
-    if isMATLABReleaseOlderThan("R2025a")
-        context.Plan.run("mexLegacy");
-    else
-        context.Plan.run("mexModern");
+function upToDate = isMexUpToDate(outputFile, sourceFiles)
+    upToDate = false;
+    if ~isfile(outputFile)
+        return
     end
+    outInfo = dir(outputFile);
+    for j = 1:numel(sourceFiles)
+        srcInfo = dir(sourceFiles(j));
+        if isempty(srcInfo) || srcInfo.datenum > outInfo.datenum
+            return
+        end
+    end
+    upToDate = true;
 end
 
 function fetchTask(~)
