@@ -44,17 +44,12 @@ end
 
 function mexTask(~)
     cfg = mexSourcesAndOptions();
-    includeDir = fullfile("cpp", "include");
-    hppInfo = dir(fullfile(includeDir, "*.hpp"));
-    headers = fullfile(string({hppInfo.folder}), string({hppInfo.name}));
-    sharedSources = [cfg.SupportSrc; headers(:)];
-
     flags = cellstr(["-outdir", cfg.OutputFolder, cfg.Options]);
     supportArgs = cellstr(cfg.SupportSrc);
     for i = 1:numel(cfg.MexEntries)
         [~, name] = fileparts(cfg.MexEntries(i));
         outputFile = fullfile(cfg.OutputFolder, name + "." + mexext);
-        if isMexUpToDate(outputFile, [cfg.MexEntries(i); sharedSources])
+        if isMexUpToDate(outputFile, [cfg.MexEntries(i); cfg.SupportSrc])
             fprintf("  %s — up to date\n", name);
             continue
         end
