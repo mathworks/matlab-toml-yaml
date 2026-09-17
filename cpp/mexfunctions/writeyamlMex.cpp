@@ -126,7 +126,7 @@ private:
                                const std::string& field) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr =
             style[0][field];
-        return matlabStringToUtf8(factory, arr[0]);
+        return matlabStringToUtf8(arr[0]);
     }
 
     static bool hasStyle(const matlab::data::Array& arr) {

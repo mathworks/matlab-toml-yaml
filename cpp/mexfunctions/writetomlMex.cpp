@@ -117,7 +117,7 @@ private:
                                const std::string& field) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr =
             style[0][field];
-        return matlabStringToUtf8(factory, arr[0]);
+        return matlabStringToUtf8(arr[0]);
     }
 
     bool getStyleBool(const matlab::data::StructArray& style,
@@ -186,7 +186,7 @@ private:
                 commentsArr;
             for (const auto& c : comments) {
                 val.comments().push_back(
-                    matlabStringToUtf8(factory, c));
+                    matlabStringToUtf8(c));
             }
         }
     }
@@ -252,7 +252,7 @@ private:
                     comments = commentsArr;
                 for (const auto& c : comments) {
                     result.comments().push_back(
-                        matlabStringToUtf8(factory, c));
+                        matlabStringToUtf8(c));
                 }
             }
         }

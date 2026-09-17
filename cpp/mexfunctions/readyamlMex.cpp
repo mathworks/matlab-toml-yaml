@@ -85,8 +85,8 @@ private:
             bool isArray) {
         auto s = factory.createStructArray({1, 1},
             {"ContainerStyle", "ScalarStyle", "IsArray"});
-        s[0]["ContainerStyle"] = makeString(factory, containerStyle);
-        s[0]["ScalarStyle"] = makeString(factory, scalarStyle);
+        s[0]["ContainerStyle"] = factory.createScalar(utf8ToMATLABString(containerStyle));
+        s[0]["ScalarStyle"] = factory.createScalar(utf8ToMATLABString(scalarStyle));
         s[0]["IsArray"] = factory.createScalar<bool>(isArray);
         return s;
     }

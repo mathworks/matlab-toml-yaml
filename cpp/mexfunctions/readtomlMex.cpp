@@ -92,16 +92,16 @@ private:
              "IntegerFormat", "FloatFormat", "StringMultiline",
              "TableFormat", "ArrayOfTables",
              "Comments", "TrailingComment"});
-        s[0]["ContainerStyle"] = makeString(factory, containerStyle);
-        s[0]["ScalarStyle"] = makeString(factory, scalarStyle);
+        s[0]["ContainerStyle"] = factory.createScalar(utf8ToMATLABString(containerStyle));
+        s[0]["ScalarStyle"] = factory.createScalar(utf8ToMATLABString(scalarStyle));
         s[0]["IsArray"] = factory.createScalar<bool>(isArray);
-        s[0]["IntegerFormat"] = makeString(factory, integerFormat);
-        s[0]["FloatFormat"] = makeString(factory, floatFormat);
+        s[0]["IntegerFormat"] = factory.createScalar(utf8ToMATLABString(integerFormat));
+        s[0]["FloatFormat"] = factory.createScalar(utf8ToMATLABString(floatFormat));
         s[0]["StringMultiline"] = factory.createScalar<bool>(stringMultiline);
-        s[0]["TableFormat"] = makeString(factory, tableFormat);
+        s[0]["TableFormat"] = factory.createScalar(utf8ToMATLABString(tableFormat));
         s[0]["ArrayOfTables"] = factory.createScalar<bool>(arrayOfTables);
         s[0]["Comments"] = std::move(comments);
-        s[0]["TrailingComment"] = makeString(factory, trailingComment);
+        s[0]["TrailingComment"] = factory.createScalar(utf8ToMATLABString(trailingComment));
         return s;
     }
 
