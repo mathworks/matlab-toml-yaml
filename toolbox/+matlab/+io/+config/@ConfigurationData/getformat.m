@@ -60,7 +60,7 @@ function meta = getOneKey(obj, keyPath)
 
     if ~isempty(currentObj.Metadata) && isConfigured(currentObj.Metadata.Keys) ...
             && isKey(currentObj.Metadata.Keys, resolved)
-        meta = currentObj.Metadata.Keys{resolved};
+        meta = matlab.io.config.internal.lookupCellDictionaryKey(currentObj.Metadata.Keys, resolved);
         return;
     end
 

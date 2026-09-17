@@ -74,7 +74,7 @@ function cs = compact(obj, format, precision)
 
         if hasMetadata && ~isa(val, 'matlab.io.config.ConfigurationData') ...
                 && isKey(meta.Keys, k(i))
-            keyStyles{i} = metadataToStyleStruct(meta.Keys{k(i)}, format);
+            keyStyles{i} = metadataToStyleStruct(matlab.io.config.internal.lookupCellDictionaryKey(meta.Keys, k(i)), format);
         end
     end
 

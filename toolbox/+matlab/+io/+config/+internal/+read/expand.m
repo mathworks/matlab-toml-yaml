@@ -99,7 +99,7 @@ function obj = applyStyles(obj, cs, format)
                 if isempty(meta)
                     meta = makeDefaultMetadata(format);
                 end
-                meta.Keys{cs.Keys(i)} = styleStructToMetadata(cs.KeyStyles{i}, format);
+                meta.Keys = matlab.io.config.internal.assignCellDictionaryKey(meta.Keys, cs.Keys(i), styleStructToMetadata(cs.KeyStyles{i}, format));
             end
         end
     end

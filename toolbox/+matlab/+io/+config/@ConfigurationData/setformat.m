@@ -62,11 +62,11 @@ function obj = setOneKey(obj, keyPath, nvargs)
         obj.Metadata = makeMetadata(obj);
     end
     if ~isConfigured(obj.Metadata.Keys) || ~isKey(obj.Metadata.Keys, resolved)
-        obj.Metadata.Keys{resolved} = makeMetadata(obj);
+        obj.Metadata.Keys = matlab.io.config.internal.assignCellDictionaryKey(obj.Metadata.Keys, resolved, makeMetadata(obj));
     end
-    meta = obj.Metadata.Keys{resolved};
+    meta = matlab.io.config.internal.lookupCellDictionaryKey(obj.Metadata.Keys, resolved);
     meta = applyProperties(meta, nvargs);
-    obj.Metadata.Keys{resolved} = meta;
+    obj.Metadata.Keys = matlab.io.config.internal.assignCellDictionaryKey(obj.Metadata.Keys, resolved, meta);
 end
 
 function obj = setNestedKey(obj, parts, nvargs)
