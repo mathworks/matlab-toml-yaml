@@ -32,10 +32,10 @@ function obj = resetOneKey(obj, keyPath)
         return;
     end
 
-    val = obj.Data{resolved};
+    val = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolved);
     if isa(val, 'matlab.io.config.ConfigurationData')
         val.Metadata = [];
-        obj.Data{resolved} = val;
+        obj.Data = matlab.io.config.internal.assignCellDictionaryKey(obj.Data, resolved, val);
         return;
     end
 
@@ -50,11 +50,11 @@ function obj = resetNestedKey(obj, parts)
     if ismissing(resolved)
         return;
     end
-    val = obj.Data{resolved};
+    val = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolved);
     if ~isa(val, 'matlab.io.config.ConfigurationData')
         return;
     end
     remainingPath = join(parts(2:end), ".");
     val = resetformat(val, remainingPath);
-    obj.Data{resolved} = val;
+    obj.Data = matlab.io.config.internal.assignCellDictionaryKey(obj.Data, resolved, val);
 end

@@ -48,13 +48,13 @@ function obj = setOneKey(obj, keyPath, nvargs)
         error("setformat:InvalidKey", "Key '%s' not found.", leafKey);
     end
 
-    val = obj.Data{resolved};
+    val = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolved);
     if isa(val, 'matlab.io.config.ConfigurationData')
         if isempty(val.Metadata)
             val.Metadata = makeMetadata(obj);
         end
         val.Metadata = applyProperties(val.Metadata, nvargs);
-        obj.Data{resolved} = val;
+        obj.Data = matlab.io.config.internal.assignCellDictionaryKey(obj.Data, resolved, val);
         return;
     end
 
@@ -74,14 +74,14 @@ function obj = setNestedKey(obj, parts, nvargs)
     if ismissing(resolved)
         error("setformat:InvalidKey", "Key '%s' not found.", parts(1));
     end
-    val = obj.Data{resolved};
+    val = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolved);
     if ~isa(val, 'matlab.io.config.ConfigurationData')
         error("setformat:InvalidKey", "Key '%s' is not a nested object.", parts(1));
     end
     remainingPath = join(parts(2:end), ".");
     args = namedargs2cell(nvargs);
     val = setformat(val, remainingPath, args{:});
-    obj.Data{resolved} = val;
+    obj.Data = matlab.io.config.internal.assignCellDictionaryKey(obj.Data, resolved, val);
 end
 
 function meta = makeMetadata(obj)

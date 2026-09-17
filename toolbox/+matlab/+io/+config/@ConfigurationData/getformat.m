@@ -37,7 +37,7 @@ function meta = getOneKey(obj, keyPath)
             meta = makeDefaultMetadata(obj);
             return;
         end
-        val = currentObj.Data{resolved};
+        val = matlab.io.config.internal.lookupCellDictionaryKey(currentObj.Data, resolved);
         if ~isa(val, 'matlab.io.config.ConfigurationData')
             meta = makeDefaultMetadata(obj);
             return;
@@ -52,7 +52,7 @@ function meta = getOneKey(obj, keyPath)
         return;
     end
 
-    val = currentObj.Data{resolved};
+    val = matlab.io.config.internal.lookupCellDictionaryKey(currentObj.Data, resolved);
     if isa(val, 'matlab.io.config.ConfigurationData') && ~isempty(val.Metadata)
         meta = val.Metadata;
         return;
