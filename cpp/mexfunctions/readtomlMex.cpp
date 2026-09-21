@@ -27,7 +27,7 @@ public:
         std::string filename = matlabStringToUtf8(filenameArr[0]);
 
         std::istringstream iss(std::move(content));
-        toml::value data = toml::parse(iss, filename);
+        toml::ordered_value data = toml::parse<toml::ordered_type_config>(iss, filename);
 
         outputs[0] = tableToCompactStruct(data);
     }
@@ -55,7 +55,7 @@ private:
         }
     }
 
-    matlab::data::Array tableToCompactStruct(const toml::value& table) {
+    matlab::data::Array tableToCompactStruct(const toml::ordered_value& table) {
         const auto& tbl = table.as_table();
         size_t n = tbl.size();
 
@@ -114,7 +114,7 @@ private:
         }
     }
 
-    matlab::data::Array convertArray(const toml::array& arr) {
+    matlab::data::Array convertArray(const toml::ordered_array& arr) {
         if (arr.empty()) {
             return factory.createArray<double>({0, 0});
         }

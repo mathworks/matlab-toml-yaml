@@ -21,6 +21,14 @@ function obj = expand(cs, format, options)
         format (1,1) string {mustBeMember(format, ["yaml", "toml"])}
         options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "datetime"
         options.Recursive (1,1) logical = true
+        options.Lazy (1,1) logical = false
+    end
+
+    if options.Lazy
+        store = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
+            cs, format, DatetimeType=options.DatetimeType);
+        obj = matlab.io.config.ConfigurationData.fromStore(store, format);
+        return
     end
 
     isYAML = (format == "yaml");
@@ -58,7 +66,7 @@ function obj = expand(cs, format, options)
 
         elseif isDatetime(i)
             if options.DatetimeType == "datetime"
-                obj.(key) = parseTOMLDatetime(val);
+                obj.(key) = matlab.io.config.internal.read.parseTOMLDatetime(val);
             else
                 obj.(key) = val;
             end
@@ -68,8 +76,10 @@ function obj = expand(cs, format, options)
                 val, isQuoted(i), options.DatetimeType);
 
         elseif isYAML && isstring(val) && ~isscalar(val)
-            obj.(key) = parseYAMLSequence(val, options.DatetimeType);
+            obj.(key) = matlab.io.config.internal.read.parseYAMLSequence(val, options.DatetimeType);
 
+        elseif ~isscalar(val) && ~isempty(val)
+            obj.(key) = val(:);
         else
             obj.(key) = val;
         end
@@ -84,33 +94,5 @@ function child = expandOrWrap(childCS, format, options)
         store = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
             childCS, format, DatetimeType=options.DatetimeType);
         child = matlab.io.config.ConfigurationData.fromStore(store, format);
-    end
-end
-
-function result = parseYAMLSequence(values, datetimeType)
-    parsed = cell(numel(values), 1);
-    for j = 1:numel(values)
-        parsed{j} = matlab.io.config.internal.read.parseYAMLScalar( ...
-            values(j), false, datetimeType);
-    end
-    firstClass = class(parsed{1});
-    if all(cellfun(@(x) isa(x, firstClass), parsed))
-        result = vertcat(parsed{:});
-    else
-        result = parsed;
-    end
-end
-
-function dt = parseTOMLDatetime(str)
-    if contains(str, "T")
-        if endsWith(str, "Z") || ~isempty(regexp(str, '[+-]\d{2}:\d{2}$', 'once'))
-            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ssXXX", TimeZone="UTC");
-        else
-            dt = datetime(str, InputFormat="uuuu-MM-dd'T'HH:mm:ss");
-        end
-    elseif contains(str, ":")
-        dt = datetime(str, InputFormat="HH:mm:ss");
-    else
-        dt = datetime(str, InputFormat="uuuu-MM-dd");
     end
 end
