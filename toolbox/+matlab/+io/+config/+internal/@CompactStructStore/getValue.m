@@ -17,7 +17,6 @@ function val = expandValue(store, idx)
     end
 
     val = store.Struct.Values{idx};
-    isYAML = (store.Format == "yaml");
     isDatetime = any(store.Struct.DatetimeIndices == idx);
 
     if isstruct(val) && isfield(val, 'Keys')
@@ -34,14 +33,13 @@ function val = expandValue(store, idx)
             val = matlab.io.config.internal.read.parseTOMLDatetime(val);
         end
 
-    elseif isYAML && isstring(val) && isscalar(val)
-        isQuoted = any(store.Struct.QuotedIndices == idx);
-        val = matlab.io.config.internal.read.parseYAMLScalar( ...
-            val, isQuoted, store.DatetimeType);
+    elseif store.Format == "yaml" && store.DatetimeType == "datetime" ...
+            && isstring(val) && isscalar(val)
+        dt = matlab.io.config.internal.read.parseYAMLDatetime(val);
+        if ~isempty(dt)
+            val = dt;
+        end
 
-    elseif isYAML && isstring(val) && ~isscalar(val)
-        val = matlab.io.config.internal.read.parseYAMLSequence( ...
-            val, store.DatetimeType);
     elseif ~isscalar(val) && ~isempty(val)
         val = val(:);
     end
@@ -52,3 +50,4 @@ function child = wrapChild(childCS, store)
         childCS, store.Format, DatetimeType=store.DatetimeType);
     child = matlab.io.config.ConfigurationData.fromStore(innerStore, store.Format);
 end
+
