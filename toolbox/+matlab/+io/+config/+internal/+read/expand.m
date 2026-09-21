@@ -7,14 +7,13 @@ function obj = expand(cs, format, options)
     %     Values         - (1×n cell) scalar values or nested CompactStructs
     %     NullIndices    - (1×m double) indices where value is null
     %     DatetimeIndices - (1×m double) indices where value is a datetime
-    %     QuotedIndices  - (1×m double) indices where scalar was quoted (YAML only)
+    %     QuotedIndices  - (1×m double) (unused, retained for write path)
     %
     %   format is "yaml" or "toml".
     %
     %   Optional name-value:
-    %     DatetimeType - "string" (default) or "datetime". When "datetime" and
-    %                    format is "yaml", quoted scalars that look like dates
-    %                    are parsed as datetime objects.
+    %     DatetimeType - "string" (default) or "datetime". When "datetime",
+    %                    TOML datetime strings are parsed as datetime objects.
 
     arguments
         cs (1,1) struct
@@ -44,9 +43,6 @@ function obj = expand(cs, format, options)
     isNull(cs.NullIndices) = true;
     isDatetime = false(1, n);
     isDatetime(cs.DatetimeIndices) = true;
-    isQuoted = false(1, n);
-    isQuoted(cs.QuotedIndices) = true;
-
     for i = 1:n
         key = cs.Keys(i);
 
@@ -70,13 +66,6 @@ function obj = expand(cs, format, options)
             else
                 obj.(key) = val;
             end
-
-        elseif isYAML && isstring(val) && isscalar(val)
-            obj.(key) = matlab.io.config.internal.read.parseYAMLScalar( ...
-                val, isQuoted(i), options.DatetimeType);
-
-        elseif isYAML && isstring(val) && ~isscalar(val)
-            obj.(key) = matlab.io.config.internal.read.parseYAMLSequence(val, options.DatetimeType);
 
         elseif ~isscalar(val) && ~isempty(val)
             obj.(key) = val(:);
