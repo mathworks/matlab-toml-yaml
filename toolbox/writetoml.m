@@ -103,7 +103,7 @@ function writetoml(data, filename, options)
             "Input must be TOMLData, struct, dictionary, or containers.Map.");
     end
 
-    cs = matlab.io.config.internal.write.compact(data, "toml", options.Precision);
+    cs = toCompactStruct(data, "toml", options.Precision);
     bytes = writetomlMex(cs, options);
 
     [fid, msg] = fopen(filename, 'w');
