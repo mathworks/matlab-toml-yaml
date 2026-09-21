@@ -11,7 +11,7 @@ function displayScalarObject(obj)
     % Show link if there's nested hierarchy
     hasHierarchy = false;
     for i = 1:numel(k)
-        if isa(matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, k(i)), 'matlab.io.config.ConfigurationData')
+        if isa(getValue(obj.Data, k(i)), 'matlab.io.config.ConfigurationData')
             hasHierarchy = true;
             break;
         end

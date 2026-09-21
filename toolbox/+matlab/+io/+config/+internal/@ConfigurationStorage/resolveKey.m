@@ -9,13 +9,13 @@ function resolvedKeys = resolveKey(obj, key)
     end
 end
 
-function resolvedKey = resolveOne(dataDictionary, key)
-    if isKey(dataDictionary, key)
+function resolvedKey = resolveOne(store, key)
+    if hasKey(store, key)
         resolvedKey = key;
         return;
     end
 
-    originalKeys = keys(dataDictionary);
+    originalKeys = allKeys(store);
     for i = 1:numel(originalKeys)
         if matlab.lang.makeValidName(originalKeys(i)) == key
             resolvedKey = originalKeys(i);

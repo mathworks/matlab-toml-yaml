@@ -6,7 +6,7 @@ function displayKeys(obj, originalKeys)
         s = struct();
         for i = 1:numel(originalKeys)
             fieldName = char(matlab.lang.makeValidName(originalKeys(i)));
-            s.(fieldName) = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, originalKeys(i));
+            s.(fieldName) = getValue(obj.Data, originalKeys(i));
         end
         groups = matlab.mixin.util.PropertyGroup(s); %#ok<NASGU> used in evalc below
     else

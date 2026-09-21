@@ -18,12 +18,12 @@ function varargout = dotReference(obj, indexOp, ~)
     end
 
     if isscalar(obj)
-        value = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, resolvedKeys);
+        value = getValue(obj.Data, resolvedKeys);
     else
         values = cell(size(obj));
         for i = 1:numel(obj)
             if found(i)
-                values{i} = matlab.io.config.internal.lookupCellDictionaryKey(obj(i).Data, resolvedKeys(i));
+                values{i} = getValue(obj(i).Data, resolvedKeys(i));
             else
                 values{i} = missing;
             end

@@ -15,7 +15,7 @@ classdef (Abstract) ConfigurationData < ...
     %   To call methods, use function syntax: keys(obj), isfield(obj, key)
 
     properties (Access = protected)
-        Data = dictionary(string.empty, cell.empty)
+        Data = matlab.io.config.internal.defaultStore()
     end
 
     methods
@@ -30,7 +30,7 @@ classdef (Abstract) ConfigurationData < ...
             %
             %   See also TOMLDATA, YAMLDATA
 
-            obj.Data = dictionary(string.empty, cell.empty);
+            obj.Data = matlab.io.config.internal.defaultStore();
         end
     end
 

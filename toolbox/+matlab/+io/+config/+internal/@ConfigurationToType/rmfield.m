@@ -7,5 +7,5 @@ function obj = rmfield(obj, key)
     end
 
     % Remove from data dictionary
-    obj.Data(resolvedKey) = [];
+    obj.Data = removeKey(obj.Data, resolvedKey);
 end
