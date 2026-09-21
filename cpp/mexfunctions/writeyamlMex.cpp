@@ -117,26 +117,6 @@ private:
         return flags;
     }
 
-    // --- YAML quoting detection ---
-
-    static bool needsYAMLQuoting(const std::string& text) {
-        if (text.empty()) return true;
-        ryml::csubstr s(text.data(), text.size());
-        if (s == "null" || s == "Null" || s == "NULL" || s == "~") return true;
-        if (s == "true"  || s == "True"  || s == "TRUE" ||
-            s == "false" || s == "False" || s == "FALSE" ||
-            s == "yes"   || s == "Yes"   || s == "YES" ||
-            s == "no"    || s == "No"    || s == "NO" ||
-            s == "on"    || s == "On"    || s == "ON" ||
-            s == "off"   || s == "Off"   || s == "OFF") return true;
-        if (s == ".inf" || s == ".Inf" || s == ".INF" ||
-            s == "-.inf" || s == "-.Inf" || s == "-.INF" ||
-            s == "+.inf" || s == "+.Inf" || s == "+.INF" ||
-            s == ".nan" || s == ".NaN" || s == ".NAN") return true;
-        if (s.is_integer() || s.is_real()) return true;
-        return false;
-    }
-
     // --- Tree building from CompactStruct ---
 
     void buildMap(ryml::NodeRef mapNode,
@@ -181,9 +161,9 @@ private:
             } else if (type == ArrayType::MATLAB_STRING && numel == 1) {
                 matlab::data::TypedArray<matlab::data::MATLABString>
                     strArr = val;
-                std::string text = matlabStringToUtf8(strArr[0]);
-                setNodeValue(child, text,
-                    isQuoted[i + 1] || needsYAMLQuoting(text));
+                setNodeValue(child,
+                    matlabStringToUtf8(strArr[0]),
+                    isQuoted[i + 1]);
             } else if (numel > 1) {
                 buildTypedSequence(child, val);
             } else if (numel == 0) {
