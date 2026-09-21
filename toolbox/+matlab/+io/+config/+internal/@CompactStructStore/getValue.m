@@ -6,24 +6,49 @@ function val = getValue(store, key)
         return
     end
 
-    cs = extractSingleKey(store.Struct, idx);
-    obj = matlab.io.config.internal.read.expand( ...
-        cs, store.Format, DatetimeType=store.DatetimeType, Recursive=false);
-    val = obj.(key);
+    val = expandValue(store, idx);
 end
 
-function cs = extractSingleKey(fullCS, idx)
-    cs.Keys = fullCS.Keys(idx);
-    cs.Values = fullCS.Values(idx);
-    cs.NullIndices = remapIndex(fullCS.NullIndices, idx);
-    cs.DatetimeIndices = remapIndex(fullCS.DatetimeIndices, idx);
-    cs.QuotedIndices = remapIndex(fullCS.QuotedIndices, idx);
-end
-
-function result = remapIndex(indices, idx)
-    if any(indices == idx)
-        result = 1;
-    else
-        result = [];
+function val = expandValue(store, idx)
+    isNull = any(store.Struct.NullIndices == idx);
+    if isNull
+        val = missing;
+        return
     end
+
+    val = store.Struct.Values{idx};
+    isYAML = (store.Format == "yaml");
+    isDatetime = any(store.Struct.DatetimeIndices == idx);
+
+    if isstruct(val) && isfield(val, 'Keys')
+        innerStore = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
+            val, store.Format, DatetimeType=store.DatetimeType);
+        val = matlab.io.config.ConfigurationData.fromStore(innerStore, store.Format);
+
+    elseif iscell(val) && ~isempty(val) && isstruct(val{1}) && isfield(val{1}, 'Keys')
+        children = cellfun(@(c) wrapChild(c, store), val);
+        val = vertcat(children(:));
+
+    elseif isDatetime
+        if store.DatetimeType == "datetime"
+            val = matlab.io.config.internal.read.parseTOMLDatetime(val);
+        end
+
+    elseif isYAML && isstring(val) && isscalar(val)
+        isQuoted = any(store.Struct.QuotedIndices == idx);
+        val = matlab.io.config.internal.read.parseYAMLScalar( ...
+            val, isQuoted, store.DatetimeType);
+
+    elseif isYAML && isstring(val) && ~isscalar(val)
+        val = matlab.io.config.internal.read.parseYAMLSequence( ...
+            val, store.DatetimeType);
+    elseif ~isscalar(val) && ~isempty(val)
+        val = val(:);
+    end
+end
+
+function child = wrapChild(childCS, store)
+    innerStore = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
+        childCS, store.Format, DatetimeType=store.DatetimeType);
+    child = matlab.io.config.ConfigurationData.fromStore(innerStore, store.Format);
 end

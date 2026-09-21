@@ -22,6 +22,10 @@ classdef CompactStructStore < matlab.io.config.internal.ConfigurationStore
         end
     end
 
+    methods (Hidden)
+        tf = isequaln(a, b)
+    end
+
     methods (Static)
         store = fromCompactStruct(cs, format, options)
         store = empty()
