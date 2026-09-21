@@ -38,12 +38,12 @@ function cs = compact(obj, format, precision)
                 nullIndices(end+1) = i; %#ok<AGROW>
                 values{i} = [];
             elseif isscalar(val)
-                values{i} = matlab.io.config.internal.write.compact(val, format, precision);
+                values{i} = toCompactStruct(val, format, precision);
             else
                 nc = numel(val);
                 children = cell(1, nc);
                 for j = 1:nc
-                    children{j} = matlab.io.config.internal.write.compact(val(j), format, precision);
+                    children{j} = toCompactStruct(val(j), format, precision);
                 end
                 values{i} = children;
             end
@@ -79,12 +79,12 @@ function c = compactCell(c, format, precision)
         elem = c{j};
         if isa(elem, 'matlab.io.config.ConfigurationData')
             if isscalar(elem)
-                c{j} = matlab.io.config.internal.write.compact(elem, format, precision);
+                c{j} = toCompactStruct(elem, format, precision);
             else
                 nc = numel(elem);
                 children = cell(1, nc);
                 for jj = 1:nc
-                    children{jj} = matlab.io.config.internal.write.compact(elem(jj), format, precision);
+                    children{jj} = toCompactStruct(elem(jj), format, precision);
                 end
                 c{j} = children;
             end
