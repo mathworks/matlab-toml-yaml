@@ -18,7 +18,7 @@ function result = traverse(obj, visitor, depth)
     transformedValues = cell(size(k));
 
     for i = 1:numel(k)
-        value = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, k(i));
+        value = getValue(obj.Data, k(i));
         transformedValues{i} = applyVisitor(visitor, k(i), value, depth);
     end
 

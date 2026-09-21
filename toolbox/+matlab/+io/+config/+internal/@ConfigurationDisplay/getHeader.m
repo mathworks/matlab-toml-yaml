@@ -2,7 +2,7 @@ function header = getHeader(obj)
     %GETHEADER Customize header to use "keys" instead of "properties"
     className = matlab.mixin.CustomDisplay.getClassNameForHeader(obj);
     if isscalar(obj)
-        nKeys = numEntries(obj.Data);
+        nKeys = numKeys(obj.Data);
         if nKeys == 0
             header = sprintf('  %s with no keys\n', className);
         else

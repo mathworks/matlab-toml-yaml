@@ -7,5 +7,5 @@ function k = keys(obj)
         k = unique([keySets{:}], 'stable');
         return;
     end
-    k = keys(obj.Data)';  % Row vector for compatibility
+    k = allKeys(obj.Data);
 end

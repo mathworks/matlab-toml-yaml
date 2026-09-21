@@ -41,8 +41,8 @@ function obj = dotAssign(obj, indexOp, varargin)
     end
 
     % Scalar: chained assignment — get or create, forward, store back
-    if isKey(obj.Data, key)
-        value = matlab.io.config.internal.lookupCellDictionaryKey(obj.Data, key);
+    if hasKey(obj.Data, key)
+        value = getValue(obj.Data, key);
         if indexOp(2).Type == matlab.indexing.IndexingOperationType.Dot ...
                 && ~isa(value, 'matlab.io.config.ConfigurationData')
             value = matlab.io.config.internal.createArray(obj);
@@ -62,5 +62,5 @@ end
 function obj = storeValue(obj, key, value)
     value = matlab.io.config.internal.validateValue(obj, value, key);
     value = obj.normalizeVectorOrientation(value);
-    obj.Data(key) = {value};
+    obj.Data = setValue(obj.Data, key, value);
 end
