@@ -8,7 +8,7 @@ function val = getValue(store, key)
 
     cs = extractSingleKey(store.Struct, idx);
     obj = matlab.io.config.internal.read.expand( ...
-        cs, store.Format, DatetimeType=store.DatetimeType);
+        cs, store.Format, DatetimeType=store.DatetimeType, Recursive=false);
     val = obj.(key);
 end
 

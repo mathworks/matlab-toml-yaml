@@ -20,6 +20,7 @@ function obj = expand(cs, format, options)
         cs (1,1) struct
         format (1,1) string {mustBeMember(format, ["yaml", "toml"])}
         options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "datetime"
+        options.Recursive (1,1) logical = true
     end
 
     isYAML = (format == "yaml");
@@ -49,12 +50,10 @@ function obj = expand(cs, format, options)
         val = cs.Values{i};
 
         if isstruct(val) && isfield(val, 'Keys')
-            obj.(key) = matlab.io.config.internal.read.expand(val, format, ...
-                DatetimeType=options.DatetimeType);
+            obj.(key) = expandOrWrap(val, format, options);
 
         elseif iscell(val) && ~isempty(val) && isstruct(val{1}) && isfield(val{1}, 'Keys')
-            children = cellfun(@(c) matlab.io.config.internal.read.expand(c, format, ...
-                DatetimeType=options.DatetimeType), val);
+            children = cellfun(@(c) expandOrWrap(c, format, options), val);
             obj.(key) = vertcat(children(:));
 
         elseif isDatetime(i)
@@ -74,6 +73,17 @@ function obj = expand(cs, format, options)
         else
             obj.(key) = val;
         end
+    end
+end
+
+function child = expandOrWrap(childCS, format, options)
+    if options.Recursive
+        child = matlab.io.config.internal.read.expand(childCS, format, ...
+            DatetimeType=options.DatetimeType);
+    else
+        store = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
+            childCS, format, DatetimeType=options.DatetimeType);
+        child = matlab.io.config.ConfigurationData.fromStore(store, format);
     end
 end
 

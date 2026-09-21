@@ -57,7 +57,7 @@ function writeyaml(data, filename, options)
             "Input must be YAMLData, struct, dictionary, or containers.Map.");
     end
 
-    cs = matlab.io.config.internal.write.compact(data, "yaml", options.Precision);
+    cs = toCompactStruct(data, "yaml", options.Precision);
     bytes = writeyamlMex(cs, options);
 
     [fid, msg] = fopen(filename, 'w');

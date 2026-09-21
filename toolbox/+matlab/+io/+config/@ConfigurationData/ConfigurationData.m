@@ -44,6 +44,12 @@ classdef (Abstract) ConfigurationData < ...
         function show(obj)
             showImpl(obj);
         end
+
+        cs = toCompactStruct(obj, format, precision)
+    end
+
+    methods (Static, Hidden)
+        obj = fromStore(store, format)
     end
 
     methods (Access=protected)
