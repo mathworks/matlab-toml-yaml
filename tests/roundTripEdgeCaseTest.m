@@ -262,8 +262,6 @@ classdef roundTripEdgeCaseTest < ConfigurationFileTestCase
         %% Issue 7 — Quoted numeric strings in YAML
 
         function testQuotedNumericStringYAMLRoundTrip(testCase)
-            testCase.assumeFail( ...
-                "Quoted numeric strings lose quoting on write (metadata-round-trip branch)");
 
             file = testCase.writeTempFile("docker.yaml", ...
                 ["version: '3.8'"; "ports:"; "  - '8080'"]);

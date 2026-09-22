@@ -4,6 +4,12 @@
 #include "ryml_util.hpp"
 
 #include <vector>
+#include <cmath>
+#include <cstdio>
+#include <cstdint>
+#include <charconv>
+#include <cstring>
+#include <cctype>
 
 using matlab::data::ArrayType;
 
@@ -100,6 +106,198 @@ private:
         } else {
             node.set_val(arenaVal);
         }
+    }
+
+    // --- Scalar formatting ---
+
+    static bool needsQuoting(const std::string& s) {
+        if (s.empty()) return true;
+
+        char c0 = s[0];
+        if (c0 == '!' || c0 == '#' || c0 == '&' || c0 == '*' ||
+            c0 == '{' || c0 == '[' || c0 == '|' || c0 == '>' ||
+            c0 == '@' || c0 == '`')
+            return true;
+
+        if (s.find(": ") != std::string::npos ||
+            s.find(" #") != std::string::npos)
+            return true;
+
+        if (looksLikeBoolOrNull(s)) return true;
+        if (looksLikeNumber(s)) return true;
+        if (looksLikeDate(s)) return true;
+
+        return false;
+    }
+
+    static bool ciEquals(const std::string& s, const char* target) {
+        size_t len = std::strlen(target);
+        if (s.size() != len) return false;
+        for (size_t i = 0; i < len; ++i) {
+            if (std::tolower(static_cast<unsigned char>(s[i])) !=
+                static_cast<unsigned char>(target[i]))
+                return false;
+        }
+        return true;
+    }
+
+    static bool looksLikeBoolOrNull(const std::string& s) {
+        return ciEquals(s, "true") || ciEquals(s, "false") ||
+               ciEquals(s, "null") || ciEquals(s, "yes") ||
+               ciEquals(s, "no") || ciEquals(s, "on") ||
+               ciEquals(s, "off") || s == "~";
+    }
+
+    static bool looksLikeNumber(const std::string& s) {
+        if (s.empty()) return false;
+
+        if (s == ".inf" || s == ".Inf" || s == ".INF" ||
+            s == "-.inf" || s == "-.Inf" || s == "-.INF" ||
+            s == "+.inf" || s == "+.Inf" || s == "+.INF" ||
+            s == ".nan" || s == ".NaN" || s == ".NAN")
+            return true;
+
+        if (s.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+            return s.find_first_not_of("0123456789abcdefABCDEF", 2)
+                == std::string::npos;
+        }
+        if (s.size() > 2 && s[0] == '0' && (s[1] == 'o' || s[1] == 'O')) {
+            return s.find_first_not_of("01234567", 2)
+                == std::string::npos;
+        }
+
+        size_t pos = 0;
+        if (pos < s.size() && (s[pos] == '+' || s[pos] == '-')) ++pos;
+        bool hasDigit = false;
+        bool hasDot = false;
+        while (pos < s.size() &&
+               (std::isdigit(static_cast<unsigned char>(s[pos])) ||
+                s[pos] == '.')) {
+            if (s[pos] == '.') {
+                if (hasDot) return false;
+                hasDot = true;
+            } else {
+                hasDigit = true;
+            }
+            ++pos;
+        }
+        if (!hasDigit) return false;
+        if (pos < s.size() && (s[pos] == 'e' || s[pos] == 'E')) {
+            ++pos;
+            if (pos < s.size() && (s[pos] == '+' || s[pos] == '-')) ++pos;
+            if (pos >= s.size() ||
+                !std::isdigit(static_cast<unsigned char>(s[pos])))
+                return false;
+            while (pos < s.size() &&
+                   std::isdigit(static_cast<unsigned char>(s[pos])))
+                ++pos;
+        }
+        return pos == s.size();
+    }
+
+    static bool looksLikeDate(const std::string& s) {
+        if (s.size() < 10) return false;
+        return s[4] == '-' && s[7] == '-' &&
+            std::isdigit(static_cast<unsigned char>(s[0])) &&
+            std::isdigit(static_cast<unsigned char>(s[1])) &&
+            std::isdigit(static_cast<unsigned char>(s[2])) &&
+            std::isdigit(static_cast<unsigned char>(s[3])) &&
+            std::isdigit(static_cast<unsigned char>(s[5])) &&
+            std::isdigit(static_cast<unsigned char>(s[6])) &&
+            std::isdigit(static_cast<unsigned char>(s[8])) &&
+            std::isdigit(static_cast<unsigned char>(s[9]));
+    }
+
+    std::string formatDouble(double val) {
+        if (std::isnan(val)) return ".nan";
+        if (std::isinf(val)) return val > 0 ? ".inf" : "-.inf";
+        if (val == std::floor(val) && std::abs(val) < (1LL << 53)) {
+            char buf[32];
+            auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf),
+                static_cast<int64_t>(val));
+            return std::string(buf, ptr);
+        }
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "%.*g", precision, val);
+        return buf;
+    }
+
+    static bool isIntegerType(ArrayType type) {
+        return type == ArrayType::INT8 || type == ArrayType::INT16 ||
+               type == ArrayType::INT32 || type == ArrayType::INT64 ||
+               type == ArrayType::UINT8 || type == ArrayType::UINT16 ||
+               type == ArrayType::UINT32 || type == ArrayType::UINT64;
+    }
+
+    static int64_t readIntScalar(const matlab::data::Array& val) {
+        switch (val.getType()) {
+        case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; return a[0]; }
+        case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; return a[0]; }
+        case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; return a[0]; }
+        case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; return a[0]; }
+        case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; return a[0]; }
+        case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; return a[0]; }
+        case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; return a[0]; }
+        case ArrayType::UINT64: { matlab::data::TypedArray<uint64_t> a = val; return static_cast<int64_t>(a[0]); }
+        default: return 0;
+        }
+    }
+
+    static std::vector<int64_t> readIntArray(
+            const matlab::data::Array& val) {
+        size_t n = val.getNumberOfElements();
+        std::vector<int64_t> out(n);
+        switch (val.getType()) {
+        case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
+        case ArrayType::UINT64: { matlab::data::TypedArray<uint64_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = static_cast<int64_t>(a[i]); break; }
+        default: break;
+        }
+        return out;
+    }
+
+    std::string formatInt(int64_t val) {
+        char buf[32];
+        auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), val);
+        return std::string(buf, ptr);
+    }
+
+    void formatAndSetScalar(ryml::NodeRef node,
+                            const matlab::data::Array& val) {
+        auto type = val.getType();
+
+        if (type == ArrayType::LOGICAL) {
+            matlab::data::TypedArray<bool> arr = val;
+            setNodeValue(node, arr[0] ? "true" : "false", false);
+            return;
+        }
+
+        if (type == ArrayType::DOUBLE || type == ArrayType::SINGLE) {
+            matlab::data::TypedArray<double> arr = val;
+            setNodeValue(node, formatDouble(arr[0]), false);
+            return;
+        }
+
+        if (isIntegerType(type)) {
+            setNodeValue(node, formatInt(readIntScalar(val)), false);
+            return;
+        }
+
+        if (type == ArrayType::MATLAB_STRING) {
+            matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
+            std::string text = matlabStringToUtf8(arr[0]);
+            setNodeValue(node, text, needsQuoting(text));
+            return;
+        }
+
+        throwMexError(*engine, factory,
+            "writeyamlMex:UnsupportedType",
+            "Unsupported scalar type in node tree.");
     }
 
     // --- Tree building from node tree ---
@@ -230,20 +428,40 @@ private:
 
     void buildTypedSequence(ryml::NodeRef node,
                             const matlab::data::Array& data) {
-        auto results = engine->feval(
-            u"matlab.io.config.internal.write.formatYAMLSequence",
-            2, {data, factory.createScalar<double>(precision)});
-
-        matlab::data::TypedArray<matlab::data::MATLABString> texts = results[0];
-        matlab::data::TypedArray<bool> quoted = results[1];
-
-        size_t numel = texts.getNumberOfElements();
+        auto type = data.getType();
+        size_t numel = data.getNumberOfElements();
         node |= seqFlags();
-        for (size_t i = 0; i < numel; ++i) {
-            ryml::NodeRef item = node.append_child();
-            setNodeValue(item,
-                matlabStringToUtf8(texts[i]),
-                static_cast<bool>(quoted[i]));
+
+        if (type == ArrayType::LOGICAL) {
+            matlab::data::TypedArray<bool> arr = data;
+            for (size_t i = 0; i < numel; ++i) {
+                ryml::NodeRef item = node.append_child();
+                setNodeValue(item, arr[i] ? "true" : "false", false);
+            }
+        } else if (type == ArrayType::DOUBLE ||
+                   type == ArrayType::SINGLE) {
+            matlab::data::TypedArray<double> arr = data;
+            for (size_t i = 0; i < numel; ++i) {
+                ryml::NodeRef item = node.append_child();
+                setNodeValue(item, formatDouble(arr[i]), false);
+            }
+        } else if (isIntegerType(type)) {
+            auto vals = readIntArray(data);
+            for (size_t i = 0; i < numel; ++i) {
+                ryml::NodeRef item = node.append_child();
+                setNodeValue(item, formatInt(vals[i]), false);
+            }
+        } else if (type == ArrayType::MATLAB_STRING) {
+            matlab::data::TypedArray<matlab::data::MATLABString> arr = data;
+            for (size_t i = 0; i < numel; ++i) {
+                ryml::NodeRef item = node.append_child();
+                std::string text = matlabStringToUtf8(arr[i]);
+                setNodeValue(item, text, needsQuoting(text));
+            }
+        } else {
+            throwMexError(*engine, factory,
+                "writeyamlMex:UnsupportedType",
+                "Unsupported array element type in node tree.");
         }
     }
 
@@ -256,18 +474,6 @@ private:
             ryml::NodeRef item = node.append_child();
             buildValue(item, cells[i]);
         }
-    }
-
-    void formatAndSetScalar(ryml::NodeRef node,
-                            const matlab::data::Array& val) {
-        auto results = engine->feval(
-            u"matlab.io.config.internal.write.formatYAMLScalar",
-            2, {val, factory.createScalar<double>(precision)});
-        matlab::data::TypedArray<matlab::data::MATLABString> t = results[0];
-        matlab::data::TypedArray<bool> q = results[1];
-        setNodeValue(node,
-            matlabStringToUtf8(t[0]),
-            static_cast<bool>(q[0]));
     }
 
     // --- Post-processing ---
