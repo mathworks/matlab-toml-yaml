@@ -1,3 +1,3 @@
 function store = defaultStore()
-    store = matlab.io.config.internal.CompactStructStore.empty();
+    store = matlab.io.config.internal.NodeTreeStore.empty();
 end

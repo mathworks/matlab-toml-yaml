@@ -17,6 +17,10 @@ classdef (Abstract) ConfigurationStore
         cs      = toCompactStruct(store, format, precision)
     end
 
+    methods
+        tree    = toNodeTree(store)
+    end
+
     methods (Abstract, Static)
         store   = fromCompactStruct(cs, format, options)
         store   = empty()

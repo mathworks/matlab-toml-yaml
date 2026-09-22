@@ -46,6 +46,7 @@ classdef (Abstract) ConfigurationData < ...
         end
 
         cs = toCompactStruct(obj, format, precision)
+        tree = toNodeTree(obj)
         tf = isequaln(a, b, varargin)
     end
 
