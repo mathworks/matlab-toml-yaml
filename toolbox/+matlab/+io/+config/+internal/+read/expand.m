@@ -21,7 +21,8 @@ function obj = expand(cs, format, options)
         options.DatetimeType (1,1) string {mustBeMember(options.DatetimeType, ["string", "datetime"])} = "datetime"
     end
 
-    store = matlab.io.config.internal.CompactStructStore.fromCompactStruct( ...
-        cs, format, DatetimeType=options.DatetimeType);
+    tree = matlab.io.config.internal.read.compactStructToNodeTree(cs);
+    store = matlab.io.config.internal.NodeTreeStore.fromNodeTree( ...
+        tree, format, DatetimeType=options.DatetimeType);
     obj = matlab.io.config.ConfigurationData.fromStore(store, format);
 end
