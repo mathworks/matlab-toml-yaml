@@ -64,5 +64,5 @@ function data = readyaml(filename, options)
     mexOptions = struct("SequenceRule", options.ArrayType);
     cs = readyamlMex(bytes, filename, mexOptions);
     data = matlab.io.config.internal.read.expand(cs, "yaml", ...
-        DatetimeType=options.DatetimeType, Lazy=true);
+        DatetimeType=options.DatetimeType);
 end
