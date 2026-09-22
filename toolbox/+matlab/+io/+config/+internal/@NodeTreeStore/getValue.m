@@ -47,7 +47,9 @@ function val = expandValueNode(node, store)
             val = missing;
             return
         elseif node.Type == "datetime"
-            if store.DatetimeType == "datetime"
+            if isa(node.Data, "datetime")
+                val = node.Data;
+            elseif store.DatetimeType == "datetime"
                 val = matlab.io.config.internal.read.parseTOMLDatetime(node.Data);
             else
                 val = node.Data;
