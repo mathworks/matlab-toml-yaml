@@ -12,14 +12,14 @@ function plan = buildfile
     plan.DefaultTasks = ["lint", "test"];
 
     plan("test").Dependencies = ["lint" "mex"];
-    plan("test").Outputs = "coverage";
     plan("fixLint").Dependencies = "indent";
     plan("all").Dependencies = ["indent", "fixLint", "test"];
     plan("mex").Dependencies = "fetch";
     plan("mex").Description = "Build MEX functions";
-    plan("mex").Outputs = "toolbox/derived/*Mex*";
 
     if ~isMATLABReleaseOlderThan("R2025a")
+        plan("test").Outputs = "coverage";
+        plan("mex").Outputs = "toolbox/derived/*Mex*";
         plan("clean") = matlab.buildtool.tasks.CleanTask;
     end
 end
