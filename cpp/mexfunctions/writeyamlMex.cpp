@@ -154,7 +154,8 @@ private:
             matlab::data::TypedArray<matlab::data::Array> cells = val;
             if (numel > 0 &&
                 cells[0].getType() == ArrayType::STRUCT) {
-                matlab::data::StructArray firstSa(cells[0]);
+                matlab::data::Array firstArr = cells[0];
+                matlab::data::StructArray firstSa(firstArr);
                 if (structHasField(firstSa, "Keys")) {
                     buildObjectSequence(node, val);
                     return;
