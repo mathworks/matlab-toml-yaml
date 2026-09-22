@@ -40,5 +40,5 @@ function data = readtoml(filename, options)
 
     cs = readtomlMex(bytes, filename);
     data = matlab.io.config.internal.read.expand(cs, "toml", ...
-        DatetimeType=options.DatetimeType, Lazy=true);
+        DatetimeType=options.DatetimeType);
 end
