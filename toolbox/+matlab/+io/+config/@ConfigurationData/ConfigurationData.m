@@ -45,7 +45,6 @@ classdef (Abstract) ConfigurationData < ...
             showImpl(obj);
         end
 
-        cs = toCompactStruct(obj, format, precision)
         tree = toNodeTree(obj)
         tf = isequaln(a, b, varargin)
     end

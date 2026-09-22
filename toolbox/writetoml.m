@@ -103,8 +103,8 @@ function writetoml(data, filename, options)
             "Input must be TOMLData, struct, dictionary, or containers.Map.");
     end
 
-    cs = toCompactStruct(data, "toml", options.Precision);
-    bytes = writetomlMex(cs, options);
+    tree = toNodeTree(data);
+    bytes = writetomlMex(tree, options);
 
     [fid, msg] = fopen(filename, 'w');
     if fid < 0

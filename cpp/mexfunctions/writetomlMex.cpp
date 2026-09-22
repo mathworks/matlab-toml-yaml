@@ -3,6 +3,7 @@
 #include "toml.hpp"
 
 #include <cmath>
+#include <sstream>
 #include <vector>
 
 using matlab::data::ArrayType;
@@ -26,7 +27,7 @@ public:
         if (inputs.size() < 1) {
             throwMexError(*engine, factory,
                 "writetomlMex:InvalidInput",
-                "CompactStruct data required.");
+                "Node tree data required.");
             return;
         }
 
@@ -95,53 +96,39 @@ private:
             getOptionDouble(opts, "Precision"));
     }
 
-    // --- Index set helper ---
+    // --- Node tree dispatch ---
 
-    static std::vector<bool> buildIndexSet(
-            const matlab::data::Array& indices, size_t n) {
-        std::vector<bool> flags(n + 1, false);
-        if (indices.getNumberOfElements() > 0) {
-            matlab::data::TypedArray<double> idx = indices;
-            for (auto v : idx) {
-                size_t i = static_cast<size_t>(v);
-                if (i >= 1 && i <= n) flags[i] = true;
-            }
-        }
-        return flags;
-    }
-
-    // --- Conversion from CompactStruct ---
-
-    toml::ordered_value convertTable(const matlab::data::Array& csArr) {
-        matlab::data::StructArray cs(csArr);
+    toml::ordered_value convertTable(const matlab::data::Array& nodeArr) {
+        matlab::data::StructArray node(nodeArr);
 
         matlab::data::TypedArray<matlab::data::MATLABString> keys =
-            cs[0]["Keys"];
+            node[0]["Keys"];
         matlab::data::TypedArray<matlab::data::Array> values =
-            cs[0]["Values"];
+            node[0]["Values"];
 
         size_t n = keys.getNumberOfElements();
-        auto isNull = buildIndexSet(cs[0]["NullIndices"], n);
-        auto isDt = buildIndexSet(cs[0]["DatetimeIndices"], n);
-
         toml::ordered_table tbl;
+
         for (size_t i = 0; i < n; ++i) {
             std::string key = matlabStringToUtf8(keys[i]);
-
-            if (isNull[i + 1]) {
-                continue;
-            }
-
             matlab::data::Array val = values[i];
 
-            if (isDt[i + 1]) {
-                tbl.push_back({key, convertDatetime(val)});
-            } else {
-                tbl.push_back({key, convert(val)});
-            }
+            if (isMissingNode(val)) continue;
+
+            tbl.push_back({key, convert(val)});
         }
 
         return toml::ordered_value(std::move(tbl));
+    }
+
+    bool isMissingNode(const matlab::data::Array& val) {
+        if (val.getType() != ArrayType::STRUCT) return false;
+        matlab::data::StructArray sa(val);
+        if (!structHasField(sa, "Data")) return false;
+        if (!structHasField(sa, "Type")) return false;
+        matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
+            sa[0]["Type"];
+        return matlabStringToUtf8(typeArr[0]) == "missing";
     }
 
     toml::ordered_value convert(const matlab::data::Array& val) {
@@ -149,14 +136,27 @@ private:
         size_t numel = val.getNumberOfElements();
 
         if (type == ArrayType::STRUCT) {
-            return convertTable(val);
+            matlab::data::StructArray sa(val);
+            if (structHasField(sa, "Keys")) {
+                return convertTable(val);
+            }
+            if (structHasField(sa, "Data")) {
+                return convertValueNodeData(sa);
+            }
+            throwMexError(*engine, factory,
+                "writetomlMex:UnrecognizedNode",
+                "Unrecognized struct in node tree.");
+            return toml::ordered_value();
         }
 
         if (type == ArrayType::CELL) {
             matlab::data::TypedArray<matlab::data::Array> cells = val;
             if (numel > 0 &&
                 cells[0].getType() == ArrayType::STRUCT) {
-                return convertObjectArray(val, numel);
+                matlab::data::StructArray firstSa(cells[0]);
+                if (structHasField(firstSa, "Keys")) {
+                    return convertObjectArray(val, numel);
+                }
             }
             return convertCellArray(val, numel);
         }
@@ -219,6 +219,42 @@ private:
                     "Cannot serialize this MATLAB type.");
                 return toml::ordered_value();
         }
+    }
+
+    // --- ValueNode handling ---
+
+    toml::ordered_value convertValueNodeData(
+            const matlab::data::StructArray& node) {
+        if (structHasField(node, "Type")) {
+            matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
+                node[0]["Type"];
+            std::string nodeType = matlabStringToUtf8(typeArr[0]);
+
+            if (nodeType == "missing") {
+                return toml::ordered_value();
+            }
+
+            if (nodeType == "datetime") {
+                matlab::data::Array data = node[0]["Data"];
+                if (data.getType() == ArrayType::MATLAB_STRING) {
+                    std::string dtStr = matlabStringToUtf8(
+                        matlab::data::TypedArray<matlab::data::MATLABString>(
+                            data)[0]);
+                    return parseDatetimeFromString(dtStr);
+                }
+                return convertDatetime(data);
+            }
+        }
+
+        matlab::data::Array data = node[0]["Data"];
+        return convert(data);
+    }
+
+    toml::ordered_value parseDatetimeFromString(const std::string& dtStr) {
+        std::string doc = "v = " + dtStr + "\n";
+        std::istringstream iss(doc);
+        auto parsed = toml::parse<toml::ordered_type_config>(iss, "");
+        return parsed.at("v");
     }
 
     // --- Scalar converters ---

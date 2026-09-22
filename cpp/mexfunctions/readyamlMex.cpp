@@ -48,7 +48,7 @@ public:
             if (root.num_children() > 0) {
                 outputs[0] = convertNode(root.first_child());
             } else {
-                outputs[0] = makeEmptyCompactStruct();
+                outputs[0] = makeEmptyTableNode();
             }
         } else {
             outputs[0] = convertNode(root);
@@ -60,12 +60,10 @@ private:
         return std::string(s.data(), s.size());
     }
 
-    matlab::data::Array makeEmptyCompactStruct() {
+    matlab::data::Array makeEmptyTableNode() {
         auto keys = factory.createArray<matlab::data::MATLABString>({1, 0});
         auto values = factory.createArray<matlab::data::Array>({1, 0});
-        auto empty = factory.createArray<double>({1, 0});
-
-        return makeCompactStruct(factory, keys, values, empty, empty, empty);
+        return makeTableNode(factory, keys, values);
     }
 
     // --- YAML 1.1 boolean detection ---
@@ -150,7 +148,7 @@ private:
         if (node.has_val()) {
             return convertTypedScalar(node);
         }
-        return makeEmptyCompactStruct();
+        return makeEmptyTableNode();
     }
 
     matlab::data::Array convertMap(ryml::ConstNodeRef node) {
@@ -158,7 +156,6 @@ private:
 
         auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
         auto values = factory.createArray<matlab::data::Array>({1, n});
-        std::vector<double> nullIdx;
 
         size_t i = 0;
         for (ryml::ConstNodeRef child : node.children()) {
@@ -170,33 +167,19 @@ private:
                 values[0][i] = convertSequence(child);
             } else if (child.has_val()) {
                 if (child.val_is_null()) {
-                    nullIdx.push_back(static_cast<double>(i + 1));
-                    values[0][i] = factory.createArray<double>({0, 0});
+                    values[0][i] = makeValueNode(factory,
+                        factory.createArray<double>({0, 0}), "missing");
                 } else {
                     values[0][i] = convertTypedScalar(child);
                 }
             } else {
-                nullIdx.push_back(static_cast<double>(i + 1));
-                values[0][i] = factory.createArray<double>({0, 0});
+                values[0][i] = makeValueNode(factory,
+                    factory.createArray<double>({0, 0}), "missing");
             }
             ++i;
         }
 
-        auto nullArr = toDoubleArray(nullIdx);
-        auto emptyArr = factory.createArray<double>({1, 0});
-
-        return makeCompactStruct(factory, keys, values, nullArr, emptyArr, emptyArr);
-    }
-
-    matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
-        if (vec.empty()) {
-            return factory.createArray<double>({1, 0});
-        }
-        auto arr = factory.createArray<double>({1, vec.size()});
-        for (size_t i = 0; i < vec.size(); ++i) {
-            arr[0][i] = vec[i];
-        }
-        return arr;
+        return makeTableNode(factory, keys, values);
     }
 
     matlab::data::Array convertSequence(ryml::ConstNodeRef node) {
@@ -230,10 +213,6 @@ private:
         elems.reserve(count);
         for (ryml::ConstNodeRef child : node.children()) {
             elems.push_back(convertNode(child));
-        }
-
-        if (sequenceAsCell) {
-            return makeCellArray(elems, count);
         }
 
         return makeCellArray(elems, count);

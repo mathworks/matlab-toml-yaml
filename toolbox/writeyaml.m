@@ -57,8 +57,8 @@ function writeyaml(data, filename, options)
             "Input must be YAMLData, struct, dictionary, or containers.Map.");
     end
 
-    cs = toCompactStruct(data, "yaml", options.Precision);
-    bytes = writeyamlMex(cs, options);
+    tree = toNodeTree(data);
+    bytes = writeyamlMex(tree, options);
 
     [fid, msg] = fopen(filename, 'w');
     if fid < 0
