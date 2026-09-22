@@ -30,7 +30,11 @@ classdef (Abstract) ConfigurationData < ...
             %
             %   See also TOMLDATA, YAMLDATA
 
-            obj.Data = matlab.io.config.internal.defaultStore();
+            if isa(obj, 'matlab.io.config.YAMLData')
+                obj.Data = matlab.io.config.internal.defaultStore("yaml");
+            else
+                obj.Data = matlab.io.config.internal.defaultStore("toml");
+            end
         end
     end
 
