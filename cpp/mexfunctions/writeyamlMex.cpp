@@ -24,7 +24,7 @@ public:
         if (inputs.size() < 1) {
             throwMexError(*engine, factory,
                 "writeyamlMex:InvalidInput",
-                "CompactStruct data required.");
+                "Node tree data required.");
             return;
         }
 
@@ -102,35 +102,18 @@ private:
         }
     }
 
-    // --- Index set helper ---
-
-    static std::vector<bool> buildIndexSet(
-            const matlab::data::Array& indices, size_t n) {
-        std::vector<bool> flags(n + 1, false);
-        if (indices.getNumberOfElements() > 0) {
-            matlab::data::TypedArray<double> idx = indices;
-            for (auto v : idx) {
-                size_t i = static_cast<size_t>(v);
-                if (i >= 1 && i <= n) flags[i] = true;
-            }
-        }
-        return flags;
-    }
-
-    // --- Tree building from CompactStruct ---
+    // --- Tree building from node tree ---
 
     void buildMap(ryml::NodeRef mapNode,
-                  const matlab::data::Array& csArr) {
-        matlab::data::StructArray cs(csArr);
+                  const matlab::data::Array& nodeArr) {
+        matlab::data::StructArray node(nodeArr);
 
         matlab::data::TypedArray<matlab::data::MATLABString> keys =
-            cs[0]["Keys"];
+            node[0]["Keys"];
         matlab::data::TypedArray<matlab::data::Array> values =
-            cs[0]["Values"];
+            node[0]["Values"];
 
         size_t n = keys.getNumberOfElements();
-        auto isNull = buildIndexSet(cs[0]["NullIndices"], n);
-        auto isQuoted = buildIndexSet(cs[0]["QuotedIndices"], n);
 
         for (size_t i = 0; i < n; ++i) {
             std::string key = matlabStringToUtf8(keys[i]);
@@ -138,41 +121,99 @@ private:
             ryml::NodeRef child = mapNode.append_child();
             child.set_key(toArena(key));
 
-            if (isNull[i + 1]) {
-                child.set_val(toArena("null"));
-                continue;
-            }
-
-            matlab::data::Array val = values[i];
-            auto type = val.getType();
-            size_t numel = val.getNumberOfElements();
-
-            if (type == ArrayType::STRUCT) {
-                child |= ryml::MAP;
-                buildMap(child, val);
-            } else if (type == ArrayType::CELL) {
-                matlab::data::TypedArray<matlab::data::Array> cells = val;
-                if (numel > 0 &&
-                    cells[0].getType() == ArrayType::STRUCT) {
-                    buildObjectSequence(child, val);
-                } else {
-                    buildCellSequence(child, val);
-                }
-            } else if (type == ArrayType::MATLAB_STRING && numel == 1) {
-                matlab::data::TypedArray<matlab::data::MATLABString>
-                    strArr = val;
-                setNodeValue(child,
-                    matlabStringToUtf8(strArr[0]),
-                    isQuoted[i + 1]);
-            } else if (numel > 1) {
-                buildTypedSequence(child, val);
-            } else if (numel == 0) {
-                child |= (ryml::SEQ | ryml::FLOW_SL);
-            } else {
-                formatAndSetScalar(child, val);
-            }
+            buildValue(child, values[i]);
         }
     }
+
+    void buildValue(ryml::NodeRef node,
+                    const matlab::data::Array& val) {
+        auto type = val.getType();
+        size_t numel = val.getNumberOfElements();
+
+        if (type == ArrayType::STRUCT) {
+            matlab::data::StructArray sa(val);
+            if (structHasField(sa, "Keys")) {
+                node |= ryml::MAP;
+                buildMap(node, val);
+                return;
+            }
+            if (structHasField(sa, "Data")) {
+                buildValueNode(node, sa);
+                return;
+            }
+            if (numel == 0) {
+                node.set_val(toArena("null"));
+                return;
+            }
+            node |= ryml::MAP;
+            buildMap(node, val);
+            return;
+        }
+
+        if (type == ArrayType::CELL) {
+            matlab::data::TypedArray<matlab::data::Array> cells = val;
+            if (numel > 0 &&
+                cells[0].getType() == ArrayType::STRUCT) {
+                matlab::data::StructArray firstSa(cells[0]);
+                if (structHasField(firstSa, "Keys")) {
+                    buildObjectSequence(node, val);
+                    return;
+                }
+            }
+            if (numel == 0) {
+                node |= (ryml::SEQ | ryml::FLOW_SL);
+                return;
+            }
+            buildCellSequence(node, val);
+            return;
+        }
+
+        if (numel > 1) {
+            buildTypedSequence(node, val);
+            return;
+        }
+
+        if (numel == 0) {
+            node |= (ryml::SEQ | ryml::FLOW_SL);
+            return;
+        }
+
+        formatAndSetScalar(node, val);
+    }
+
+    // --- ValueNode handling ---
+
+    void buildValueNode(ryml::NodeRef node,
+                        const matlab::data::StructArray& vn) {
+        if (structHasField(vn, "Type")) {
+            matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
+                vn[0]["Type"];
+            std::string nodeType = matlabStringToUtf8(typeArr[0]);
+
+            if (nodeType == "missing") {
+                node.set_val(toArena("null"));
+                return;
+            }
+
+            if (nodeType == "datetime") {
+                matlab::data::Array data = vn[0]["Data"];
+                if (data.getType() == ArrayType::MATLAB_STRING) {
+                    matlab::data::TypedArray<matlab::data::MATLABString>
+                        strArr = data;
+                    setNodeValue(node,
+                        matlabStringToUtf8(strArr[0]), false);
+                } else {
+                    formatAndSetScalar(node, data);
+                }
+                return;
+            }
+        }
+
+        matlab::data::Array data = vn[0]["Data"];
+        buildValue(node, data);
+    }
+
+    // --- Sequence builders ---
 
     void buildObjectSequence(ryml::NodeRef node,
                              const matlab::data::Array& data) {
@@ -214,46 +255,6 @@ private:
             ryml::NodeRef item = node.append_child();
             buildValue(item, cells[i]);
         }
-    }
-
-    // --- Fallback for individual values (cell elements only) ---
-
-    void buildValue(ryml::NodeRef node,
-                    const matlab::data::Array& val) {
-        auto type = val.getType();
-        size_t numel = val.getNumberOfElements();
-
-        if (type == ArrayType::STRUCT) {
-            if (numel == 0) {
-                node.set_val(toArena("null"));
-                return;
-            }
-            node |= ryml::MAP;
-            buildMap(node, val);
-            return;
-        }
-
-        if (numel == 0) {
-            node |= (ryml::SEQ | ryml::FLOW_SL);
-            return;
-        }
-
-        if (numel == 1) {
-            formatAndSetScalar(node, val);
-            return;
-        }
-
-        if (type == ArrayType::CELL) {
-            matlab::data::TypedArray<matlab::data::Array> cells = val;
-            if (cells[0].getType() == ArrayType::STRUCT) {
-                buildObjectSequence(node, val);
-            } else {
-                buildCellSequence(node, val);
-            }
-            return;
-        }
-
-        buildTypedSequence(node, val);
     }
 
     void formatAndSetScalar(ryml::NodeRef node,

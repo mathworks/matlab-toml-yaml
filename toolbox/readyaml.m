@@ -62,7 +62,8 @@ function data = readyaml(filename, options)
     bytes = fread(fid, '*uint8')';
 
     mexOptions = struct("SequenceRule", options.ArrayType);
-    cs = readyamlMex(bytes, filename, mexOptions);
-    data = matlab.io.config.internal.read.expand(cs, "yaml", ...
-        DatetimeType=options.DatetimeType);
+    tree = readyamlMex(bytes, filename, mexOptions);
+    store = matlab.io.config.internal.NodeTreeStore.fromNodeTree( ...
+        tree, "yaml", DatetimeType=options.DatetimeType);
+    data = matlab.io.config.ConfigurationData.fromStore(store, "yaml");
 end

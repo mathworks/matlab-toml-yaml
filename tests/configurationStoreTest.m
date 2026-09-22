@@ -4,12 +4,9 @@ classdef configurationStoreTest < matlab.unittest.TestCase
 
     properties (TestParameter)
         factory = struct( ...
-            CompactStruct = struct( ...
-                make = @() matlab.io.config.internal.CompactStructStore.empty(), ...
-                fromCompactStruct = @(varargin) matlab.io.config.internal.CompactStructStore.fromCompactStruct(varargin{:})), ...
             NodeTree = struct( ...
                 make = @() matlab.io.config.internal.NodeTreeStore.empty(), ...
-                fromCompactStruct = @(varargin) matlab.io.config.internal.NodeTreeStore.fromCompactStruct(varargin{:})))
+                fromNodeTree = @(varargin) matlab.io.config.internal.NodeTreeStore.fromNodeTree(varargin{:})))
     end
 
     methods (Test)
@@ -143,92 +140,84 @@ classdef configurationStoreTest < matlab.unittest.TestCase
                 "Original should not change when copy is modified");
         end
 
-        %% fromCompactStruct
+        %% fromNodeTree
 
-        function fromCompactStructScalarValues(testCase, factory)
-            cs = makeCompactStruct( ...
+        function fromNodeTreeScalarValues(testCase, factory)
+            tree = makeNodeTree( ...
                 Keys = ["port", "host", "debug"], ...
                 Values = {8080, "localhost", true});
-            store = factory.fromCompactStruct(cs, "toml");
+            store = factory.fromNodeTree(tree, "toml");
             testCase.verifyEqual(getValue(store, "port"), 8080);
             testCase.verifyEqual(getValue(store, "host"), "localhost");
             testCase.verifyEqual(getValue(store, "debug"), true);
         end
 
-        function fromCompactStructNullValues(testCase, factory)
-            cs = makeCompactStruct( ...
+        function fromNodeTreeNullValues(testCase, factory)
+            tree = makeNodeTree( ...
                 Keys = ["a", "b"], ...
-                Values = {1, []}, ...
-                NullIndices = 2);
-            store = factory.fromCompactStruct(cs, "toml");
+                Values = {1, struct("Data", [], "Type", "missing")});
+            store = factory.fromNodeTree(tree, "toml");
             testCase.verifyEqual(getValue(store, "a"), 1);
             testCase.verifyClass(getValue(store, "b"), "missing");
         end
 
-        function fromCompactStructDatetimeValues(testCase, factory)
-            cs = makeCompactStruct( ...
+        function fromNodeTreeDatetimeValues(testCase, factory)
+            tree = makeNodeTree( ...
                 Keys = "created", ...
-                Values = {"2024-01-15T10:30:00Z"}, ...
-                DatetimeIndices = 1);
-            store = factory.fromCompactStruct(cs, "toml");
+                Values = {struct("Data", "2024-01-15T10:30:00Z", ...
+                    "Type", "datetime")});
+            store = factory.fromNodeTree(tree, "toml");
             result = getValue(store, "created");
             testCase.verifyClass(result, "datetime");
         end
 
-        function fromCompactStructNestedTable(testCase, factory)
-            inner = makeCompactStruct( ...
+        function fromNodeTreeNestedTable(testCase, factory)
+            inner = makeNodeTree( ...
                 Keys = "port", Values = {8080});
-            cs = makeCompactStruct( ...
+            tree = makeNodeTree( ...
                 Keys = "server", Values = {inner});
-            store = factory.fromCompactStruct(cs, "toml");
+            store = factory.fromNodeTree(tree, "toml");
             nested = getValue(store, "server");
             testCase.verifyClass(nested, "matlab.io.config.TOMLData");
             testCase.verifyEqual(nested.port, 8080);
         end
 
-        function fromCompactStructArrayOfTables(testCase, factory)
-            child1 = makeCompactStruct(Keys = "name", Values = {"Alice"});
-            child2 = makeCompactStruct(Keys = "name", Values = {"Bob"});
-            cs = makeCompactStruct( ...
+        function fromNodeTreeArrayOfTables(testCase, factory)
+            child1 = makeNodeTree(Keys = "name", Values = {"Alice"});
+            child2 = makeNodeTree(Keys = "name", Values = {"Bob"});
+            tree = makeNodeTree( ...
                 Keys = "people", ...
                 Values = {{child1, child2}});
-            store = factory.fromCompactStruct(cs, "toml");
+            store = factory.fromNodeTree(tree, "toml");
             arr = getValue(store, "people");
             testCase.verifyClass(arr, "matlab.io.config.TOMLData");
             testCase.verifyNumElements(arr, 2);
         end
 
-        function fromCompactStructPreservesKeyOrder(testCase, factory)
-            cs = makeCompactStruct( ...
+        function fromNodeTreePreservesKeyOrder(testCase, factory)
+            tree = makeNodeTree( ...
                 Keys = ["z", "a", "m"], ...
                 Values = {1, 2, 3});
-            store = factory.fromCompactStruct(cs, "toml");
+            store = factory.fromNodeTree(tree, "toml");
             testCase.verifyEqual(allKeys(store), ["z", "a", "m"]);
         end
 
-        function fromCompactStructYAMLCreatesYAMLData(testCase, factory)
-            inner = makeCompactStruct( ...
+        function fromNodeTreeYAMLCreatesYAMLData(testCase, factory)
+            inner = makeNodeTree( ...
                 Keys = "port", Values = {8080});
-            cs = makeCompactStruct( ...
+            tree = makeNodeTree( ...
                 Keys = "server", Values = {inner});
-            store = factory.fromCompactStruct(cs, "yaml");
+            store = factory.fromNodeTree(tree, "yaml");
             nested = getValue(store, "server");
             testCase.verifyClass(nested, "matlab.io.config.YAMLData");
         end
     end
 end
 
-function cs = makeCompactStruct(options)
+function tree = makeNodeTree(options)
     arguments
         options.Keys (1,:) string = string.empty
         options.Values (1,:) cell = {}
-        options.NullIndices (1,:) double = []
-        options.DatetimeIndices (1,:) double = []
-        options.QuotedIndices (1,:) double = []
     end
-    cs.Keys = options.Keys;
-    cs.Values = options.Values;
-    cs.NullIndices = options.NullIndices;
-    cs.DatetimeIndices = options.DatetimeIndices;
-    cs.QuotedIndices = options.QuotedIndices;
+    tree = struct("Keys", options.Keys, "Values", {options.Values});
 end

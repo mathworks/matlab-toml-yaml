@@ -32,7 +32,6 @@ classdef NodeTreeStore < matlab.io.config.internal.ConfigurationStore
     end
 
     methods (Static)
-        store = fromCompactStruct(cs, format, options)
         store = fromNodeTree(tree, format, options)
         store = empty()
     end

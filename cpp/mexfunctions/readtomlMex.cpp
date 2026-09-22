@@ -29,7 +29,7 @@ public:
         std::istringstream iss(std::move(content));
         toml::ordered_value data = toml::parse<toml::ordered_type_config>(iss, filename);
 
-        outputs[0] = tableToCompactStruct(data);
+        outputs[0] = tableToNode(data);
     }
 
 private:
@@ -55,47 +55,33 @@ private:
         }
     }
 
-    matlab::data::Array tableToCompactStruct(const toml::ordered_value& table) {
+    matlab::data::Array tableToNode(const toml::ordered_value& table) {
         const auto& tbl = table.as_table();
         size_t n = tbl.size();
 
         auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
         auto values = factory.createArray<matlab::data::Array>({1, n});
-        std::vector<double> nullIdx, datetimeIdx;
 
         size_t i = 0;
         for (const auto& [key, val] : tbl) {
             keys[0][i] = utf8ToMATLABString(key);
 
             if (val.type() == toml::value_t::table) {
-                values[0][i] = tableToCompactStruct(val);
+                values[0][i] = tableToNode(val);
             } else if (val.type() == toml::value_t::array) {
                 values[0][i] = convertArray(val.as_array());
             } else if (isDatetimeType(val.type())) {
-                datetimeIdx.push_back(static_cast<double>(i + 1));
-                values[0][i] = factory.createScalar(utf8ToMATLABString(datetimeToString(val)));
+                values[0][i] = makeValueNode(factory,
+                    factory.createScalar(
+                        utf8ToMATLABString(datetimeToString(val))),
+                    "datetime");
             } else {
                 values[0][i] = convertScalar(val);
             }
             ++i;
         }
 
-        auto nullArr = toDoubleArray(nullIdx);
-        auto dtArr = toDoubleArray(datetimeIdx);
-        auto emptyArr = factory.createArray<double>({1, 0});
-
-        return makeCompactStruct(factory, keys, values, nullArr, dtArr, emptyArr);
-    }
-
-    matlab::data::Array toDoubleArray(const std::vector<double>& vec) {
-        if (vec.empty()) {
-            return factory.createArray<double>({1, 0});
-        }
-        auto arr = factory.createArray<double>({1, vec.size()});
-        for (size_t i = 0; i < vec.size(); ++i) {
-            arr[0][i] = vec[i];
-        }
-        return arr;
+        return makeTableNode(factory, keys, values);
     }
 
     matlab::data::Array convertScalar(const toml::value& val) {
@@ -129,7 +115,7 @@ private:
             size_t count = arr.size();
             auto out = factory.createArray<matlab::data::Array>({1, count});
             for (size_t i = 0; i < count; ++i) {
-                out[0][i] = tableToCompactStruct(arr[i]);
+                out[0][i] = tableToNode(arr[i]);
             }
             return out;
         }
@@ -171,7 +157,7 @@ private:
         elems.reserve(arr.size());
         for (const auto& elem : arr) {
             if (elem.type() == toml::value_t::table) {
-                elems.push_back(tableToCompactStruct(elem));
+                elems.push_back(tableToNode(elem));
             } else if (elem.type() == toml::value_t::array) {
                 elems.push_back(convertArray(elem.as_array()));
             } else if (isDatetimeType(elem.type())) {

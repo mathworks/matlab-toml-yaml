@@ -14,19 +14,32 @@ void throwMexError(
     const std::string& id,
     const std::string& msg);
 
-inline matlab::data::StructArray makeCompactStruct(
+inline matlab::data::StructArray makeTableNode(
     matlab::data::ArrayFactory& factory,
     matlab::data::Array keys,
-    matlab::data::Array values,
-    matlab::data::Array nullIndices,
-    matlab::data::Array datetimeIndices,
-    matlab::data::Array quotedIndices) {
-    auto cs = factory.createStructArray({1, 1},
-        {"Keys", "Values", "NullIndices", "DatetimeIndices", "QuotedIndices"});
-    cs[0]["Keys"] = std::move(keys);
-    cs[0]["Values"] = std::move(values);
-    cs[0]["NullIndices"] = std::move(nullIndices);
-    cs[0]["DatetimeIndices"] = std::move(datetimeIndices);
-    cs[0]["QuotedIndices"] = std::move(quotedIndices);
-    return cs;
+    matlab::data::Array values) {
+    auto node = factory.createStructArray({1, 1}, {"Keys", "Values"});
+    node[0]["Keys"] = std::move(keys);
+    node[0]["Values"] = std::move(values);
+    return node;
+}
+
+inline matlab::data::StructArray makeValueNode(
+    matlab::data::ArrayFactory& factory,
+    matlab::data::Array data,
+    const std::string& type) {
+    auto node = factory.createStructArray({1, 1}, {"Data", "Type"});
+    node[0]["Data"] = std::move(data);
+    node[0]["Type"] = factory.createScalar(utf8ToMATLABString(type));
+    return node;
+}
+
+inline bool structHasField(
+    const matlab::data::StructArray& sa,
+    const std::string& name) {
+    matlab::data::MATLABFieldIdentifier target(name);
+    for (const auto& f : sa.getFieldNames()) {
+        if (f == target) return true;
+    }
+    return false;
 }
