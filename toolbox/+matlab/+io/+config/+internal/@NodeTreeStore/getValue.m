@@ -36,7 +36,7 @@ function val = expandNodeValue(val, store)
         end
     end
 
-    if ~isscalar(val) && ~isempty(val) && ~iscell(val)
+    if ~isscalar(val) && ~isempty(val) && ~iscell(val) && isvector(val)
         val = val(:);
     end
 end
