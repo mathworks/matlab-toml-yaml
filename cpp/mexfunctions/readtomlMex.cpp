@@ -120,6 +120,26 @@ private:
             return out;
         }
 
+        // Single-element arrays are wrapped in a 1x1 cell so that [5]
+        // is structurally distinct from bare scalar 5 in MATLAB.
+        if (arr.size() == 1) {
+            matlab::data::Array element;
+            const auto& first = arr.front();
+            if (first.type() == toml::value_t::array) {
+                element = convertArray(first.as_array());
+            } else if (isDatetimeType(first.type())) {
+                element = makeValueNode(factory,
+                    factory.createScalar(
+                        utf8ToMATLABString(datetimeToString(first))),
+                    "datetime");
+            } else {
+                element = convertScalar(first);
+            }
+            auto out = factory.createArray<matlab::data::Array>({1, 1});
+            out[0][0] = std::move(element);
+            return out;
+        }
+
         if (homogeneous && firstType == toml::value_t::integer) {
             auto out = factory.createArray<double>({1, arr.size()});
             for (size_t i = 0; i < arr.size(); ++i) {
