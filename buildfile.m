@@ -18,8 +18,10 @@ function plan = buildfile
     plan("mex").Description = "Build MEX functions";
 
     if ~isMATLABReleaseOlderThan("R2025a")
-        plan("test").Outputs = "coverage";
+        plan("mex").Inputs = "cpp/mexfunctions/**";
         plan("mex").Outputs = "toolbox/derived/*Mex*";
+        plan("test").Inputs = ["toolbox/**", "tests/**", "toolbox/derived/*Mex*"];
+        plan("test").Outputs = "coverage";
         plan("clean") = matlab.buildtool.tasks.CleanTask;
     end
 end
