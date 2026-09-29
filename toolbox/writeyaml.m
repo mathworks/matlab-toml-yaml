@@ -58,7 +58,7 @@ function writeyaml(data, filename, options)
     end
 
     tree = toNodeTree(data);
-    bytes = writeyamlMex(tree, options);
+    bytes = configMex("writeyaml", tree, options);
 
     [fid, msg] = fopen(filename, 'w');
     if fid < 0

@@ -38,7 +38,7 @@ function data = readtoml(filename, options)
     cleanup = onCleanup(@() fclose(fid));
     bytes = fread(fid, '*uint8')';
 
-    tree = readtomlMex(bytes, filename);
+    tree = configMex("readtoml", bytes, filename);
     store = matlab.io.config.internal.NodeTreeStore.fromNodeTree( ...
         tree, "toml", DatetimeType=options.DatetimeType);
     data = matlab.io.config.ConfigurationData.fromStore(store, "toml");

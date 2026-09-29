@@ -104,7 +104,7 @@ function writetoml(data, filename, options)
     end
 
     tree = toNodeTree(data);
-    bytes = writetomlMex(tree, options);
+    bytes = configMex("writetoml", tree, options);
 
     [fid, msg] = fopen(filename, 'w');
     if fid < 0
