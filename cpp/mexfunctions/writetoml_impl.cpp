@@ -1,6 +1,5 @@
 #include "writetoml_impl.hpp"
-
-using matlab::data::ArrayType;
+#include "matlab_walker.hpp"
 
 WriteTomlImpl::WriteTomlImpl(
         std::shared_ptr<matlab::engine::MATLABEngine> eng)
@@ -30,9 +29,12 @@ void WriteTomlImpl::execute(matlab::mex::ArgumentList outputs,
         parseOptions(inputs[2]);
     }
 
-    toml::ordered_value root = convertTable(data);
+    stack.clear();
+    rootResult = toml::ordered_value();
 
-    std::string content = toml::format(root);
+    MatlabWalker::walk(data, *this);
+
+    std::string content = toml::format(rootResult);
 
     if (!addSectionSpacing) {
         content = removeBlankLines(content);
@@ -78,166 +80,91 @@ void WriteTomlImpl::parseOptions(const matlab::data::Array& optsArr) {
         getOptionDouble(opts, "Precision"));
 }
 
-toml::ordered_value WriteTomlImpl::convertTable(
-        const matlab::data::Array& nodeArr) {
-    matlab::data::StructArray node(nodeArr);
-
-    matlab::data::TypedArray<matlab::data::MATLABString> keys =
-        node[0]["Keys"];
-    matlab::data::TypedArray<matlab::data::Array> values =
-        node[0]["Values"];
-
-    size_t n = keys.getNumberOfElements();
-    toml::ordered_table tbl;
-
-    for (size_t i = 0; i < n; ++i) {
-        std::string key = matlabStringToUtf8(keys[i]);
-        matlab::data::Array val = values[i];
-
-        if (isMissingNode(val)) continue;
-
-        tbl.push_back({key, convert(val)});
+void WriteTomlImpl::pushToParent(toml::ordered_value val) {
+    if (stack.empty()) {
+        rootResult = std::move(val);
+        return;
     }
-
-    return toml::ordered_value(std::move(tbl));
-}
-
-bool WriteTomlImpl::isMissingNode(const matlab::data::Array& val) {
-    if (val.getType() != ArrayType::STRUCT) return false;
-    matlab::data::StructArray sa(val);
-    if (!structHasField(sa, "Data")) return false;
-    if (!structHasField(sa, "Type")) return false;
-    matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
-        sa[0]["Type"];
-    return matlabStringToUtf8(typeArr[0]) == "missing";
-}
-
-toml::ordered_value WriteTomlImpl::convert(
-        const matlab::data::Array& val) {
-    auto type = val.getType();
-    size_t numel = val.getNumberOfElements();
-
-    if (type == ArrayType::STRUCT) {
-        matlab::data::StructArray sa(val);
-        if (structHasField(sa, "Keys")) {
-            return convertTable(val);
-        }
-        if (structHasField(sa, "Data")) {
-            return convertValueNodeData(sa);
-        }
-        throwMexError(*engine, factory,
-            "writetomlMex:UnrecognizedNode",
-            "Unrecognized struct in node tree.");
-        return toml::ordered_value();
-    }
-
-    if (type == ArrayType::CELL) {
-        matlab::data::TypedArray<matlab::data::Array> cells = val;
-        if (numel > 0 &&
-            cells[0].getType() == ArrayType::STRUCT) {
-            matlab::data::Array firstArr = cells[0];
-            matlab::data::StructArray firstSa(firstArr);
-            if (structHasField(firstSa, "Keys")) {
-                return convertObjectArray(val, numel);
-            }
-        }
-        return convertCellArray(val, numel);
-    }
-
-    switch (type) {
-        case ArrayType::LOGICAL:
-            if (numel == 1) {
-                matlab::data::TypedArray<bool> b = val;
-                return toml::ordered_value(static_cast<bool>(b[0]));
-            }
-            return convertNumericArray<bool>(val, numel);
-
-        case ArrayType::DOUBLE:
-            if (numel == 1) {
-                return convertDouble(
-                    matlab::data::TypedArray<double>(val)[0]);
-            }
-            return convertNumericArray<double>(val, numel);
-
-        case ArrayType::SINGLE:
-            if (numel == 1) {
-                return convertDouble(static_cast<double>(
-                    matlab::data::TypedArray<float>(val)[0]));
-            }
-            return convertNumericArray<float>(val, numel);
-
-        case ArrayType::INT8:
-            return convertIntType<int8_t>(val, numel);
-        case ArrayType::INT16:
-            return convertIntType<int16_t>(val, numel);
-        case ArrayType::INT32:
-            return convertIntType<int32_t>(val, numel);
-        case ArrayType::INT64:
-            return convertIntType<int64_t>(val, numel);
-        case ArrayType::UINT8:
-            return convertIntType<uint8_t>(val, numel);
-        case ArrayType::UINT16:
-            return convertIntType<uint16_t>(val, numel);
-        case ArrayType::UINT32:
-            return convertIntType<uint32_t>(val, numel);
-        case ArrayType::UINT64:
-            return convertIntType<uint64_t>(val, numel);
-
-        case ArrayType::MATLAB_STRING:
-            if (numel == 1) {
-                return convertString(val);
-            }
-            return convertStringArray(val, numel);
-
-        case ArrayType::VALUE_OBJECT:
-        case ArrayType::HANDLE_OBJECT_REF:
-            if (numel == 1) {
-                return convertDatetime(val);
-            }
-            return convertDatetimeArray(val, numel);
-
-        default:
-            throwMexError(*engine, factory,
-                "writetomlMex:UnsupportedType",
-                "Cannot serialize this MATLAB type.");
-            return toml::ordered_value();
+    auto& frame = stack.back();
+    if (auto* of = std::get_if<ObjectFrame>(&frame)) {
+        of->table.push_back({of->pendingKey, std::move(val)});
+    } else if (auto* af = std::get_if<ArrayFrame>(&frame)) {
+        af->array.push_back(std::move(val));
     }
 }
 
-toml::ordered_value WriteTomlImpl::convertValueNodeData(
-        const matlab::data::StructArray& node) {
-    if (structHasField(node, "Type")) {
-        matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
-            node[0]["Type"];
-        std::string nodeType = matlabStringToUtf8(typeArr[0]);
+// ── DocumentHandler implementation ──────────────────────────────────
 
-        if (nodeType == "missing") {
-            return toml::ordered_value();
-        }
+void WriteTomlImpl::startObject(size_t /*count*/) {
+    stack.emplace_back(ObjectFrame{});
+}
 
-        if (nodeType == "datetime") {
-            matlab::data::Array data = node[0]["Data"];
-            if (data.getType() == ArrayType::MATLAB_STRING) {
-                std::string dtStr = matlabStringToUtf8(
-                    matlab::data::TypedArray<matlab::data::MATLABString>(
-                        data)[0]);
-                return parseDatetimeFromString(dtStr);
-            }
-            return convertDatetime(data);
-        }
+void WriteTomlImpl::key(std::string_view k) {
+    auto& of = std::get<ObjectFrame>(stack.back());
+    of.pendingKey.assign(k.data(), k.size());
+}
+
+void WriteTomlImpl::endObject() {
+    auto of = std::get<ObjectFrame>(std::move(stack.back()));
+    stack.pop_back();
+    pushToParent(toml::ordered_value(std::move(of.table)));
+}
+
+void WriteTomlImpl::startArray(size_t /*count*/) {
+    stack.emplace_back(ArrayFrame{});
+}
+
+void WriteTomlImpl::endArray() {
+    auto af = std::get<ArrayFrame>(std::move(stack.back()));
+    stack.pop_back();
+
+    toml::array_format_info fmt;
+    fmt.body_indent = indentSize;
+
+    if (!af.array.empty() && af.array.front().is_table()) {
+        fmt.fmt = resolveTableArrayFormat(af.array);
+    } else {
+        fmt.fmt = resolveArrayFormat(af.array);
     }
 
-    matlab::data::Array data = node[0]["Data"];
-    return convert(data);
+    pushToParent(toml::ordered_value(std::move(af.array), fmt));
 }
 
-toml::ordered_value WriteTomlImpl::parseDatetimeFromString(
-        const std::string& dtStr) {
-    std::string doc = "v = " + dtStr + "\n";
-    std::istringstream iss(doc);
-    auto parsed = toml::parse<toml::ordered_type_config>(iss, "");
-    return parsed.at("v");
+void WriteTomlImpl::nullValue() {
+    // TOML has no null type — discard this value.
+    // In object context the pending key is simply overwritten by the next
+    // key() call; in array context we omit the element.
 }
+
+void WriteTomlImpl::boolValue(bool b) {
+    pushToParent(toml::ordered_value(b));
+}
+
+void WriteTomlImpl::intValue(int64_t i) {
+    pushToParent(toml::ordered_value(
+        static_cast<toml::ordered_value::integer_type>(i)));
+}
+
+void WriteTomlImpl::uintValue(uint64_t u) {
+    pushToParent(toml::ordered_value(
+        static_cast<toml::ordered_value::integer_type>(u)));
+}
+
+void WriteTomlImpl::doubleValue(double d) {
+    pushToParent(convertDouble(d));
+}
+
+void WriteTomlImpl::stringValue(std::string_view s) {
+    toml::string_format_info fmt;
+    fmt.fmt = resolveStringFormat();
+    pushToParent(toml::ordered_value(std::string(s), fmt));
+}
+
+void WriteTomlImpl::datetimeValue(std::string_view iso) {
+    pushToParent(parseDatetimeFromString(std::string(iso)));
+}
+
+// ── TOML formatting helpers (unchanged) ─────────────────────────────
 
 toml::ordered_value WriteTomlImpl::convertDouble(double v) {
     if (v == std::floor(v) && std::abs(v) < (1LL << 53)) {
@@ -248,16 +175,6 @@ toml::ordered_value WriteTomlImpl::convertDouble(double v) {
     fmt.prec = static_cast<std::size_t>(precision);
     fmt.fmt = toml::floating_format::defaultfloat;
     return toml::ordered_value(v, fmt);
-}
-
-toml::ordered_value WriteTomlImpl::convertString(
-        const matlab::data::Array& val) {
-    matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-    std::string s = matlabStringToUtf8(arr[0]);
-
-    toml::string_format_info fmt;
-    fmt.fmt = resolveStringFormat();
-    return toml::ordered_value(std::move(s), fmt);
 }
 
 toml::string_format WriteTomlImpl::resolveStringFormat() {
@@ -272,122 +189,12 @@ toml::string_format WriteTomlImpl::resolveStringFormat() {
                       : toml::string_format::basic;
 }
 
-toml::ordered_value WriteTomlImpl::convertDatetime(
-        const matlab::data::Array& val) {
-    matlab::data::CharArray tz(engine->feval(u"getfield",
-        {val, factory.createCharArray("TimeZone")}));
-    std::string tzStr;
-    if (tz.getNumberOfElements() > 0) {
-        tzStr = matlabStringToUtf8(tz.toUTF16());
-    }
-
-    if (tzStr.empty()) {
-        return toml::ordered_value(extractLocalDatetime(val));
-    }
-
-    matlab::data::Array utcVal = engine->feval(u"datetime",
-        {val, factory.createCharArray("TimeZone"),
-         factory.createCharArray("UTC")});
-
-    toml::local_datetime ldt = extractLocalDatetime(utcVal);
-    return toml::ordered_value(toml::offset_datetime(
-        ldt.date, ldt.time, toml::time_offset(0, 0)));
-}
-
-toml::local_datetime WriteTomlImpl::extractLocalDatetime(
-        const matlab::data::Array& val) {
-    auto intField = [&](const char16_t* fn) -> int {
-        matlab::data::TypedArray<double> r =
-            engine->feval(fn, {val});
-        return static_cast<int>(r[0]);
-    };
-
-    int y  = intField(u"year");
-    int mo = intField(u"month");
-    int d  = intField(u"day");
-    int h  = intField(u"hour");
-    int mi = intField(u"minute");
-
-    matlab::data::TypedArray<double> secArr =
-        engine->feval(u"second", {val});
-    double sec = secArr[0];
-    int wholeSec = static_cast<int>(sec);
-    int microseconds = static_cast<int>(
-        std::round((sec - wholeSec) * 1e6));
-
-    return toml::local_datetime(
-        toml::local_date(y, static_cast<toml::month_t>(mo - 1), d),
-        toml::local_time(h, mi, wholeSec, microseconds * 1000, 0));
-}
-
-toml::ordered_value WriteTomlImpl::convertStringArray(
-        const matlab::data::Array& val, size_t numel) {
-    matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-    toml::ordered_array tomlArr;
-    tomlArr.reserve(numel);
-
-    toml::string_format_info strFmt;
-    strFmt.fmt = resolveStringFormat();
-    for (const auto& ms : arr) {
-        std::string s = matlabStringToUtf8(ms);
-        tomlArr.push_back(toml::ordered_value(std::move(s), strFmt));
-    }
-
-    toml::array_format_info fmt;
-    fmt.fmt = resolveArrayFormat(tomlArr);
-    fmt.body_indent = indentSize;
-    return toml::ordered_value(std::move(tomlArr), fmt);
-}
-
-toml::ordered_value WriteTomlImpl::convertCellArray(
-        const matlab::data::Array& val, size_t numel) {
-    matlab::data::TypedArray<matlab::data::Array> cells = val;
-    toml::ordered_array tomlArr;
-    tomlArr.reserve(numel);
-
-    for (size_t i = 0; i < numel; ++i) {
-        tomlArr.push_back(convert(cells[i]));
-    }
-
-    toml::array_format_info fmt;
-    fmt.fmt = resolveArrayFormat(tomlArr);
-    fmt.body_indent = indentSize;
-    return toml::ordered_value(std::move(tomlArr), fmt);
-}
-
-toml::ordered_value WriteTomlImpl::convertObjectArray(
-        const matlab::data::Array& val, size_t numel) {
-    matlab::data::TypedArray<matlab::data::Array> cells = val;
-
-    toml::ordered_array tomlArr;
-    tomlArr.reserve(numel);
-
-    for (size_t i = 0; i < numel; ++i) {
-        tomlArr.push_back(convertTable(cells[i]));
-    }
-
-    toml::array_format_info fmt;
-    fmt.body_indent = indentSize;
-    fmt.fmt = resolveTableArrayFormat(tomlArr);
-    return toml::ordered_value(std::move(tomlArr), fmt);
-}
-
-toml::ordered_value WriteTomlImpl::convertDatetimeArray(
-        const matlab::data::Array& val, size_t numel) {
-    matlab::data::TypedArray<matlab::data::Array> cells =
-        engine->feval(u"num2cell", {val});
-
-    toml::ordered_array tomlArr;
-    tomlArr.reserve(numel);
-
-    for (size_t i = 0; i < numel; ++i) {
-        tomlArr.push_back(convertDatetime(cells[i]));
-    }
-
-    toml::array_format_info fmt;
-    fmt.fmt = resolveArrayFormat(tomlArr);
-    fmt.body_indent = indentSize;
-    return toml::ordered_value(std::move(tomlArr), fmt);
+toml::ordered_value WriteTomlImpl::parseDatetimeFromString(
+        const std::string& dtStr) {
+    std::string doc = "v = " + dtStr + "\n";
+    std::istringstream iss(doc);
+    auto parsed = toml::parse<toml::ordered_type_config>(iss, "");
+    return parsed.at("v");
 }
 
 toml::array_format WriteTomlImpl::resolveArrayFormat(

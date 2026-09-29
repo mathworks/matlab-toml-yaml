@@ -2,10 +2,10 @@
 
 #include "util.hpp"
 #include "toml.hpp"
+#include "document_handler.hpp"
 
 #include <sstream>
 #include <string>
-#include <vector>
 
 class ReadTomlImpl {
     std::shared_ptr<matlab::engine::MATLABEngine> engine;
@@ -17,9 +17,14 @@ public:
                  matlab::mex::ArgumentList inputs);
 
 private:
-    bool isDatetimeType(toml::value_t t);
-    std::string datetimeToString(const toml::value& val);
-    matlab::data::Array tableToNode(const toml::ordered_value& table);
-    matlab::data::Array convertScalar(const toml::value& val);
-    matlab::data::Array convertArray(const toml::ordered_array& arr);
+    static bool isDatetimeType(toml::value_t t);
+    static std::string datetimeToString(const toml::ordered_value& val);
+    void emitTable(const toml::ordered_value& table,
+                   DocumentHandler& handler);
+    void emitValue(const toml::ordered_value& val,
+                   DocumentHandler& handler);
+    void emitArray(const toml::ordered_array& arr,
+                   DocumentHandler& handler);
+    void emitScalar(const toml::ordered_value& val,
+                    DocumentHandler& handler);
 };

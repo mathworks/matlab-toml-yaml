@@ -22,8 +22,15 @@ function val = expandNodeValue(val, store)
         return
     end
 
-    if iscell(val) && ~isempty(val) && isstruct(val{1}) && isfield(val{1}, "Keys")
-        val = wrapTableNodeCell(val, store);
+    if iscell(val)
+        if ~isempty(val) && isstruct(val{1}) && isfield(val{1}, "Keys")
+            val = wrapTableNodeCell(val, store);
+            return
+        end
+        if isscalar(val)
+            val = expandNodeValue(val{1}, store);
+            return
+        end
         return
     end
 
@@ -65,11 +72,47 @@ function val = expandArrayNode(node, store)
     if ~isempty(elements) && isstruct(elements{1}) && isfield(elements{1}, "Keys")
         val = wrapTableNodeCell(elements, store);
     else
-        val = cell(size(elements));
         for j = 1:numel(elements)
-            val{j} = expandNodeValue(elements{j}, store);
+            elements{j} = expandNodeValue(elements{j}, store);
+        end
+        if store.ArrayType == "cell"
+            val = elements;
+        elseif store.Format == "toml" && numel(elements) == 1
+            val = elements;
+        else
+            val = tryConsolidate(elements);
         end
     end
+end
+
+
+function val = tryConsolidate(elements)
+    if all(cellfun(@(x) isa(x, 'double') && isscalar(x), elements))
+        val = [elements{:}]';
+        return
+    end
+
+    if all(cellfun(@(x) isa(x, 'int64') && isscalar(x), elements))
+        val = [elements{:}]';
+        return
+    end
+
+    if all(cellfun(@(x) isa(x, 'uint64') && isscalar(x), elements))
+        val = [elements{:}]';
+        return
+    end
+
+    if all(cellfun(@(x) islogical(x) && isscalar(x), elements))
+        val = [elements{:}]';
+        return
+    end
+
+    if all(cellfun(@(x) isstring(x) && isscalar(x), elements))
+        val = [elements{:}]';
+        return
+    end
+
+    val = elements;
 end
 
 function obj = wrapTableNode(tableNode, store)
