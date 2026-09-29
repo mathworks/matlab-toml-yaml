@@ -1,4 +1,5 @@
 #include "readyaml_impl.hpp"
+#include "matlab_builder.hpp"
 
 ReadYamlImpl::ReadYamlImpl(
         std::shared_ptr<matlab::engine::MATLABEngine> eng)
@@ -20,41 +21,30 @@ void ReadYamlImpl::execute(matlab::mex::ArgumentList outputs,
         inputs[2];
     std::string filename = matlabStringToUtf8(filenameArr[0]);
 
-    sequenceAsCell = false;
-    if (inputs.size() > 3) {
-        matlab::data::StructArray opts(inputs[3]);
-
-        matlab::data::TypedArray<matlab::data::MATLABString> seqRule =
-            opts[0]["SequenceRule"];
-        sequenceAsCell =
-            (matlabStringToUtf8(seqRule[0]) == "cell");
-    }
-
     ryml::Tree tree = ryml::parse_in_arena(
         ryml::csubstr(filename.data(), filename.size()),
         ryml::csubstr(content.data(), content.size()));
 
     ryml::ConstNodeRef root = tree.rootref();
 
+    MatlabBuilder builder;
+
     if (root.is_stream()) {
         if (root.num_children() > 0) {
-            outputs[0] = convertNode(root.first_child());
+            emitNode(root.first_child(), builder);
         } else {
-            outputs[0] = makeEmptyTableNode();
+            builder.startObject(0);
+            builder.endObject();
         }
     } else {
-        outputs[0] = convertNode(root);
+        emitNode(root, builder);
     }
+
+    outputs[0] = builder.result();
 }
 
 std::string ReadYamlImpl::toStdString(ryml::csubstr s) {
     return std::string(s.data(), s.size());
-}
-
-matlab::data::Array ReadYamlImpl::makeEmptyTableNode() {
-    auto keys = factory.createArray<matlab::data::MATLABString>({1, 0});
-    auto values = factory.createArray<matlab::data::Array>({1, 0});
-    return makeTableNode(factory, keys, values);
 }
 
 bool ReadYamlImpl::tryParseBool(ryml::csubstr val, bool& result) {
@@ -93,217 +83,86 @@ bool ReadYamlImpl::tryParseYAMLFloat(ryml::csubstr val, double& result) {
     return false;
 }
 
-matlab::data::Array ReadYamlImpl::convertTypedScalar(
-        ryml::ConstNodeRef node) {
+void ReadYamlImpl::emitNode(ryml::ConstNodeRef node,
+                            DocumentHandler& handler) {
+    if (node.is_map()) {
+        emitObject(node, handler);
+    } else if (node.is_seq()) {
+        emitSequence(node, handler);
+    } else if (node.has_val()) {
+        emitScalar(node, handler);
+    } else {
+        handler.startObject(0);
+        handler.endObject();
+    }
+}
+
+void ReadYamlImpl::emitObject(ryml::ConstNodeRef node,
+                              DocumentHandler& handler) {
+    size_t n = node.num_children();
+    handler.startObject(n);
+
+    for (ryml::ConstNodeRef child : node.children()) {
+        std::string keyStr = toStdString(child.key());
+        handler.key(keyStr);
+
+        if (child.is_map()) {
+            emitObject(child, handler);
+        } else if (child.is_seq()) {
+            emitSequence(child, handler);
+        } else if (child.has_val()) {
+            if (child.val_is_null()) {
+                handler.nullValue();
+            } else {
+                emitScalar(child, handler);
+            }
+        } else {
+            handler.nullValue();
+        }
+    }
+
+    handler.endObject();
+}
+
+void ReadYamlImpl::emitSequence(ryml::ConstNodeRef node,
+                                DocumentHandler& handler) {
+    size_t count = node.num_children();
+    handler.startArray(count);
+    for (ryml::ConstNodeRef child : node.children()) {
+        emitNode(child, handler);
+    }
+    handler.endArray();
+}
+
+void ReadYamlImpl::emitScalar(ryml::ConstNodeRef node,
+                              DocumentHandler& handler) {
     if (node.is_val_quoted()) {
-        return factory.createScalar(
-            utf8ToMATLABString(toStdString(node.val())));
+        std::string text = toStdString(node.val());
+        handler.stringValue(text);
+        return;
     }
 
     ryml::csubstr val = node.val();
 
     bool b;
     if (tryParseBool(val, b)) {
-        return factory.createScalar<bool>(b);
+        handler.boolValue(b);
+        return;
     }
 
     double d;
     if (tryParseYAMLFloat(val, d)) {
-        return factory.createScalar<double>(d);
+        handler.doubleValue(d);
+        return;
     }
 
     if (val.is_integer() || val.is_real()) {
         if (ryml::from_chars(val, &d)) {
-            return factory.createScalar<double>(d);
+            handler.doubleValue(d);
+            return;
         }
     }
 
-    return factory.createScalar(
-        utf8ToMATLABString(toStdString(val)));
-}
-
-matlab::data::Array ReadYamlImpl::convertNode(ryml::ConstNodeRef node) {
-    if (node.is_map()) {
-        return convertMap(node);
-    }
-    if (node.is_seq()) {
-        return convertSequence(node);
-    }
-    if (node.has_val()) {
-        return convertTypedScalar(node);
-    }
-    return makeEmptyTableNode();
-}
-
-matlab::data::Array ReadYamlImpl::convertMap(ryml::ConstNodeRef node) {
-    size_t n = node.num_children();
-
-    auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
-    auto values = factory.createArray<matlab::data::Array>({1, n});
-
-    size_t i = 0;
-    for (ryml::ConstNodeRef child : node.children()) {
-        keys[0][i] = utf8ToMATLABString(toStdString(child.key()));
-
-        if (child.is_map()) {
-            values[0][i] = convertMap(child);
-        } else if (child.is_seq()) {
-            values[0][i] = convertSequence(child);
-        } else if (child.has_val()) {
-            if (child.val_is_null()) {
-                values[0][i] = makeValueNode(factory,
-                    factory.createArray<double>({0, 0}), "missing");
-            } else {
-                values[0][i] = convertTypedScalar(child);
-            }
-        } else {
-            values[0][i] = makeValueNode(factory,
-                factory.createArray<double>({0, 0}), "missing");
-        }
-        ++i;
-    }
-
-    return makeTableNode(factory, keys, values);
-}
-
-matlab::data::Array ReadYamlImpl::convertSequence(
-        ryml::ConstNodeRef node) {
-    size_t count = node.num_children();
-    if (count == 0) {
-        return factory.createArray<double>({0, 0});
-    }
-
-    bool allMaps = true;
-    bool allScalar = true;
-    for (ryml::ConstNodeRef child : node.children()) {
-        if (!child.is_map()) allMaps = false;
-        if (child.is_map() || child.is_seq()) allScalar = false;
-    }
-
-    if (allMaps && !sequenceAsCell) {
-        auto out = factory.createArray<matlab::data::Array>({1, count});
-        size_t i = 0;
-        for (ryml::ConstNodeRef child : node.children()) {
-            out[0][i] = convertMap(child);
-            ++i;
-        }
-        return out;
-    }
-
-    if (allScalar && !sequenceAsCell) {
-        return consolidateTypedScalars(node, count);
-    }
-
-    std::vector<matlab::data::Array> elems;
-    elems.reserve(count);
-    for (ryml::ConstNodeRef child : node.children()) {
-        elems.push_back(convertNode(child));
-    }
-
-    return makeCellArray(elems, count);
-}
-
-matlab::data::Array ReadYamlImpl::consolidateTypedScalars(
-        ryml::ConstNodeRef node, size_t count) {
-    std::vector<double> nums;
-    nums.reserve(count);
-    bool allNumeric = true;
-    for (ryml::ConstNodeRef child : node.children()) {
-        if (child.is_val_quoted() || child.val_is_null()) {
-            allNumeric = false;
-            break;
-        }
-        ryml::csubstr val = child.val();
-        double d;
-        if (tryParseYAMLFloat(val, d)) {
-            nums.push_back(d);
-        } else if (val.is_integer() || val.is_real()) {
-            if (ryml::from_chars(val, &d)) {
-                nums.push_back(d);
-            } else {
-                allNumeric = false;
-                break;
-            }
-        } else {
-            allNumeric = false;
-            break;
-        }
-    }
-    if (allNumeric) {
-        auto out = factory.createArray<double>({count, 1});
-        for (size_t i = 0; i < count; ++i) {
-            out[i][0] = nums[i];
-        }
-        return out;
-    }
-
-    std::vector<bool> bools;
-    bools.reserve(count);
-    bool allBool = true;
-    for (ryml::ConstNodeRef child : node.children()) {
-        if (child.is_val_quoted()) {
-            allBool = false;
-            break;
-        }
-        bool b;
-        if (tryParseBool(child.val(), b)) {
-            bools.push_back(b);
-        } else {
-            allBool = false;
-            break;
-        }
-    }
-    if (allBool) {
-        auto out = factory.createArray<bool>({count, 1});
-        for (size_t i = 0; i < count; ++i) {
-            out[i][0] = bools[i];
-        }
-        return out;
-    }
-
-    bool allString = true;
-    for (ryml::ConstNodeRef child : node.children()) {
-        if (child.val_is_null()) {
-            allString = false;
-            break;
-        }
-    }
-    if (allString) {
-        auto out = factory.createArray<matlab::data::MATLABString>(
-            {count, 1});
-        size_t i = 0;
-        for (ryml::ConstNodeRef child : node.children()) {
-            out[i][0] = utf8ToMATLABString(toStdString(child.val()));
-            ++i;
-        }
-        return out;
-    }
-
-    std::vector<matlab::data::Array> elems;
-    elems.reserve(count);
-    for (ryml::ConstNodeRef child : node.children()) {
-        if (child.val_is_null()) {
-            elems.push_back(factory.createArray<double>({0, 0}));
-        } else {
-            elems.push_back(convertTypedScalar(child));
-        }
-    }
-    return makeCellArray(elems, count);
-}
-
-matlab::data::Array ReadYamlImpl::makeCellArray(
-        const std::vector<matlab::data::Array>& elems, size_t count) {
-    auto out = factory.createArray<matlab::data::Array>({1, count});
-    for (size_t i = 0; i < count; ++i) {
-        out[0][i] = elems[i];
-    }
-    return out;
-}
-
-matlab::data::Array ReadYamlImpl::convertScalar(ryml::ConstNodeRef node) {
-    if (node.val_is_null()) {
-        return factory.createArray<double>({0, 0});
-    }
-    return factory.createScalar(
-        utf8ToMATLABString(toStdString(node.val())));
+    std::string text = toStdString(val);
+    handler.stringValue(text);
 }

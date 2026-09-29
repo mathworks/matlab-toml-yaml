@@ -19,6 +19,7 @@ classdef NodeTreeStore < matlab.io.config.internal.ConfigurationStore
         Tree struct
         Format (1,1) string = "toml"
         DatetimeType (1,1) string = "datetime"
+        ArrayType (1,1) string = "auto"
     end
 
     methods

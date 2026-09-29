@@ -1,4 +1,5 @@
 #include "readtoml_impl.hpp"
+#include "matlab_builder.hpp"
 
 ReadTomlImpl::ReadTomlImpl(
         std::shared_ptr<matlab::engine::MATLABEngine> eng)
@@ -24,7 +25,9 @@ void ReadTomlImpl::execute(matlab::mex::ArgumentList outputs,
     toml::ordered_value data =
         toml::parse<toml::ordered_type_config>(iss, filename);
 
-    outputs[0] = tableToNode(data);
+    MatlabBuilder builder;
+    emitTable(data, builder);
+    outputs[0] = builder.result();
 }
 
 bool ReadTomlImpl::isDatetimeType(toml::value_t t) {
@@ -34,7 +37,8 @@ bool ReadTomlImpl::isDatetimeType(toml::value_t t) {
            t == toml::value_t::local_time;
 }
 
-std::string ReadTomlImpl::datetimeToString(const toml::value& val) {
+std::string ReadTomlImpl::datetimeToString(
+        const toml::ordered_value& val) {
     switch (val.type()) {
         case toml::value_t::offset_datetime:
             return toml::to_string(val.as_offset_datetime());
@@ -49,144 +53,60 @@ std::string ReadTomlImpl::datetimeToString(const toml::value& val) {
     }
 }
 
-matlab::data::Array ReadTomlImpl::tableToNode(
-        const toml::ordered_value& table) {
+void ReadTomlImpl::emitTable(const toml::ordered_value& table,
+                             DocumentHandler& handler) {
     const auto& tbl = table.as_table();
-    size_t n = tbl.size();
+    handler.startObject(tbl.size());
 
-    auto keys = factory.createArray<matlab::data::MATLABString>({1, n});
-    auto values = factory.createArray<matlab::data::Array>({1, n});
-
-    size_t i = 0;
     for (const auto& [key, val] : tbl) {
-        keys[0][i] = utf8ToMATLABString(key);
-
-        if (val.type() == toml::value_t::table) {
-            values[0][i] = tableToNode(val);
-        } else if (val.type() == toml::value_t::array) {
-            values[0][i] = convertArray(val.as_array());
-        } else if (isDatetimeType(val.type())) {
-            values[0][i] = makeValueNode(factory,
-                factory.createScalar(
-                    utf8ToMATLABString(datetimeToString(val))),
-                "datetime");
-        } else {
-            values[0][i] = convertScalar(val);
-        }
-        ++i;
+        handler.key(key);
+        emitValue(val, handler);
     }
 
-    return makeTableNode(factory, keys, values);
+    handler.endObject();
 }
 
-matlab::data::Array ReadTomlImpl::convertScalar(const toml::value& val) {
+void ReadTomlImpl::emitValue(const toml::ordered_value& val,
+                             DocumentHandler& handler) {
+    auto t = val.type();
+
+    if (t == toml::value_t::table) {
+        emitTable(val, handler);
+    } else if (t == toml::value_t::array) {
+        emitArray(val.as_array(), handler);
+    } else if (isDatetimeType(t)) {
+        std::string iso = datetimeToString(val);
+        handler.datetimeValue(iso);
+    } else {
+        emitScalar(val, handler);
+    }
+}
+
+void ReadTomlImpl::emitArray(const toml::ordered_array& arr,
+                             DocumentHandler& handler) {
+    handler.startArray(arr.size());
+    for (const auto& elem : arr) {
+        emitValue(elem, handler);
+    }
+    handler.endArray();
+}
+
+void ReadTomlImpl::emitScalar(const toml::ordered_value& val,
+                              DocumentHandler& handler) {
     switch (val.type()) {
         case toml::value_t::boolean:
-            return factory.createScalar<bool>(val.as_boolean());
+            handler.boolValue(val.as_boolean());
+            break;
         case toml::value_t::integer:
-            return factory.createScalar<double>(
-                static_cast<double>(val.as_integer()));
+            handler.intValue(val.as_integer());
+            break;
         case toml::value_t::floating:
-            return factory.createScalar<double>(val.as_floating());
+            handler.doubleValue(val.as_floating());
+            break;
         case toml::value_t::string:
-            return factory.createScalar(
-                *(utf8ToMATLABString(val.as_string())));
+            handler.stringValue(val.as_string());
+            break;
         default:
-            return factory.createArray<double>({0, 0});
+            break;
     }
-}
-
-matlab::data::Array ReadTomlImpl::convertArray(
-        const toml::ordered_array& arr) {
-    if (arr.empty()) {
-        return factory.createArray<double>({0, 0});
-    }
-
-    auto firstType = arr.front().type();
-    bool homogeneous = std::all_of(arr.begin(), arr.end(),
-        [&](const toml::value& v) {
-            return v.type() == firstType;
-        });
-
-    if (homogeneous && firstType == toml::value_t::table) {
-        size_t count = arr.size();
-        auto out = factory.createArray<matlab::data::Array>({1, count});
-        for (size_t i = 0; i < count; ++i) {
-            out[0][i] = tableToNode(arr[i]);
-        }
-        return out;
-    }
-
-    if (arr.size() == 1) {
-        matlab::data::Array element;
-        const auto& first = arr.front();
-        if (first.type() == toml::value_t::array) {
-            element = convertArray(first.as_array());
-        } else if (isDatetimeType(first.type())) {
-            element = makeValueNode(factory,
-                factory.createScalar(
-                    utf8ToMATLABString(datetimeToString(first))),
-                "datetime");
-        } else {
-            element = convertScalar(first);
-        }
-        auto out = factory.createArray<matlab::data::Array>({1, 1});
-        out[0][0] = std::move(element);
-        return out;
-    }
-
-    if (homogeneous && firstType == toml::value_t::integer) {
-        auto out = factory.createArray<double>({1, arr.size()});
-        for (size_t i = 0; i < arr.size(); ++i) {
-            out[0][i] = static_cast<double>(arr[i].as_integer());
-        }
-        return out;
-    }
-
-    if (homogeneous && firstType == toml::value_t::floating) {
-        auto out = factory.createArray<double>({1, arr.size()});
-        for (size_t i = 0; i < arr.size(); ++i) {
-            out[0][i] = arr[i].as_floating();
-        }
-        return out;
-    }
-
-    if (homogeneous && firstType == toml::value_t::boolean) {
-        auto out = factory.createArray<bool>({1, arr.size()});
-        for (size_t i = 0; i < arr.size(); ++i) {
-            out[0][i] = arr[i].as_boolean();
-        }
-        return out;
-    }
-
-    if (homogeneous && firstType == toml::value_t::string) {
-        auto out = factory.createArray<matlab::data::MATLABString>(
-            {1, arr.size()});
-        for (size_t i = 0; i < arr.size(); ++i) {
-            out[0][i] = utf8ToMATLABString(arr[i].as_string());
-        }
-        return out;
-    }
-
-    std::vector<matlab::data::Array> elems;
-    elems.reserve(arr.size());
-    for (const auto& elem : arr) {
-        if (elem.type() == toml::value_t::table) {
-            elems.push_back(tableToNode(elem));
-        } else if (elem.type() == toml::value_t::array) {
-            elems.push_back(convertArray(elem.as_array()));
-        } else if (isDatetimeType(elem.type())) {
-            elems.push_back(factory.createScalar(
-                utf8ToMATLABString(datetimeToString(elem))));
-        } else {
-            elems.push_back(convertScalar(elem));
-        }
-    }
-
-    auto out = factory.createArray<matlab::data::Array>(
-        {1, arr.size()});
-    for (size_t i = 0; i < elems.size(); ++i) {
-        out[0][i] = std::move(elems[i]);
-    }
-    return out;
 }

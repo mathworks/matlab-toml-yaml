@@ -1,6 +1,5 @@
 #include "writeyaml_impl.hpp"
-
-using matlab::data::ArrayType;
+#include "matlab_walker.hpp"
 
 WriteYamlImpl::WriteYamlImpl(
         std::shared_ptr<matlab::engine::MATLABEngine> eng)
@@ -28,9 +27,10 @@ void WriteYamlImpl::execute(matlab::mex::ArgumentList outputs,
     tree.reserve(64);
     tree.reserve_arena(4096);
 
-    ryml::NodeRef root = tree.rootref();
-    root |= ryml::MAP;
-    buildMap(root, data);
+    stack.clear();
+    hasPendingKey = false;
+
+    MatlabWalker::walk(data, *this);
 
     std::string yaml =
         ryml::emitrs_yaml<std::string>(tree, tree.root_id());
@@ -82,6 +82,98 @@ void WriteYamlImpl::setNodeValue(ryml::NodeRef node,
         node.set_val(arenaVal);
     }
 }
+
+ryml::NodeRef WriteYamlImpl::allocChild() {
+    ryml::NodeRef parent = stack.back();
+    ryml::NodeRef child = parent.append_child();
+    if (hasPendingKey) {
+        child.set_key(toArena(pendingKey));
+        hasPendingKey = false;
+    }
+    return child;
+}
+
+// ── DocumentHandler implementation ──────────────────────────────────
+
+void WriteYamlImpl::startObject(size_t /*count*/) {
+    ryml::NodeRef node;
+    if (stack.empty()) {
+        node = tree.rootref();
+    } else {
+        node = allocChild();
+    }
+    node |= ryml::MAP;
+    stack.push_back(node);
+}
+
+void WriteYamlImpl::key(std::string_view k) {
+    pendingKey.assign(k.data(), k.size());
+    hasPendingKey = true;
+}
+
+void WriteYamlImpl::endObject() {
+    stack.pop_back();
+}
+
+void WriteYamlImpl::startArray(size_t count) {
+    ryml::NodeRef node;
+    if (stack.empty()) {
+        node = tree.rootref();
+    } else {
+        node = allocChild();
+    }
+    if (count == 0) {
+        node |= (ryml::SEQ | ryml::FLOW_SL);
+    } else {
+        node |= seqFlags();
+    }
+    stack.push_back(node);
+}
+
+void WriteYamlImpl::endArray() {
+    stack.pop_back();
+}
+
+void WriteYamlImpl::nullValue() {
+    ryml::NodeRef child = allocChild();
+    child.set_val(toArena("null"));
+}
+
+void WriteYamlImpl::boolValue(bool b) {
+    ryml::NodeRef child = allocChild();
+    setNodeValue(child, b ? "true" : "false", false);
+}
+
+void WriteYamlImpl::intValue(int64_t i) {
+    ryml::NodeRef child = allocChild();
+    setNodeValue(child, formatInt(i), false);
+}
+
+void WriteYamlImpl::uintValue(uint64_t u) {
+    ryml::NodeRef child = allocChild();
+    char buf[32];
+    auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), u);
+    setNodeValue(child, std::string(buf, ptr), false);
+}
+
+void WriteYamlImpl::doubleValue(double d) {
+    ryml::NodeRef child = allocChild();
+    setNodeValue(child, formatDouble(d), false);
+}
+
+void WriteYamlImpl::stringValue(std::string_view s) {
+    ryml::NodeRef child = allocChild();
+    std::string text(s);
+    setNodeValue(child, text, needsQuoting(text));
+}
+
+void WriteYamlImpl::datetimeValue(std::string_view iso) {
+    ryml::NodeRef child = allocChild();
+    std::string text(iso);
+    setNodeValue(child, text, false);
+}
+
+// ── YAML formatting helpers (unchanged) ─────────────────────────────
 
 bool WriteYamlImpl::needsQuoting(const std::string& s) {
     if (s.empty()) return true;
@@ -195,252 +287,10 @@ std::string WriteYamlImpl::formatDouble(double val) {
     return buf;
 }
 
-bool WriteYamlImpl::isIntegerType(ArrayType type) {
-    return type == ArrayType::INT8 || type == ArrayType::INT16 ||
-           type == ArrayType::INT32 || type == ArrayType::INT64 ||
-           type == ArrayType::UINT8 || type == ArrayType::UINT16 ||
-           type == ArrayType::UINT32 || type == ArrayType::UINT64;
-}
-
-int64_t WriteYamlImpl::readIntScalar(const matlab::data::Array& val) {
-    switch (val.getType()) {
-    case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; return a[0]; }
-    case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; return a[0]; }
-    case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; return a[0]; }
-    case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; return a[0]; }
-    case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; return a[0]; }
-    case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; return a[0]; }
-    case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; return a[0]; }
-    case ArrayType::UINT64: { matlab::data::TypedArray<uint64_t> a = val; return static_cast<int64_t>(a[0]); }
-    default: return 0;
-    }
-}
-
-std::vector<int64_t> WriteYamlImpl::readIntArray(
-        const matlab::data::Array& val) {
-    size_t n = val.getNumberOfElements();
-    std::vector<int64_t> out(n);
-    switch (val.getType()) {
-    case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = a[i]; break; }
-    case ArrayType::UINT64: { matlab::data::TypedArray<uint64_t> a = val; for (size_t i = 0; i < n; ++i) out[i] = static_cast<int64_t>(a[i]); break; }
-    default: break;
-    }
-    return out;
-}
-
 std::string WriteYamlImpl::formatInt(int64_t val) {
     char buf[32];
     auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), val);
     return std::string(buf, ptr);
-}
-
-void WriteYamlImpl::formatAndSetScalar(ryml::NodeRef node,
-                                       const matlab::data::Array& val) {
-    auto type = val.getType();
-
-    if (type == ArrayType::LOGICAL) {
-        matlab::data::TypedArray<bool> arr = val;
-        setNodeValue(node, arr[0] ? "true" : "false", false);
-        return;
-    }
-
-    if (type == ArrayType::DOUBLE || type == ArrayType::SINGLE) {
-        matlab::data::TypedArray<double> arr = val;
-        setNodeValue(node, formatDouble(arr[0]), false);
-        return;
-    }
-
-    if (isIntegerType(type)) {
-        setNodeValue(node, formatInt(readIntScalar(val)), false);
-        return;
-    }
-
-    if (type == ArrayType::MATLAB_STRING) {
-        matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-        std::string text = matlabStringToUtf8(arr[0]);
-        setNodeValue(node, text, needsQuoting(text));
-        return;
-    }
-
-    throwMexError(*engine, factory,
-        "writeyamlMex:UnsupportedType",
-        "Unsupported scalar type in node tree.");
-}
-
-void WriteYamlImpl::buildMap(ryml::NodeRef mapNode,
-                             const matlab::data::Array& nodeArr) {
-    matlab::data::StructArray node(nodeArr);
-
-    matlab::data::TypedArray<matlab::data::MATLABString> keys =
-        node[0]["Keys"];
-    matlab::data::TypedArray<matlab::data::Array> values =
-        node[0]["Values"];
-
-    size_t n = keys.getNumberOfElements();
-
-    for (size_t i = 0; i < n; ++i) {
-        std::string key = matlabStringToUtf8(keys[i]);
-
-        ryml::NodeRef child = mapNode.append_child();
-        child.set_key(toArena(key));
-
-        buildValue(child, values[i]);
-    }
-}
-
-void WriteYamlImpl::buildValue(ryml::NodeRef node,
-                               const matlab::data::Array& val) {
-    auto type = val.getType();
-    size_t numel = val.getNumberOfElements();
-
-    if (type == ArrayType::STRUCT) {
-        matlab::data::StructArray sa(val);
-        if (structHasField(sa, "Keys")) {
-            node |= ryml::MAP;
-            buildMap(node, val);
-            return;
-        }
-        if (structHasField(sa, "Data")) {
-            buildValueNode(node, sa);
-            return;
-        }
-        if (numel == 0) {
-            node.set_val(toArena("null"));
-            return;
-        }
-        node |= ryml::MAP;
-        buildMap(node, val);
-        return;
-    }
-
-    if (type == ArrayType::CELL) {
-        matlab::data::TypedArray<matlab::data::Array> cells = val;
-        if (numel > 0 &&
-            cells[0].getType() == ArrayType::STRUCT) {
-            matlab::data::Array firstArr = cells[0];
-            matlab::data::StructArray firstSa(firstArr);
-            if (structHasField(firstSa, "Keys")) {
-                buildObjectSequence(node, val);
-                return;
-            }
-        }
-        if (numel == 0) {
-            node |= (ryml::SEQ | ryml::FLOW_SL);
-            return;
-        }
-        buildCellSequence(node, val);
-        return;
-    }
-
-    if (numel > 1) {
-        buildTypedSequence(node, val);
-        return;
-    }
-
-    if (numel == 0) {
-        node |= (ryml::SEQ | ryml::FLOW_SL);
-        return;
-    }
-
-    formatAndSetScalar(node, val);
-}
-
-void WriteYamlImpl::buildValueNode(ryml::NodeRef node,
-                                   const matlab::data::StructArray& vn) {
-    if (structHasField(vn, "Type")) {
-        matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
-            vn[0]["Type"];
-        std::string nodeType = matlabStringToUtf8(typeArr[0]);
-
-        if (nodeType == "missing") {
-            node.set_val(toArena("null"));
-            return;
-        }
-
-        if (nodeType == "datetime") {
-            matlab::data::Array data = vn[0]["Data"];
-            if (data.getType() == ArrayType::MATLAB_STRING) {
-                matlab::data::TypedArray<matlab::data::MATLABString>
-                    strArr = data;
-                setNodeValue(node,
-                    matlabStringToUtf8(strArr[0]), false);
-            } else {
-                formatAndSetScalar(node, data);
-            }
-            return;
-        }
-    }
-
-    matlab::data::Array data = vn[0]["Data"];
-    buildValue(node, data);
-}
-
-void WriteYamlImpl::buildObjectSequence(ryml::NodeRef node,
-                                        const matlab::data::Array& data) {
-    matlab::data::TypedArray<matlab::data::Array> cells = data;
-    size_t numel = cells.getNumberOfElements();
-    node |= seqFlags();
-    for (size_t i = 0; i < numel; ++i) {
-        ryml::NodeRef item = node.append_child();
-        item |= ryml::MAP;
-        buildMap(item, cells[i]);
-    }
-}
-
-void WriteYamlImpl::buildTypedSequence(ryml::NodeRef node,
-                                       const matlab::data::Array& data) {
-    auto type = data.getType();
-    size_t numel = data.getNumberOfElements();
-    node |= seqFlags();
-
-    if (type == ArrayType::LOGICAL) {
-        matlab::data::TypedArray<bool> arr = data;
-        for (size_t i = 0; i < numel; ++i) {
-            ryml::NodeRef item = node.append_child();
-            setNodeValue(item, arr[i] ? "true" : "false", false);
-        }
-    } else if (type == ArrayType::DOUBLE ||
-               type == ArrayType::SINGLE) {
-        matlab::data::TypedArray<double> arr = data;
-        for (size_t i = 0; i < numel; ++i) {
-            ryml::NodeRef item = node.append_child();
-            setNodeValue(item, formatDouble(arr[i]), false);
-        }
-    } else if (isIntegerType(type)) {
-        auto vals = readIntArray(data);
-        for (size_t i = 0; i < numel; ++i) {
-            ryml::NodeRef item = node.append_child();
-            setNodeValue(item, formatInt(vals[i]), false);
-        }
-    } else if (type == ArrayType::MATLAB_STRING) {
-        matlab::data::TypedArray<matlab::data::MATLABString> arr = data;
-        for (size_t i = 0; i < numel; ++i) {
-            ryml::NodeRef item = node.append_child();
-            std::string text = matlabStringToUtf8(arr[i]);
-            setNodeValue(item, text, needsQuoting(text));
-        }
-    } else {
-        throwMexError(*engine, factory,
-            "writeyamlMex:UnsupportedType",
-            "Unsupported array element type in node tree.");
-    }
-}
-
-void WriteYamlImpl::buildCellSequence(ryml::NodeRef node,
-                                      const matlab::data::Array& data) {
-    matlab::data::TypedArray<matlab::data::Array> cells = data;
-    size_t numel = cells.getNumberOfElements();
-    node |= seqFlags();
-    for (size_t i = 0; i < numel; ++i) {
-        ryml::NodeRef item = node.append_child();
-        buildValue(item, cells[i]);
-    }
 }
 
 std::string WriteYamlImpl::insertSectionSpacing(const std::string& yaml) {
