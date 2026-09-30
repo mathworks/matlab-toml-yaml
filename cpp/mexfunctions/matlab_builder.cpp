@@ -94,7 +94,8 @@ void MatlabBuilder::endArray() {
             for (size_t i = 0; i < n; ++i) {
                 matlab::data::TypedArray<matlab::data::MATLABString> el =
                     af.elements[i];
-                arr[i][0] = el[0];
+                matlab::data::MATLABString s = el[0];
+                arr[i][0] = s;
             }
             pushValue(std::move(arr));
             return;

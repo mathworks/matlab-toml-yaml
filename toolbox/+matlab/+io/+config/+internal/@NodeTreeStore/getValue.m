@@ -77,7 +77,7 @@ function val = expandArrayNode(node, store)
         end
         if store.ArrayType == "cell"
             val = elements;
-        elseif store.Format == "toml" && numel(elements) == 1
+        elseif store.Format == "toml" && isscalar(elements)
             val = elements;
         else
             val = tryConsolidate(elements);
