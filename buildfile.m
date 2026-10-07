@@ -68,7 +68,7 @@ function mltbxTask(~)
     if ~isMATLABReleaseOlderThan("R2026b")
         opts.PackageName = "tomlyaml";
     end
-    opts.ToolboxVersion = "0.1.0";
+    opts.ToolboxVersion = "0.1.4";
     opts.MinimumMatlabRelease = "R2022b";
     opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
     opts.Summary = "Read and write TOML and YAML configuration files with dot notation access.";
