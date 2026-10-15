@@ -22,5 +22,6 @@ void throwMexError(
     const std::string& id,
     const std::string& msg) {
     engine.feval(u"error", 0,
-        {factory.createCharArray(id), factory.createCharArray(msg)});
+        {factory.createCharArray(id), factory.createCharArray("%s"),
+         factory.createCharArray(msg)});
 }
