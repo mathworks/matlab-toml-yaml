@@ -22,8 +22,17 @@ void ReadTomlImpl::execute(matlab::mex::ArgumentList outputs,
     std::string filename = matlabStringToUtf8(filenameArr[0]);
 
     std::istringstream iss(std::move(content));
-    toml::ordered_value data =
-        toml::parse<toml::ordered_type_config>(iss, filename);
+    toml::ordered_value data;
+    try {
+        data = toml::parse<toml::ordered_type_config>(iss, filename);
+    } catch (const toml::syntax_error& e) {
+        const auto& errs = e.errors();
+        std::string msg = errs.empty()
+            ? std::string(e.what())
+            : toml::format_error(errs.front());
+        throwMexError(*engine, factory, "readtoml:ParseError", msg);
+        return;
+    }
 
     MatlabBuilder builder;
     emitTable(data, builder);

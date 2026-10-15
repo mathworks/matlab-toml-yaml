@@ -141,7 +141,7 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
                 "}"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Arrays of tables ---------------------------------------------
@@ -218,7 +218,7 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
             file = testCase.writeToml(["valid = 1"; "garbage"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException", ...
+                "readtoml:ParseError", ...
                 "A non key-value line should be reported as invalid syntax");
         end
 
@@ -231,7 +231,7 @@ classdef readtomlArrayTest < ConfigurationFileTestCase
                 "name = ""alpha"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException", ...
+                "readtoml:ParseError", ...
                 "Reusing a scalar key as an array of tables should error");
         end
     end

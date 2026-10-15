@@ -79,14 +79,14 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""a"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testArrayOverScalarRootKeyErrors(testCase)
             file = testCase.writeToml(["items = 1"; "[[items]]"; "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testDeepArrayOverExistingScalarErrors(testCase)
@@ -99,7 +99,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""linux"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Deep headers with no declared parents ---------------------------
@@ -149,7 +149,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Arrays replaced by a scalar between elements --------------------
@@ -169,7 +169,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "run = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testAppendingAfterDeepArrayIsOverwrittenErrors(testCase)
@@ -183,7 +183,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "os = ""b"""]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testAppendingAfterTableArrayIsOverwrittenErrors(testCase)
@@ -197,7 +197,7 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "n = 2"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Dotted keys ---------------------------------------------------
