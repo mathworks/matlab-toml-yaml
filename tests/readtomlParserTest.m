@@ -63,7 +63,19 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("value = abc");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
+        end
+
+        function testParseErrorReportedOnce(testCase)
+            file = testCase.writeToml("value = [1, 2, whoops]");
+
+            try
+                readtoml(file);
+                testCase.verifyFail("Expected an error.");
+            catch e
+                occurrences = count(e.message, "unknown value appeared");
+                testCase.verifyEqual(occurrences, 1);
+            end
         end
 
         % --- Strings -------------------------------------------------------
@@ -103,7 +115,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("text = ""unclosed");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Datetimes -----------------------------------------------------
@@ -130,14 +142,14 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("at = 2020-99-99T99:99:99");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testTimeLikeValueThatCannotParseErrors(testCase)
             file = testCase.writeToml("at = 99:99:99");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Inline tables -------------------------------------------------
@@ -156,7 +168,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("section = {bare}");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testUnclosedInlineTableErrors(testCase)
@@ -165,14 +177,14 @@ classdef readtomlParserTest < ConfigurationFileTestCase
             file = testCase.writeToml("section = {bare = 1");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testUnclosedArrayErrors(testCase)
             file = testCase.writeToml("items = [1, 2");
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         function testInlineTableWithMultipleEntries(testCase)
@@ -243,7 +255,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
                 "extra = 1"]);
 
             testCase.verifyError(@() readtoml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readtoml:ParseError");
         end
 
         % --- Bracket tracking inside quotes --------------------------------
