@@ -104,7 +104,7 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
             file = testCase.writeText(["root:"; sprintf("\tchild: 1")]);
 
             testCase.verifyError(@() readyaml(file), ...
-                "MATLAB:mex:CppMexException", ...
+                "readyaml:ParseError", ...
                 "Tab indentation is invalid YAML and should error");
         end
 
@@ -137,8 +137,26 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
             file = testCase.writeText(["host: local"; "garbage"; "port: 80"]);
 
             testCase.verifyError(@() readyaml(file), ...
-                "MATLAB:mex:CppMexException", ...
+                "readyaml:ParseError", ...
                 "A line that is not valid YAML should error");
+        end
+
+        function testParseErrorIncludesLocation(testCase)
+            file = testCase.writeText(["host: local"; "garbage"; "port: 80"]);
+
+            try
+                readyaml(file);
+                testCase.verifyFail("Expected an error.");
+            catch e
+                testCase.verifySubstring(e.message, "-->", ...
+                    "Parse error should include a location arrow");
+                testCase.verifySubstring(e.message, ":2:", ...
+                    "Parse error should cite line 2");
+                testCase.verifySubstring(e.message, "2 | garbage", ...
+                    "Parse error should show the offending source line");
+                testCase.verifySubstring(e.message, "^-- here", ...
+                    "Parse error should include a caret pointer");
+            end
         end
 
         % --- Sequences ----------------------------------------------------

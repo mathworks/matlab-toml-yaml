@@ -111,7 +111,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
                 "    port: 80"]);
 
             testCase.verifyError(@() readyaml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readyaml:ParseError");
         end
 
         function testIndentedListMarkerEndsTheItem(testCase)
@@ -122,7 +122,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
                 "    - stray"]);
 
             testCase.verifyError(@() readyaml(file), ...
-                "MATLAB:mex:CppMexException");
+                "readyaml:ParseError");
         end
 
         % --- Flow sequences ------------------------------------------------
