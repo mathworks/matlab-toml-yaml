@@ -1,6 +1,44 @@
 #include "readyaml_impl.hpp"
 #include "matlab_builder.hpp"
 
+static std::string getSourceLine(const std::string& content, size_t lineNum) {
+    size_t cur = 1;
+    size_t pos = 0;
+    while (cur < lineNum && pos < content.size()) {
+        if (content[pos] == '\n')
+            ++cur;
+        ++pos;
+    }
+    size_t end = content.find('\n', pos);
+    if (end == std::string::npos)
+        end = content.size();
+    return content.substr(pos, end - pos);
+}
+
+static std::string formatParseError(const RymlParseError& e,
+                                    const std::string& content,
+                                    const std::string& filename) {
+    std::string msg = e.what();
+    if (e.line == ryml::npos)
+        return msg;
+
+    msg += "\n --> " + filename + ":" + std::to_string(e.line);
+    if (e.col != ryml::npos)
+        msg += ":" + std::to_string(e.col);
+
+    std::string srcLine = getSourceLine(content, e.line);
+    if (!srcLine.empty()) {
+        std::string lineNum = std::to_string(e.line);
+        std::string pad(lineNum.size() + 1, ' ');
+        msg += "\n" + pad + " |\n "
+             + lineNum + " | " + srcLine + "\n"
+             + pad + " |";
+        if (e.col != ryml::npos && e.col > 0)
+            msg += std::string(e.col, ' ') + "^-- here";
+    }
+    return msg;
+}
+
 ReadYamlImpl::ReadYamlImpl(
         std::shared_ptr<matlab::engine::MATLABEngine> eng)
     : engine(std::move(eng)) {}
@@ -21,9 +59,20 @@ void ReadYamlImpl::execute(matlab::mex::ArgumentList outputs,
         inputs[2];
     std::string filename = matlabStringToUtf8(filenameArr[0]);
 
-    ryml::Tree tree = ryml::parse_in_arena(
-        ryml::csubstr(filename.data(), filename.size()),
-        ryml::csubstr(content.data(), content.size()));
+    ryml::Tree tree;
+    try {
+        tree = ryml::parse_in_arena(
+            ryml::csubstr(filename.data(), filename.size()),
+            ryml::csubstr(content.data(), content.size()));
+    } catch (const RymlParseError& e) {
+        throwMexError(*engine, factory, "readyaml:ParseError",
+            formatParseError(e, content, filename));
+        return;
+    } catch (const std::exception& e) {
+        throwMexError(*engine, factory, "readyaml:ParseError",
+            std::string("[fallback] ") + e.what());
+        return;
+    }
 
     ryml::ConstNodeRef root = tree.rootref();
 
