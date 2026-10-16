@@ -32,6 +32,28 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "42");
         end
 
+        function testWriteSingleScalar(testCase)
+            obj = yamldata(struct("rate", single(0.25)));
+            text = testCase.writeYAMLToString(obj);
+            testCase.verifySubstring(text, "0.25");
+        end
+
+        function testWriteSingleArray(testCase)
+            obj = yamldata(struct("vals", single([1.5 2.5])));
+            text = testCase.writeYAMLToString(obj);
+            testCase.verifySubstring(text, "1.5");
+            testCase.verifySubstring(text, "2.5");
+        end
+
+        function testWriteSingleScalarToml(testCase)
+            obj = tomldata(struct("rate", single(0.25)));
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "0.25");
+        end
+
         function testWriteBooleanValueString(testCase)
             obj = yamldata(struct("label", "true"));
             text = testCase.writeYAMLToString(obj);

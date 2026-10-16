@@ -60,8 +60,9 @@ void MatlabWalker::walkValue(const matlab::data::Array& val,
         matlab::data::TypedArray<bool> arr = val;
         handler.boolValue(arr[0]);
     } else if (type == ArrayType::DOUBLE || type == ArrayType::SINGLE) {
-        matlab::data::TypedArray<double> arr = val;
-        double d = arr[0];
+        double d = (type == ArrayType::SINGLE)
+            ? static_cast<double>(matlab::data::TypedArray<float>(val)[0])
+            : matlab::data::TypedArray<double>(val)[0];
         if (!std::isnan(d) && !std::isinf(d) &&
             d == std::floor(d) &&
             std::abs(d) < static_cast<double>(1LL << 53)) {
@@ -144,9 +145,7 @@ void MatlabWalker::walkTypedArray(const matlab::data::Array& val,
             handler.boolValue(arr[i]);
         }
     } else if (type == ArrayType::DOUBLE || type == ArrayType::SINGLE) {
-        matlab::data::TypedArray<double> arr = val;
-        for (size_t i = 0; i < numel; ++i) {
-            double d = arr[i];
+        auto emitDouble = [&](double d) {
             if (!std::isnan(d) && !std::isinf(d) &&
                 d == std::floor(d) &&
                 std::abs(d) < static_cast<double>(1LL << 53)) {
@@ -154,6 +153,13 @@ void MatlabWalker::walkTypedArray(const matlab::data::Array& val,
             } else {
                 handler.doubleValue(d);
             }
+        };
+        if (type == ArrayType::SINGLE) {
+            matlab::data::TypedArray<float> arr = val;
+            for (size_t i = 0; i < numel; ++i) emitDouble(arr[i]);
+        } else {
+            matlab::data::TypedArray<double> arr = val;
+            for (size_t i = 0; i < numel; ++i) emitDouble(arr[i]);
         }
     } else if (type == ArrayType::UINT64) {
         matlab::data::TypedArray<uint64_t> arr = val;
