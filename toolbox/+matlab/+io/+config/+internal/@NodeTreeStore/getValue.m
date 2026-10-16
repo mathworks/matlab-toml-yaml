@@ -9,17 +9,10 @@ function val = expandNodeValue(val, store)
         if isfield(val, "Keys")
             val = wrapTableNode(val, store);
             return
-        elseif isfield(val, "Elements")
-            val = expandArrayNode(val, store);
-            return
         elseif isfield(val, "Data")
             val = expandValueNode(val, store);
             return
         end
-    end
-
-    if isa(val, "matlab.io.config.ConfigurationData")
-        return
     end
 
     if iscell(val)
@@ -65,54 +58,6 @@ function val = expandValueNode(node, store)
         end
     end
     val = node.Data;
-end
-
-function val = expandArrayNode(node, store)
-    elements = node.Elements;
-    if ~isempty(elements) && isstruct(elements{1}) && isfield(elements{1}, "Keys")
-        val = wrapTableNodeCell(elements, store);
-    else
-        for j = 1:numel(elements)
-            elements{j} = expandNodeValue(elements{j}, store);
-        end
-        if store.ArrayType == "cell"
-            val = elements;
-        elseif store.Format == "toml" && isscalar(elements)
-            val = elements;
-        else
-            val = tryConsolidate(elements);
-        end
-    end
-end
-
-
-function val = tryConsolidate(elements)
-    if all(cellfun(@(x) isa(x, 'double') && isscalar(x), elements))
-        val = [elements{:}]';
-        return
-    end
-
-    if all(cellfun(@(x) isa(x, 'int64') && isscalar(x), elements))
-        val = [elements{:}]';
-        return
-    end
-
-    if all(cellfun(@(x) isa(x, 'uint64') && isscalar(x), elements))
-        val = [elements{:}]';
-        return
-    end
-
-    if all(cellfun(@(x) islogical(x) && isscalar(x), elements))
-        val = [elements{:}]';
-        return
-    end
-
-    if all(cellfun(@(x) isstring(x) && isscalar(x), elements))
-        val = [elements{:}]';
-        return
-    end
-
-    val = elements;
 end
 
 function obj = wrapTableNode(tableNode, store)
