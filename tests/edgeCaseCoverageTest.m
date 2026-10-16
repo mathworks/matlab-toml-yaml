@@ -194,6 +194,38 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyClass(obj.t, 'datetime');
         end
 
+        %% parseTOMLDatetime — fractional seconds
+
+        function testParseTOMLOffsetDatetimeFractional(testCase)
+            dt = matlab.io.config.internal.read.parseTOMLDatetime("2026-10-16T12:30:45.125Z");
+            testCase.verifyClass(dt, 'datetime');
+            testCase.verifyEqual(second(dt), 45.125);
+        end
+
+        function testParseTOMLLocalDatetimeFractional(testCase)
+            dt = matlab.io.config.internal.read.parseTOMLDatetime("2026-10-16T12:30:45.125");
+            testCase.verifyClass(dt, 'datetime');
+            testCase.verifyEqual(second(dt), 45.125);
+        end
+
+        function testParseTOMLTimeOnlyFractional(testCase)
+            dt = matlab.io.config.internal.read.parseTOMLDatetime("12:30:45.125");
+            testCase.verifyClass(dt, 'datetime');
+            testCase.verifyEqual(second(dt), 45.125);
+        end
+
+        function testParseTOMLOffsetDatetimeSixDigitFractional(testCase)
+            dt = matlab.io.config.internal.read.parseTOMLDatetime("2026-10-16T12:30:45.123456Z");
+            testCase.verifyClass(dt, 'datetime');
+            testCase.verifyEqual(second(dt), 45.123456, AbsTol=1e-9);
+        end
+
+        function testParseTOMLOffsetDatetimeFractionalWithOffset(testCase)
+            dt = matlab.io.config.internal.read.parseTOMLDatetime("2026-10-16T12:30:45.125+05:30");
+            testCase.verifyClass(dt, 'datetime');
+            testCase.verifyFalse(isempty(dt.TimeZone));
+        end
+
         %% readyaml — parseYAMLScalar paths
 
         function testReadYAMLQuotedDateStaysString(testCase)
