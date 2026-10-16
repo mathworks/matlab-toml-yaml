@@ -197,21 +197,14 @@ All arrays are returned as column vectors for consistency.
 
 ## Limitations
 
-`readyaml` implements a lightweight, pure-MATLAB parser for the subset of YAML
-most commonly used in configuration files. It is **not** a fully compliant YAML
-1.2 parser. The following features are not supported:
+`readyaml` uses the [rapidyaml](https://github.com/biojppm/rapidyaml) C++ library via MEX, which covers most of the YAML 1.2 specification. The following features are not supported or have caveats:
 
-- **Anchors and aliases** (`&`, `*`) are not supported and may be read as literal text.
-- **Tags** (e.g. `!!str`, `!!float`) and **directives** (e.g. `%YAML 1.2`) are not supported.
-- **Multiple documents** in one file (separated by `---`) are not supported; the entire file is treated as a single document.
+- **Anchors and aliases** (`&`, `*`) — Anchor tags are parsed and stripped from values, but aliases are not resolved. An alias like `*ref` is returned as the literal string `"*ref"`. Merge keys (`<<: *ref`) are stored as a literal `<<` key.
+- **Tags** (e.g. `!!str`, `!!float`) and **directives** (e.g. `%YAML 1.2`) are not honored. Tagged values are converted using default type inference.
+- **Multiple documents** in one file (separated by `---`) — Only the first document is read.
 - **Complex keys** are not supported; mapping keys must be scalar strings.
-- **Flow-style mappings** (e.g. `{name: value}`) are not robustly parsed; use block style. Nested flow-style sequences (e.g. `[[1,2],[3,4]]`) are also not fully supported.
-- **Block scalars** (`|` and `>`) are not explicitly supported and may be parsed incorrectly.
-- **Timestamps** are detected heuristically with a regular expression covering a subset of ISO 8601 (only when `DatetimeType="datetime"`); other date/time formats are read as strings.
+- **Timestamps** are detected heuristically with a subset of ISO 8601 (only when `DatetimeType="datetime"`); other date/time formats are read as strings.
 - **Comments** (`#`) are removed during parsing and not preserved when writing.
-
-For use cases requiring full spec compliance (for example, complex Kubernetes
-manifests that use anchors), consider a Java-based library such as SnakeYAML.
 
 ## See Also
 

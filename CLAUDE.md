@@ -141,7 +141,7 @@ Scalar access on a missing key errors (consistent with struct, dictionary, table
 
 ## Known Limitations
 
-- **YAML**: No anchors/aliases, no multi-document, no literal/folded strings
+- **YAML**: Anchors/aliases parsed but not resolved, no multi-document, no tags
 - **Comments**: Not preserved during round-trip
 
 ## Test Files Location
