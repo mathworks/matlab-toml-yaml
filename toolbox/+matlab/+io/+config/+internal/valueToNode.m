@@ -35,12 +35,23 @@ end
 function str = formatDatetime(dt)
     hasTime = (dt.Hour ~= 0 || dt.Minute ~= 0 || dt.Second ~= 0);
     hasZone = ~isempty(dt.TimeZone);
+    frac = fractionalFormat(dt);
 
     if hasZone
-        str = string(dt, "uuuu-MM-dd'T'HH:mm:ssXXX");
+        str = string(dt, "uuuu-MM-dd'T'HH:mm:ss" + frac + "XXX");
     elseif hasTime
-        str = string(dt, "uuuu-MM-dd'T'HH:mm:ss");
+        str = string(dt, "uuuu-MM-dd'T'HH:mm:ss" + frac);
     else
         str = string(dt, "uuuu-MM-dd");
+    end
+end
+
+function fmt = fractionalFormat(dt)
+    frac = second(dt) - floor(second(dt));
+    if frac == 0
+        fmt = "";
+    else
+        digits = strip(sprintf('%.9f', frac), 'right', '0');
+        fmt = "." + repmat('S', 1, strlength(digits) - 2);
     end
 end
