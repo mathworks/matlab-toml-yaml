@@ -11,6 +11,7 @@ function s = struct(obj)
         for i = 1:numel(obj)
             structCell{i} = struct(obj(i));
         end
+        structCell = reconcileFields(structCell);
         s = reshape([structCell{:}], size(obj));
         return;
     end
@@ -29,8 +30,24 @@ function s = toStruct(keys, values, ~)
         fieldName = matlab.lang.makeValidName(keys(i));
         value = values{i};
         if iscell(value) && ~isempty(value) && isstruct(value{1})
+            value = reconcileFields(value);
             value = [value{:}];
         end
         s.(fieldName) = value;
+    end
+end
+
+function structCell = reconcileFields(structCell)
+    allFields = string.empty(1, 0);
+    for i = 1:numel(structCell)
+        allFields = union(allFields, string(fieldnames(structCell{i}))', 'stable');
+    end
+    for i = 1:numel(structCell)
+        for f = allFields
+            if ~isfield(structCell{i}, f)
+                structCell{i}.(f) = missing;
+            end
+        end
+        structCell{i} = orderfields(structCell{i}, cellstr(allFields));
     end
 end

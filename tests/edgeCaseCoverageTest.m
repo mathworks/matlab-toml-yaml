@@ -339,6 +339,17 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyLength(s.items, 2);
         end
 
+        function testStructConversionHeterogeneousFields(testCase)
+            file = testCase.writeTempFile( ...
+                sprintf('[[svc]]\nname = "api"\nport = 8080\n[[svc]]\nname = "worker"\nqueue = "jobs"'), ...
+                '.toml');
+            config = readtoml(file);
+            s = struct(config);
+            testCase.verifyLength(s.svc, 2);
+            testCase.verifyTrue(ismissing(s.svc(1).queue));
+            testCase.verifyTrue(ismissing(s.svc(2).port));
+        end
+
         %% Display paths
 
         function testDisplayNonScalarArray(testCase)
