@@ -62,6 +62,19 @@ function data = readyaml(filename, options)
     bytes = fread(fid, '*uint8')';
 
     tree = configMex("readyaml", bytes, filename);
+
+    % Top-level primitive (scalar or typed array) — return directly
+    if ~isstruct(tree) && ~iscell(tree)
+        data = tree;
+        return
+    end
+
+    % Top-level sequence of primitives — return directly
+    if iscell(tree) && ~isempty(tree) && ~isstruct(tree{1})
+        data = tree;
+        return
+    end
+
     store = matlab.io.config.internal.NodeTreeStore.fromNodeTree( ...
         tree, "yaml", DatetimeType=options.DatetimeType, ...
         ArrayType=options.ArrayType);

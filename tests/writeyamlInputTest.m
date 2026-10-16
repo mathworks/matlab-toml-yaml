@@ -39,9 +39,14 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
         end
 
         function testWritesStructArrayAsSequence(testCase)
-            % Struct array writing is not yet supported with MEX writers
-            % because compact() requires a scalar ConfigurationData input.
-            testCase.assumeFail("Struct array writing not yet supported with MEX writers");
+            data = [struct("name","A","value",1), struct("name","B","value",2)];
+
+            text = testCase.writeAndRead(data);
+
+            testCase.verifySubstring(text, "- name: A");
+            testCase.verifySubstring(text, "- name: B");
+            testCase.verifySubstring(text, "value: 1");
+            testCase.verifySubstring(text, "value: 2");
         end
 
         function testWritesDictionary(testCase)
@@ -72,10 +77,7 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "- 3");
         end
 
-        % --- Rejected input types ----------------------------------------
-        % writeyaml only accepts a mapping at the top level, and only as a
-        % ConfigurationData object, struct or dictionary. Everything else is
-        % turned away before any conversion happens.
+        % --- Other input types -------------------------------------------
 
         function testContainersMapInputWritesSuccessfully(testCase)
             data = containers.Map({'alpha', 'beta'}, {1, "two"});
@@ -86,16 +88,39 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "beta: two");
         end
 
-        function testCellArrayInputErrors(testCase)
-            testCase.verifyError(@() testCase.writeAndRead({1, "two", 3}), ...
-                "writeyaml:InvalidInput", ...
-                "A bare cell array is not a mapping and should be rejected");
+        function testCellArrayInputWritesSequence(testCase)
+            text = testCase.writeAndRead({1, "two", 3});
+
+            testCase.verifySubstring(text, "- 1");
+            testCase.verifySubstring(text, "- two");
+            testCase.verifySubstring(text, "- 3");
         end
 
-        function testStringArrayInputErrors(testCase)
-            testCase.verifyError(@() testCase.writeAndRead(["first", "second"]), ...
-                "writeyaml:InvalidInput", ...
-                "A bare string array is not a mapping and should be rejected");
+        function testStringArrayInputWritesSequence(testCase)
+            text = testCase.writeAndRead(["first", "second"]);
+
+            testCase.verifySubstring(text, "- first");
+            testCase.verifySubstring(text, "- second");
+        end
+
+        function testNumericArrayInputWritesSequence(testCase)
+            text = testCase.writeAndRead([1; 2; 3]);
+
+            testCase.verifySubstring(text, "- 1");
+            testCase.verifySubstring(text, "- 2");
+            testCase.verifySubstring(text, "- 3");
+        end
+
+        function testScalarStringInput(testCase)
+            testCase.verifySubstring(testCase.writeAndRead("hello world"), "hello world");
+        end
+
+        function testScalarNumberInput(testCase)
+            testCase.verifySubstring(testCase.writeAndRead(42), "42");
+        end
+
+        function testScalarBooleanInput(testCase)
+            testCase.verifySubstring(testCase.writeAndRead(true), "true");
         end
 
         % --- Integer formatting ------------------------------------------

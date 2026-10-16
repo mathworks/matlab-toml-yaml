@@ -84,6 +84,10 @@ void WriteYamlImpl::setNodeValue(ryml::NodeRef node,
 }
 
 ryml::NodeRef WriteYamlImpl::allocChild() {
+    // Top-level scalar — set value directly on the root node
+    if (stack.empty()) {
+        return tree.rootref();
+    }
     ryml::NodeRef parent = stack.back();
     ryml::NodeRef child = parent.append_child();
     if (hasPendingKey) {

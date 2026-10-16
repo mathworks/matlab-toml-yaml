@@ -142,6 +142,76 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
             testCase.verifyEmpty(readyaml(file).items);
         end
 
+        % --- Top-level sequences -------------------------------------------
+
+        function testTopLevelSequenceOfMappings(testCase)
+            file = testCase.writeText([...
+                "- name: A"; ...
+                "  value: 1"; ...
+                "- name: B"; ...
+                "  value: 2"]);
+
+            result = readyaml(file);
+
+            testCase.verifyClass(result, "matlab.io.config.YAMLData");
+            testCase.verifySize(result, [1 2]);
+            testCase.verifyEqual(result(1).name, "A");
+            testCase.verifyEqual(result(2).value, 2);
+        end
+
+        function testTopLevelSequenceOfNumbers(testCase)
+            file = testCase.writeText(["- 1"; "- 2"; "- 3"]);
+
+            result = readyaml(file);
+
+            testCase.verifyEqual(result, [1; 2; 3]);
+        end
+
+        function testTopLevelSequenceOfStrings(testCase)
+            file = testCase.writeText(["- alpha"; "- beta"; "- gamma"]);
+
+            result = readyaml(file);
+
+            testCase.verifyEqual(result, ["alpha"; "beta"; "gamma"]);
+        end
+
+        function testTopLevelMixedSequence(testCase)
+            file = testCase.writeText(["- 1"; "- two"; "- true"]);
+
+            result = readyaml(file);
+
+            testCase.verifyClass(result, "cell");
+            testCase.verifyEqual(result{1}, 1);
+            testCase.verifyEqual(result{2}, "two");
+            testCase.verifyEqual(result{3}, true);
+        end
+
+        % --- Top-level scalars ---------------------------------------------
+
+        function testTopLevelScalarString(testCase)
+            file = testCase.writeText("hello world");
+
+            result = readyaml(file);
+
+            testCase.verifyEqual(result, "hello world");
+        end
+
+        function testTopLevelScalarNumber(testCase)
+            file = testCase.writeText("42");
+
+            result = readyaml(file);
+
+            testCase.verifyEqual(result, 42);
+        end
+
+        function testTopLevelScalarBoolean(testCase)
+            file = testCase.writeText("true");
+
+            result = readyaml(file);
+
+            testCase.verifyEqual(result, true);
+        end
+
         % --- Unreadable file -----------------------------------------------
 
         function testUnreadableFileErrors(testCase)
