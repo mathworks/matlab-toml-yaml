@@ -36,7 +36,9 @@ function cfg = mexSourcesAndOptions()
         cxx17Flag = "CXXFLAGS=$CXXFLAGS -std=c++17";
     end
 
-    cfg.Options = ["-I" + includeFolder, cxx17Flag, staticLibcxxFlags()];
+    % Disable rapidyaml's debugbreak dependency (BSD-2-Clause, separate from rapidyaml's MIT license)
+    noDebugBreak = "-DC4_NO_DEBUG_BREAK";
+    cfg.Options = ["-I" + includeFolder, cxx17Flag, noDebugBreak, staticLibcxxFlags()];
 
     srcFolder = fullfile("cpp", "mexfunctions");
     fs = matlab.io.datastore.FileSet(srcFolder, FileExtensions=".cpp");
