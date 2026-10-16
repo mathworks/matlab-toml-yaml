@@ -1,6 +1,6 @@
 # MATLAB Toolbox for TOML and YAML
 
-The MATLAB&reg; Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. The implementation is pure MATLAB with no third-party dependencies.
+The MATLAB&reg; Toolbox for TOML and YAML adds support for reading and writing YAML and TOML configuration files with very strong round-trip support. The toolbox includes custom data types that make it easier to work with YAML and TOML data than structures or tables. Parsing and serialization use C++ libraries ([rapidyaml](https://github.com/biojppm/rapidyaml), [toml11](https://github.com/ToruNiina/toml11)) via MEX for performance and spec compliance.
 
 <!-- markdownlint-disable-next-line MD033 -->
 <img src="images/matlab-toml-yaml.png" alt="MATLAB Toolbox for TOML and YAML" width="200"/>
@@ -96,9 +96,7 @@ See [`toolbox/doc/GettingStarted.mlx`](toolbox/doc/GettingStarted.mlx) for an in
 
 ## Limitations
 
-This toolbox implements a simplified YAML parser optimized for configuration files. It is **not** a full YAML 1.2 compliant parser.
-
-- **YAML**: Subset parser. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for details on supported/unsupported features (anchors, tags, etc.). Being addressed in the [cpp-parser-serializer](https://github.com/mathworks/matlab-toml-yaml/tree/cpp-parser-serializer) branch.
+- **YAML**: Covers the most common YAML features. See [readyaml documentation](toolbox/doc/readyaml.md#limitations) for remaining unsupported features (anchor resolution, tags, multiple documents).
 
 ## Requirements
 

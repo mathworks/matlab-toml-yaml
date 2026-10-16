@@ -1,14 +1,9 @@
 classdef writeyamlInputTest < ConfigurationFileTestCase
     % Tests for the writeyaml input types and numeric formatting branches
-    % that the main yamltest suite does not reach: struct and dictionary
-    % inputs, the rejected input types, integer and logical arrays in both
-    % array styles, and the file-write error wrapper.
-    %
-    % The GenerateError wrapper around generateYAML (lines 69-73) is no
-    % longer reachable. writeyaml converts its input to YAMLData up front,
-    % and YAMLData rejects any value it cannot serialize on assignment, so
-    % nothing that reaches the generator can fail in it. See
-    % testUnserializableValueErrors.
+    % that the main yamltest suite does not reach: struct, dictionary,
+    % containers.Map, struct arrays, cell arrays, string arrays, numeric
+    % arrays, scalars, integer and logical arrays in both array styles,
+    % and the file-write error wrapper.
 
     methods(Access = private)
         function text = writeAndRead(testCase, data, varargin)
