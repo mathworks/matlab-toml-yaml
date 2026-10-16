@@ -29,7 +29,7 @@ classdef typeConversionTest < matlab.unittest.TestCase
             config = testCase.makeConfig();
 
             testCase.verifyTrue(ismember("build-system", fieldnames(config)), ...
-                "fieldnames should report the original key, not the alias");
+                "fieldnames should report the original key name");
         end
 
         % --- properties -------------------------------------------------
@@ -174,18 +174,6 @@ classdef typeConversionTest < matlab.unittest.TestCase
 
             testCase.verifyEqual(keys(config), keysBefore, ...
                 "rmfield must not modify the source object");
-        end
-
-        function testRmfieldByAliasRemovesOriginalKey(testCase)
-            % Unlike select (issue #23), rmfield resolves the alias to the
-            % canonical key before removing it.
-            config = testCase.makeConfig();
-
-            result = rmfield(config, "build_system");
-
-            testCase.verifyFalse(iskey(result, "build-system"), ...
-                "Removing by alias should remove the original key");
-            testCase.verifyEqual(keys(result), ["host", "port", "nested"]);
         end
 
         function testRmfieldMissingKeyErrors(testCase)

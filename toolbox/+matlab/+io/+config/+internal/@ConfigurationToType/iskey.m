@@ -12,5 +12,5 @@ function tf = iskey(obj, key)
     %
     %   See also ISFIELD, KEYS
 
-    tf = ~ismissing(resolveKey(obj, key));
+    tf = arrayfun(@(o) hasKey(o.Data, string(key)), obj);
 end

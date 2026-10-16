@@ -1,11 +1,9 @@
 function obj = rmfield(obj, key)
     %RMFIELD Remove a field
-    resolvedKey = resolveKey(obj, key);
-    if ismissing(resolvedKey)
+    key = string(key);
+    if ~hasKey(obj.Data, key)
         error('ConfigurationData:InvalidKey', ...
             'Key "%s" does not exist.', key);
     end
-
-    % Remove from data dictionary
-    obj.Data = removeKey(obj.Data, resolvedKey);
+    obj.Data = removeKey(obj.Data, key);
 end
