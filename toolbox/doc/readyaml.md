@@ -13,7 +13,14 @@ data = readyaml(filename,Name=Value)
 
 ## Description
 
-`data = readyaml(filename)` reads the YAML file specified by `filename` and returns the data as a [YAMLData](YAMLData.md) object. YAML sequences (arrays) are automatically converted to the most appropriate MATLAB&reg; array type.
+`data = readyaml(filename)` reads the YAML file specified by `filename`. The return type depends on the YAML document's root type:
+
+| YAML root type | MATLAB return type |
+|---|---|
+| Mapping (`key: value`) | [YAMLData](YAMLData.md) object |
+| Sequence of mappings | [YAMLData](YAMLData.md) array |
+| Sequence of scalars | Typed array (double, string) or cell array |
+| Scalar | Scalar value (double, string, logical) |
 
 `data = readyaml(filename,Name=Value)` specifies options for array conversion and datetime handling.
 
@@ -53,14 +60,17 @@ YAML has no native datetime type — all values are plain strings. When `Datetim
 ## Output Arguments
 
 ### data
-YAML data as a YAMLData object.
-*Type:* [YAMLData](YAMLData.md)
+YAML data returned as the most appropriate MATLAB type.
 
-[YAMLData](YAMLData.md) supports:
+For YAML mappings, the return type is [YAMLData](YAMLData.md), which supports:
 - Dot notation for field access: `data.field`
 - Special character keys using dynamic field names: `data.("field-name")`
 - Conversion to struct: `s = struct(data)`
 - Methods: `keys`, `isfield`, `show`
+
+For YAML sequences of mappings, the return type is a [YAMLData](YAMLData.md) array where each element is one mapping.
+
+For YAML sequences of scalars or top-level scalar values, the return type is the native MATLAB type (double, string, logical, or cell array for mixed types).
 
 ## Examples
 
@@ -120,6 +130,25 @@ writelines(yamlNested,"nested.yaml");
 % Read and access nested data
 dbConfig = readyaml("nested.yaml");
 username = dbConfig.database.credentials.username  % "admin"
+```
+
+### Top-Level Sequences
+
+Read a YAML file whose root is a sequence of mappings:
+
+```matlab
+% YAML file with sequence of mappings at the root
+yamlContent = [
+    "- name: alpha"
+    "  port: 80"
+    "- name: beta"
+    "  port: 443"];
+writelines(yamlContent,"servers.yaml");
+
+% Returns a YAMLData array
+servers = readyaml("servers.yaml");
+servers(1).name  % "alpha"
+servers(2).port  % 443
 ```
 
 For comprehensive examples including GitHub Actions workflows and advanced array handling, see [readyamlExample.m](../../examples/readyamlExample.m).

@@ -26,7 +26,7 @@ data = readyaml(filename)
 
 `data = yamldata(m)` converts containers.Map `m` to YAMLData.
 
-`data = readyaml(filename)` creates a YAMLData object by reading from a YAML file. See [readyaml](readyaml.md).
+`data = readyaml(filename)` reads a YAML file. Returns a YAMLData object for mappings, a YAMLData array for sequences of mappings, or a native MATLAB type for scalars and sequences of scalars. See [readyaml](readyaml.md).
 
 ## Object Functions
 

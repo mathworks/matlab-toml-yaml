@@ -24,7 +24,10 @@ writeyaml(___,Name=Value)
 
 ### data
 Data to write to file.
-*Type:* [YAMLData](YAMLData.md), struct, dictionary, or containers.Map
+*Type:* Any serializable MATLAB type:
+- **Mapping types:** [YAMLData](YAMLData.md), struct, dictionary, or containers.Map
+- **Sequence types:** struct array, YAMLData array, numeric array, string array, or cell array
+- **Scalar types:** string, number, or logical
 
 ### filename
 Output file path.
@@ -117,11 +120,43 @@ writeyaml(config,"compact.yaml", ...
     Precision=2);
 ```
 
+### Write a Struct Array as a Sequence
+
+Write a struct array as a YAML sequence of mappings:
+
+```matlab
+records = [struct("name","A","value",1), struct("name","B","value",2)];
+writeyaml(records,"records.yaml");
+% - name: A
+%   value: 1
+%
+% - name: B
+%   value: 2
+```
+
+### Write Scalars and Arrays
+
+Write primitive values directly:
+
+```matlab
+% Write a numeric array
+writeyaml([1, 2, 3],"numbers.yaml");
+% - 1
+% - 2
+% - 3
+
+% Write a scalar string
+writeyaml("hello world","greeting.yaml");
+% hello world
+```
+
 For more examples, see [readyamlExample.m](../../examples/readyamlExample.m).
 
 ## Tips
 
 - Pass structs or dictionaries directly: `writeyaml(myStruct, "file.yaml")`.
+- Pass struct arrays for sequences of mappings: `writeyaml([struct("a",1), struct("a",2)], "file.yaml")`.
+- Scalars and arrays are written directly as top-level YAML values.
 - Use `ArrayStyle="flow"` for compact, single-line arrays in configuration files.
 - Use `SectionSpacing="compact"` to reduce file size when readability isn't critical.
 - The `Precision` option controls decimal places; use smaller values for cleaner output when full precision isn't needed.
