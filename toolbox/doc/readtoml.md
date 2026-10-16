@@ -162,7 +162,6 @@ TOML values are converted to MATLAB types as follows:
 ## Limitations
 
 - Extremely large integers may lose precision due to MATLAB's double precision representation.
-- Time zone information in offset date-times is preserved in `datetime` objects.
 
 ## See Also
 
