@@ -185,6 +185,11 @@ void ReadYamlImpl::emitSequence(ryml::ConstNodeRef node,
 
 void ReadYamlImpl::emitScalar(ryml::ConstNodeRef node,
                               DocumentHandler& handler) {
+    if (node.val_is_null()) {
+        handler.nullValue();
+        return;
+    }
+
     if (node.is_val_quoted()) {
         std::string text = toStdString(node.val());
         handler.stringValue(text);

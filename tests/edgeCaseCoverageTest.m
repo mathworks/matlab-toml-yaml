@@ -246,6 +246,20 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyFalse(isempty(dt.TimeZone));
         end
 
+        %% readyaml — null in sequences
+
+        function testReadYAMLNullInFlowSequence(testCase)
+            file = testCase.writeTempFile('weights: [1, null, 3]', '.yaml');
+            obj = readyaml(file);
+            testCase.verifyTrue(ismissing(obj.weights{2}));
+        end
+
+        function testReadYAMLTildeInBlockSequence(testCase)
+            file = testCase.writeTempFile(sprintf('items:\n  - 1\n  - ~\n  - 3'), '.yaml');
+            obj = readyaml(file);
+            testCase.verifyTrue(ismissing(obj.items{2}));
+        end
+
         %% readyaml — parseYAMLScalar paths
 
         function testReadYAMLQuotedDateStaysString(testCase)

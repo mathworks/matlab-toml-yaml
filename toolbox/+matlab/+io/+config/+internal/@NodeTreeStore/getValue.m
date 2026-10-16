@@ -24,6 +24,9 @@ function val = expandNodeValue(val, store)
             val = expandNodeValue(val{1}, store);
             return
         end
+        for j = 1:numel(val)
+            val{j} = expandNodeValue(val{j}, store);
+        end
         return
     end
 
