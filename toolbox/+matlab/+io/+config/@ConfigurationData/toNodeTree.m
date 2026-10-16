@@ -1,6 +1,13 @@
 function tree = toNodeTree(obj)
     arguments
-        obj (1,1) matlab.io.config.ConfigurationData
+        obj matlab.io.config.ConfigurationData
     end
-    tree = toNodeTree(obj.Data);
+    if isscalar(obj)
+        tree = toNodeTree(obj.Data);
+    else
+        tree = cell(1, numel(obj));
+        for i = 1:numel(obj)
+            tree{i} = toNodeTree(obj(i));
+        end
+    end
 end

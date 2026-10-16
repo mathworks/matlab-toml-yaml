@@ -9,14 +9,8 @@ function node = valueToNode(val)
     if isa(val, "matlab.io.config.ConfigurationData")
         if isempty(val)
             node = struct("Data", [], "Type", "missing");
-        elseif isscalar(val)
-            node = toNodeTree(val);
         else
-            elements = cell(1, numel(val));
-            for j = 1:numel(val)
-                elements{j} = toNodeTree(val(j));
-            end
-            node = elements;
+            node = toNodeTree(val);
         end
     elseif isa(val, "datetime")
         node = struct("Data", formatDatetime(val), "Type", "datetime");
