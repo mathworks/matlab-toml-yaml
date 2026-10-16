@@ -1,10 +1,6 @@
 classdef dataConstructorTest < matlab.unittest.TestCase
     % Tests for the yamldata() and tomldata() constructor functions and the
     % importFrom conversion they delegate to.
-    %
-    % Nested structs and dictionaries as *values* are not covered here
-    % because importing them is broken (issue #20); only flat inputs and the
-    % cell-valued dictionary form work today.
 
     properties(TestParameter)
         % Each constructor paired with the class it should produce.
@@ -106,6 +102,50 @@ classdef dataConstructorTest < matlab.unittest.TestCase
             testCase.verifyEqual(keys(result), ["a", "build-system"]);
             testCase.verifyEqual(result.build_system, "cmake", ...
                 "The alias should resolve to the hyphenated key");
+        end
+
+        function testNestedStructDoesNotInheritParentKeys(testCase, constructor)
+            input = struct("name", "app", "count", 42, ...
+                "server", struct("host", "localhost", "timeout", 2.5));
+
+            result = constructor.make(input);
+
+            testCase.verifyEqual(keys(result.server), ["host", "timeout"], ...
+                "Nested struct should contain only its own keys");
+            testCase.verifyEqual(result.server.host, "localhost");
+            testCase.verifyEqual(result.server.timeout, 2.5);
+        end
+
+        function testDeeplyNestedStructKeysAreIsolated(testCase, constructor)
+            input = struct("a", 1, ...
+                "level1", struct("b", 2, ...
+                    "level2", struct("c", 3)));
+
+            result = constructor.make(input);
+
+            testCase.verifyEqual(keys(result), ["a", "level1"]);
+            testCase.verifyEqual(keys(result.level1), ["b", "level2"]);
+            testCase.verifyEqual(keys(result.level1.level2), "c");
+        end
+
+        function testNestedStructPreservesSubclassType(testCase, constructor)
+            input = struct("outer", struct("inner", 1));
+
+            result = constructor.make(input);
+
+            testCase.verifyClass(result.outer, constructor.class);
+        end
+
+        function testNestedDictionaryDoesNotInheritParentKeys(testCase, constructor)
+            inner = dictionary(string.empty, cell.empty);
+            inner("host") = {"localhost"};
+            inner("port") = {8080};
+
+            result = constructor.make(struct("name", "app"));
+            result.server = inner;
+
+            testCase.verifyEqual(keys(result.server), ["host", "port"], ...
+                "Nested dictionary should contain only its own keys");
         end
     end
 end

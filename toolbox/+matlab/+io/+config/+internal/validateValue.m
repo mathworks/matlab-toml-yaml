@@ -22,7 +22,7 @@ function value = validateValue(obj, value, key)
     % --- Converted types: accepted as input, auto-converted to storage type ---
 
     if isstruct(value)
-        value = importFrom(obj, value);
+        value = importFrom(matlab.io.config.internal.createArray(obj), value);
         return;
     end
 
@@ -37,7 +37,7 @@ function value = validateValue(obj, value, key)
     end
 
     if isa(value, 'dictionary')
-        value = importFrom(obj, value);
+        value = importFrom(matlab.io.config.internal.createArray(obj), value);
         return;
     end
 
