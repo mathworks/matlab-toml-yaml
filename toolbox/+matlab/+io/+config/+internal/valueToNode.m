@@ -38,9 +38,6 @@ function str = formatDatetime(dt)
 
     if hasZone
         str = string(dt, "uuuu-MM-dd'T'HH:mm:ssXXX");
-        if endsWith(str, "+00:00")
-            str = replaceBetween(str, strlength(str)-5, strlength(str), "Z");
-        end
     elseif hasTime
         str = string(dt, "uuuu-MM-dd'T'HH:mm:ss");
     else
