@@ -4,7 +4,11 @@ function writeyaml(data, filename, options)
     %
     %   WRITEYAML(DATA, FILENAME) writes to the specified file.
     %
-    %   DATA can be a YAMLData object, struct, dictionary, or containers.Map.
+    %   DATA can be:
+    %   - YAMLData object, struct, dictionary, or containers.Map (mapping)
+    %   - Struct array or YAMLData array (sequence of mappings)
+    %   - Numeric, string, or cell array (sequence of scalars)
+    %   - Scalar value (string, number, logical)
     %
     %   WRITEYAML(..., Name, Value) specifies additional options using
     %   name-value pairs:
@@ -24,11 +28,15 @@ function writeyaml(data, filename, options)
     %                 Must be a positive integer
     %
     %   Examples:
-    %       % Write to default filename
-    %       writeyaml(data);  % Creates untitled.yaml
-    %
-    %       % Write to specific file
+    %       % Write a mapping to file
     %       writeyaml(data, 'output.yaml');
+    %
+    %       % Write a struct array as a sequence of mappings
+    %       records = [struct("name","A","value",1), struct("name","B","value",2)];
+    %       writeyaml(records, 'records.yaml');
+    %
+    %       % Write a scalar or array
+    %       writeyaml([1, 2, 3], 'numbers.yaml');
     %
     %       % Compact format
     %       writeyaml(myData, 'data.yml', 'SectionSpacing', 'compact');

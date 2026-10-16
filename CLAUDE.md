@@ -60,6 +60,8 @@ Keys with special characters are accessed using quoted dot notation (e.g. `confi
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
 
+YAML supports any root type: `readyaml` returns YAMLData for mappings, YAMLData arrays for sequences of mappings, typed arrays for homogeneous sequences, and scalars directly. `writeyaml` accepts all of these plus struct arrays, cell arrays, and primitives. TOML requires a table at the root, so `readtoml`/`writetoml` always work with scalar TOMLData objects.
+
 `ConfigurationData` is abstract. Subclass wrappers: `yamldata()`, `tomldata()`. These accept no args (empty), a struct, a dictionary, or a containers.Map.
 
 ## Critical Design Decisions

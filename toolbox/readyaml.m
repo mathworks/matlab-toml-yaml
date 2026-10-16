@@ -1,8 +1,12 @@
 function data = readyaml(filename, options)
     %READYAML Read data from YAML file
-    %   DATA = READYAML(FILENAME) reads the YAML file specified by FILENAME and
-    %   returns the data as a YAMLData object with dot notation access and support
-    %   for special characters in field names.
+    %   DATA = READYAML(FILENAME) reads the YAML file specified by FILENAME.
+    %   The return type depends on the YAML document's root type:
+    %
+    %   Mapping (key: value)     - YAMLData object with dot notation access
+    %   Sequence of mappings     - YAMLData array (one element per mapping)
+    %   Sequence of scalars      - Typed array (double, string) or cell array
+    %   Scalar                   - Scalar value (double, string, logical)
     %
     %   DATA = READYAML(FILENAME, 'ArrayType', TYPE) controls how YAML
     %   flow-style sequences [item1, item2, ...] are converted to MATLAB:
@@ -28,13 +32,17 @@ function data = readyaml(filename, options)
     %                        Note: YAML has no native datetime type; detection
     %                        is heuristic based on ISO 8601 format patterns.
     %
-    %   The returned YAMLData object can be converted to a standard struct using:
+    %   A returned YAMLData object can be converted to a standard struct using:
     %       s = struct(data);
     %
     %   Examples:
-    %       % Read a YAML configuration file
+    %       % Read a YAML configuration file (mapping)
     %       config = readyaml('config.yaml');
     %       config.ports  % [8080, 8443] - numeric array
+    %
+    %       % Read a sequence of mappings (e.g. GitHub Actions steps)
+    %       steps = readyaml('steps.yaml');
+    %       steps(1).name  % first step name
     %
     %       % Force cell arrays for consistency
     %       config = readyaml('config.yaml', 'ArrayType', 'cell');
