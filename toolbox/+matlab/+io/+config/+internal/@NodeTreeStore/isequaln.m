@@ -1,8 +1,5 @@
 function tf = isequaln(a, b)
     tf = false;
-    if ~isa(b, "matlab.io.config.internal.NodeTreeStore")
-        return
-    end
     ka = allKeys(a);
     kb = allKeys(b);
     if ~isequal(ka, kb)

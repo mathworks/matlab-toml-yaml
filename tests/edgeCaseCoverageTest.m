@@ -276,6 +276,138 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifySubstring(output, "hello world");
         end
 
+        %% isequaln — ConfigurationData comparison paths
+
+        function testIsequalnScalarMatch(testCase)
+            a = yamldata(struct("x", 1));
+            b = yamldata(struct("x", 1));
+            testCase.verifyTrue(isequaln(a, b));
+        end
+
+        function testIsequalnScalarMismatch(testCase)
+            a = yamldata(struct("x", 1));
+            b = yamldata(struct("x", 2));
+            testCase.verifyFalse(isequaln(a, b));
+        end
+
+        function testIsequalnDifferentClasses(testCase)
+            a = yamldata(struct("x", 1));
+            b = tomldata(struct("x", 1));
+            testCase.verifyFalse(isequaln(a, b));
+        end
+
+        function testIsequalnDifferentSizes(testCase)
+            a = yamldata(struct("x", {1, 2}));
+            b = yamldata(struct("x", {1, 2, 3}));
+            testCase.verifyFalse(isequaln(a, b));
+        end
+
+        function testIsequalnNonScalarMatch(testCase)
+            a = yamldata(struct("x", {1, 2}));
+            b = yamldata(struct("x", {1, 2}));
+            testCase.verifyTrue(isequaln(a, b));
+        end
+
+        function testIsequalnThreeArguments(testCase)
+            a = yamldata(struct("x", 1));
+            b = yamldata(struct("x", 1));
+            c = yamldata(struct("x", 1));
+            testCase.verifyTrue(isequaln(a, b, c));
+        end
+
+        function testIsequalnDifferentKeys(testCase)
+            a = yamldata(struct("x", 1));
+            b = yamldata(struct("y", 1));
+            testCase.verifyFalse(isequaln(a, b));
+        end
+
+        function testIsequalnNonScalarMismatch(testCase)
+            a = yamldata(struct("x", {1, 2}));
+            b = yamldata(struct("x", {1, 3}));
+            testCase.verifyFalse(isequaln(a, b));
+        end
+
+        %% traverse — cell array visitor path
+
+        function testStructConversionWithCellValue(testCase)
+            obj = yamldata();
+            obj.tags = {"alpha", "beta"};
+            s = struct(obj);
+            testCase.verifyEqual(s.tags, {"alpha", "beta"});
+        end
+
+        %% parseYAMLDatetime — strict format rejection
+
+        function testYAMLDatetimeRejectsTzWithoutSeconds(testCase)
+            yaml = "stamp: 2024-01-15T12:00+05:00";
+            file = testCase.writeTempFile(yaml, '.yaml');
+            obj = readyaml(file, DatetimeType="datetime");
+            testCase.verifyClass(obj.stamp, "string");
+        end
+
+        function testYAMLDatetimeRejectsLocalWithoutSeconds(testCase)
+            yaml = "stamp: 2024-01-15T12:00";
+            file = testCase.writeTempFile(yaml, '.yaml');
+            obj = readyaml(file, DatetimeType="datetime");
+            testCase.verifyClass(obj.stamp, "string");
+        end
+
+        function testYAMLDatetimeRejectsDateWithTrailingText(testCase)
+            yaml = "stamp: '2024-01-15extra'";
+            file = testCase.writeTempFile(yaml, '.yaml');
+            obj = readyaml(file, DatetimeType="datetime");
+            testCase.verifyClass(obj.stamp, "string");
+        end
+
+        %% defaultStore — no-argument path
+
+        function testDefaultStoreNoArgument(testCase)
+            store = matlab.io.config.internal.defaultStore();
+            testCase.verifyEqual(numKeys(store), 0);
+        end
+
+        %% valueToNode — datetime formatting
+
+        function testRoundTripDatetimeWithTimezone(testCase)
+            obj = tomldata();
+            obj.stamp = datetime(2024, 6, 15, 10, 30, 0, TimeZone="UTC");
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "2024-06-15T10:30:00Z");
+        end
+
+        function testRoundTripLocalDatetime(testCase)
+            obj = tomldata();
+            obj.stamp = datetime(2024, 6, 15, 10, 30, 0);
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "2024-06-15T10:30:00");
+        end
+
+        function testRoundTripDatetimeWithNonUTCTimezone(testCase)
+            obj = tomldata();
+            obj.stamp = datetime(2024, 6, 15, 10, 30, 0, TimeZone="America/New_York");
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "2024-06-15");
+            testCase.verifyTrue(~contains(text, "Z"));
+        end
+
+        %% getValue — DatetimeType="string" keeps datetime as string
+
+        function testTomlDatetimeAsString(testCase)
+            toml = "stamp = 2024-06-15T10:30:00Z";
+            file = testCase.writeTempFile(toml, '.toml');
+            obj = readtoml(file, DatetimeType="string");
+            testCase.verifyClass(obj.stamp, "string");
+        end
+
     end
 
     methods (Access = private)
