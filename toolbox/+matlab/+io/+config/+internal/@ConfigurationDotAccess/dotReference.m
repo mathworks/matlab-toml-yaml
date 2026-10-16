@@ -11,19 +11,20 @@ function varargout = dotReference(obj, indexOp, ~)
 
     % Resolve the first dot to a value
     fieldName = indexOp(1).Name;
-    resolvedKeys = resolveKey(obj, fieldName);
-    found = ~ismissing(resolvedKeys);
-    if ~any(found)
-        error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
-    end
-
     if isscalar(obj)
-        value = getValue(obj.Data, resolvedKeys);
+        if ~hasKey(obj.Data, fieldName)
+            error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
+        end
+        value = getValue(obj.Data, fieldName);
     else
+        found = arrayfun(@(o) hasKey(o.Data, fieldName), obj);
+        if ~any(found)
+            error('ConfigurationData:InvalidKey', 'Key "%s" does not exist.', fieldName);
+        end
         values = cell(size(obj));
         for i = 1:numel(obj)
             if found(i)
-                values{i} = getValue(obj(i).Data, resolvedKeys(i));
+                values{i} = getValue(obj(i).Data, fieldName);
             else
                 values{i} = missing;
             end

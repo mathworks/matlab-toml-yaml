@@ -209,14 +209,13 @@ data2 = data1;          % Independent copy
 
 YAMLData uses `matlab.mixin.indexing.RedefinesDot` to enable dot notation access to dynamic fields.
 
-### Key Aliasing
+### Special Characters in Keys
 
-Keys with special characters (hyphens, spaces, dots) are automatically aliased for valid MATLAB name access:
+Keys with special characters (hyphens, spaces, dots) are supported using quoted dot notation:
 
 ```matlab
 data.("app-name") = "MyApp";
-% Creates alias: appname -> app-name
-% Both data.("app-name") and data.appname work
+data.("app-name")   % access the value
 ```
 
 ### Field Order Preservation

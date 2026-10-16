@@ -93,17 +93,6 @@ classdef dataConstructorTest < matlab.unittest.TestCase
                 "Input other than a struct or dictionary should be rejected");
         end
 
-        function testKeyNeedingAnAliasIsPreserved(testCase, constructor)
-            % Struct field names cannot contain hyphens, so a key needing an
-            % alias has to be assigned after construction.
-            result = constructor.make(struct("a", 1));
-            result.("build-system") = "cmake";
-
-            testCase.verifyEqual(keys(result), ["a", "build-system"]);
-            testCase.verifyEqual(result.build_system, "cmake", ...
-                "The alias should resolve to the hyphenated key");
-        end
-
         function testNestedStructDoesNotInheritParentKeys(testCase, constructor)
             input = struct("name", "app", "count", 42, ...
                 "server", struct("host", "localhost", "timeout", 2.5));
@@ -119,7 +108,7 @@ classdef dataConstructorTest < matlab.unittest.TestCase
         function testDeeplyNestedStructKeysAreIsolated(testCase, constructor)
             input = struct("a", 1, ...
                 "level1", struct("b", 2, ...
-                    "level2", struct("c", 3)));
+                "level2", struct("c", 3)));
 
             result = constructor.make(input);
 

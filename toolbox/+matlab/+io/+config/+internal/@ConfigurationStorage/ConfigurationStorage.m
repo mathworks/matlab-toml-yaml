@@ -9,8 +9,6 @@ classdef (Abstract) ConfigurationStorage
     end
 
     methods (Access = protected)
-        resolvedKeys = resolveKey(obj, key)
-
         result = tryConcatenate(obj, values, fieldName)
     end
 

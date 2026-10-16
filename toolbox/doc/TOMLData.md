@@ -224,13 +224,13 @@ TOMLData is optimized for TOML format:
 - Handles TOML-specific types (datetime, inline tables, arrays of tables)
 - Supports both bare keys and quoted keys
 
-### Key Aliasing for Special Characters
+### Special Characters in Keys
 
-TOML frequently uses hyphens and dots in keys. TOMLData handles these with key aliasing:
+TOML frequently uses hyphens and dots in keys. Use quoted dot notation to access these:
 
 ```matlab
 data.("build-system") = "value";
-% Creates alias: buildsystem -> build-system
+data.("build-system")   % access the value
 ```
 
 ### Common TOML Patterns

@@ -55,7 +55,7 @@ Internal superclasses live in the `matlab.io.config.internal` package. Any undoc
 One protected property:
 - `Data` — `dictionary<string, cell>` storing values wrapped in cells (insertion order preserved)
 
-Key aliases (e.g. `build_system` → `build-system`) are computed on the fly in `resolveKey`. There are no reserved key names — users can have keys named "Data", etc.
+Keys with special characters are accessed using quoted dot notation (e.g. `config.("build-system")`). There are no reserved key names — users can have keys named "Data", etc.
 
 ### I/O Pattern
 Reader functions (`readyaml`, `readtoml`) return subclass objects (YAMLData, TOMLData). Writer functions (`writeyaml`, `writetoml`) accept data objects or structs.
@@ -87,11 +87,10 @@ copy = original;  % copy is independent
 copy.field = 'new';  % does not affect original
 ```
 
-### Key Aliasing
-Keys with special characters get valid MATLAB aliases:
+### Special Characters in Keys
+Keys with special characters are accessed using quoted dot notation:
 ```matlab
 config.("build-system")  % original key with hyphens
-config.build_system      % aliased name also works
 ```
 
 ### Nested Object Creation
