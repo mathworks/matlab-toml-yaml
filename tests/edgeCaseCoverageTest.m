@@ -54,6 +54,26 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifySubstring(text, "0.25");
         end
 
+        function testWriteDatetimeFractionalSeconds(testCase)
+            obj = tomldata();
+            obj.created = datetime(2026, 10, 16, 12, 30, 45.125, TimeZone="UTC");
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "45.125");
+        end
+
+        function testWriteDatetimeNoFractionalSeconds(testCase)
+            obj = tomldata();
+            obj.ts = datetime(2026, 10, 16, 12, 30, 45, TimeZone="UTC");
+            file = [tempname '.toml'];
+            testCase.addTeardown(@() delete(file));
+            writetoml(obj, file);
+            text = string(fileread(file));
+            testCase.verifySubstring(text, "12:30:45Z");
+        end
+
         function testWriteBooleanValueString(testCase)
             obj = yamldata(struct("label", "true"));
             text = testCase.writeYAMLToString(obj);
