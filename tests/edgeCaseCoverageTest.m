@@ -350,6 +350,18 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyTrue(ismissing(s.svc(2).port));
         end
 
+        function testStructConversionCollidingFieldNames(testCase)
+            file = testCase.writeTempFile( ...
+                sprintf('api-key: hyphen-secret\napi_key: underscore-secret'), ...
+                '.yaml');
+            config = readyaml(file);
+            s = struct(config);
+            testCase.verifyEqual(numel(fieldnames(s)), 2);
+            values = string({s.api_key, s.api_key_1});
+            testCase.verifyTrue(ismember("hyphen-secret", values));
+            testCase.verifyTrue(ismember("underscore-secret", values));
+        end
+
         %% Display paths
 
         function testDisplayNonScalarArray(testCase)

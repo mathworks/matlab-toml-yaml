@@ -25,15 +25,16 @@ function s = struct(obj)
 end
 
 function s = toStruct(keys, values, ~)
+    fieldNames = matlab.lang.makeUniqueStrings( ...
+        matlab.lang.makeValidName(keys), {}, namelengthmax);
     s = struct();
     for i = 1:numel(keys)
-        fieldName = matlab.lang.makeValidName(keys(i));
         value = values{i};
         if iscell(value) && ~isempty(value) && isstruct(value{1})
             value = reconcileFields(value);
             value = [value{:}];
         end
-        s.(fieldName) = value;
+        s.(fieldNames(i)) = value;
     end
 end
 
