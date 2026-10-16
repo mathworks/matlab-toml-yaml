@@ -106,5 +106,49 @@ classdef dataConstructorTest < matlab.unittest.TestCase
             testCase.verifyEqual(result.build_system, "cmake", ...
                 "The alias should resolve to the hyphenated key");
         end
+
+        function testNestedStructDoesNotInheritParentKeys(testCase, constructor)
+            input = struct("name", "app", "count", 42, ...
+                "server", struct("host", "localhost", "timeout", 2.5));
+
+            result = constructor.make(input);
+
+            testCase.verifyEqual(keys(result.server), ["host", "timeout"], ...
+                "Nested struct should contain only its own keys");
+            testCase.verifyEqual(result.server.host, "localhost");
+            testCase.verifyEqual(result.server.timeout, 2.5);
+        end
+
+        function testDeeplyNestedStructKeysAreIsolated(testCase, constructor)
+            input = struct("a", 1, ...
+                "level1", struct("b", 2, ...
+                    "level2", struct("c", 3)));
+
+            result = constructor.make(input);
+
+            testCase.verifyEqual(keys(result), ["a", "level1"]);
+            testCase.verifyEqual(keys(result.level1), ["b", "level2"]);
+            testCase.verifyEqual(keys(result.level1.level2), "c");
+        end
+
+        function testNestedStructPreservesSubclassType(testCase, constructor)
+            input = struct("outer", struct("inner", 1));
+
+            result = constructor.make(input);
+
+            testCase.verifyClass(result.outer, constructor.class);
+        end
+
+        function testNestedDictionaryDoesNotInheritParentKeys(testCase, constructor)
+            inner = dictionary(string.empty, cell.empty);
+            inner("host") = {"localhost"};
+            inner("port") = {8080};
+
+            result = constructor.make(struct("name", "app"));
+            result.server = inner;
+
+            testCase.verifyEqual(keys(result.server), ["host", "port"], ...
+                "Nested dictionary should contain only its own keys");
+        end
     end
 end
