@@ -30,11 +30,20 @@ function s = toStruct(keys, values, ~)
     s = struct();
     for i = 1:numel(keys)
         value = values{i};
-        if iscell(value) && ~isempty(value) && isstruct(value{1})
+        if iscell(value) && ~isempty(value) && any(cellfun(@isstruct, value))
+            value = wrapNonStructElements(value);
             value = reconcileFields(value);
             value = [value{:}];
         end
         s.(fieldNames(i)) = value;
+    end
+end
+
+function c = wrapNonStructElements(c)
+    for i = 1:numel(c)
+        if ~isstruct(c{i})
+            c{i} = struct("Element", c{i});
+        end
     end
 end
 

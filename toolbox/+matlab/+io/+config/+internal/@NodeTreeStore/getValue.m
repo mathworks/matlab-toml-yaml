@@ -16,10 +16,6 @@ function val = expandNodeValue(val, store)
     end
 
     if iscell(val)
-        if ~isempty(val) && isstruct(val{1}) && isfield(val{1}, "Keys")
-            val = wrapTableNodeCell(val, store);
-            return
-        end
         if isscalar(val)
             val = expandNodeValue(val{1}, store);
             return
@@ -27,6 +23,7 @@ function val = expandNodeValue(val, store)
         for j = 1:numel(val)
             val{j} = expandNodeValue(val{j}, store);
         end
+        val = tryConcatenateCell(val);
         return
     end
 
@@ -62,10 +59,11 @@ function obj = wrapTableNode(tableNode, store)
     obj = matlab.io.config.ConfigurationData.fromStore(childStore, store.Format);
 end
 
-function val = wrapTableNodeCell(nodes, store)
-    children = cell(size(nodes));
-    for j = 1:numel(nodes)
-        children{j} = wrapTableNode(nodes{j}, store);
+function val = tryConcatenateCell(val)
+    if all(cellfun(@(v) isa(v, 'matlab.io.config.ConfigurationData'), val))
+        try
+            val = vertcat(val{:});
+        catch
+        end
     end
-    val = vertcat(children{:});
 end

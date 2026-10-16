@@ -362,6 +362,25 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyTrue(ismember("underscore-secret", values));
         end
 
+        function testMixedTypeSequenceAccessible(testCase)
+            file = testCase.writeTempFile( ...
+                sprintf('items:\n  - name: a\n  - 3\n  - hello'), '.yaml');
+            config = readyaml(file);
+            testCase.verifyClass(config.items, 'cell');
+            testCase.verifyLength(config.items, 3);
+            testCase.verifyClass(config.items{1}, 'matlab.io.config.YAMLData');
+        end
+
+        function testMixedTypeSequenceStructConversion(testCase)
+            file = testCase.writeTempFile( ...
+                sprintf('items:\n  - name: a\n  - 3'), '.yaml');
+            config = readyaml(file);
+            s = struct(config);
+            testCase.verifyLength(s.items, 2);
+            testCase.verifyEqual(s.items(1).name, "a");
+            testCase.verifyEqual(s.items(2).Element, 3);
+        end
+
         %% Display paths
 
         function testDisplayNonScalarArray(testCase)
