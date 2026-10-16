@@ -11,9 +11,6 @@ classdef (Abstract) ConfigurationStore
         val     = getValue(store, key)
         store   = setValue(store, key, value)
         store   = removeKey(store, key)
-    end
-
-    methods
         tree    = toNodeTree(store)
     end
 
