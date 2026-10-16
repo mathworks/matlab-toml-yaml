@@ -37,7 +37,11 @@ function val = expandNodeValue(val, store)
     end
 
     if ~isscalar(val) && ~isempty(val) && ~iscell(val) && isvector(val)
-        val = val(:);
+        if store.ArrayType == "cell"
+            val = num2cell(val(:));
+        else
+            val = val(:);
+        end
     end
 end
 
@@ -55,7 +59,8 @@ end
 
 function obj = wrapTableNode(tableNode, store)
     childStore = matlab.io.config.internal.NodeTreeStore.fromNodeTree( ...
-        tableNode, store.Format, DatetimeType=store.DatetimeType);
+        tableNode, store.Format, DatetimeType=store.DatetimeType, ...
+        ArrayType=store.ArrayType);
     obj = matlab.io.config.ConfigurationData.fromStore(childStore, store.Format);
 end
 

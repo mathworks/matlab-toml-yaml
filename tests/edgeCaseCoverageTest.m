@@ -362,6 +362,24 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             testCase.verifyTrue(ismember("underscore-secret", values));
         end
 
+        %% readyaml — ArrayType="cell"
+
+        function testReadYAMLArrayTypeCellFlowSequence(testCase)
+            file = testCase.writeTempFile('vals: [1, 2]', '.yaml');
+            config = readyaml(file, ArrayType="cell");
+            testCase.verifyClass(config.vals, 'cell');
+            testCase.verifyEqual(config.vals{1}, 1);
+        end
+
+        function testReadYAMLArrayTypeCellNestedSequence(testCase)
+            file = testCase.writeTempFile( ...
+                sprintf('outer:\n  inner: [1, 2]'), '.yaml');
+            config = readyaml(file, ArrayType="cell");
+            testCase.verifyClass(config.outer.inner, 'cell');
+        end
+
+        %% getValue — mixed-type sequences
+
         function testMixedTypeSequenceAccessible(testCase)
             file = testCase.writeTempFile( ...
                 sprintf('items:\n  - name: a\n  - 3\n  - hello'), '.yaml');
