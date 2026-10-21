@@ -5,6 +5,7 @@
 #include "toml.hpp"
 
 #include <cmath>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <variant>

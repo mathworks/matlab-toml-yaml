@@ -275,6 +275,78 @@ classdef roundTripEdgeCaseTest < ConfigurationFileTestCase
                 "Quoted numeric string should remain a string after round-trip");
         end
 
+        %% Issue I-3 — Large integer precision
+
+        function testLargeIntegerRoundTripTOML(testCase)
+            file = testCase.writeTempFile("bigint.toml", ...
+                "id = 9007199254740993");
+            data = readtoml(file);
+
+            testCase.verifyClass(data.id, "int64", ...
+                "Large integers should be returned as int64");
+            testCase.verifyEqual(data.id, int64(9007199254740993), ...
+                "Value above 2^53 must not lose precision");
+
+            out = testCase.tempFile("out.toml");
+            writetoml(data, out);
+            data2 = readtoml(out);
+
+            testCase.verifyEqual(data2.id, int64(9007199254740993), ...
+                "Large integer must survive round-trip");
+        end
+
+        function testNestedArrayReadAsMatrix(testCase)
+            file = testCase.writeTempFile("matrix.toml", ...
+                "m = [[1, 2, 3], [4, 5, 6]]");
+            data = readtoml(file);
+
+            testCase.verifySize(data.m, [2 3], ...
+                "Uniform nested arrays should be read as a matrix");
+            testCase.verifyEqual(data.m, [1 2 3; 4 5 6]);
+        end
+
+        function testMatrixRoundTripTOML(testCase)
+            config = tomldata();
+            config.m = [1 2 3; 4 5 6];
+
+            out = testCase.tempFile("matrix.toml");
+            writetoml(config, out);
+            data = readtoml(out);
+
+            testCase.verifyEqual(data.m, [1 2 3; 4 5 6], ...
+                "A 2x3 matrix should survive TOML round-trip");
+        end
+
+        function testRaggedNestedArrayStaysCell(testCase)
+            file = testCase.writeTempFile("ragged.toml", ...
+                "m = [[1, 2], [3, 4, 5]]");
+            data = readtoml(file);
+
+            testCase.verifyClass(data.m, "cell", ...
+                "Ragged nested arrays should remain cell arrays");
+        end
+
+        function testMixedDoubleAndLargeIntStaysCell(testCase)
+            file = testCase.writeTempFile("mixed_numeric.toml", ...
+                "v = [3.14, 9007199254740993]");
+            data = readtoml(file);
+
+            testCase.verifyClass(data.v, "cell", ...
+                "Mix of fractional double and large int64 should fall back to cell");
+            testCase.verifyEqual(data.v{1}, 3.14);
+            testCase.verifyEqual(data.v{2}, int64(9007199254740993));
+        end
+
+        function testIntegerArrayRoundTripTOML(testCase)
+            file = testCase.writeTempFile("intarr.toml", ...
+                "ids = [1, 2, 3]");
+            data = readtoml(file);
+
+            testCase.verifyClass(data.ids, "double", ...
+                "Small TOML integers should be returned as double");
+            testCase.verifyEqual(data.ids, [1; 2; 3]);
+        end
+
         %% Composite round-trip — read, modify, write, re-read
 
         function testModifyAndRoundTrip(testCase)

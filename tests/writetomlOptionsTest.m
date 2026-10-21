@@ -73,6 +73,18 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "show = 789");
         end
 
+        % --- uint64 overflow (I-3) ----------------------------------------
+
+        function testUint64OverflowErrors(testCase)
+            config = tomldata();
+            config.big = uint64(intmax("int64")) + uint64(1);
+
+            file = testCase.tempFile("overflow.toml");
+            testCase.verifyError(@() writetoml(config, file), ...
+                "writetoml:IntegerOverflow", ...
+                "uint64 values exceeding int64 range should error");
+        end
+
         % --- Complex input rejection (I-4) --------------------------------
 
         function testComplexInputErrors(testCase)
@@ -328,6 +340,72 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
             text = testCase.writeAndRead(config);
 
             testCase.verifySubstring(text, "host = ""example.com""");
+        end
+
+        % --- Literal string safety (B-3, B-4) --------------------------------
+
+        % --- Compact spacing preserves multiline strings (I-6) -------------
+
+        function testCompactSpacingPreservesMultilineString(testCase)
+            config = tomldata();
+            config.text = "line1" + newline + newline + "line3";
+
+            text = testCase.writeAndRead(config, ...
+                "SectionSpacing", "compact", ...
+                "StringLayout", "multiline");
+
+            result = readtoml(testCase.writeTempFile("verify.toml", text));
+            testCase.verifyEqual(result.text, "line1" + newline + newline + "line3", ...
+                "Compact spacing must not strip blank lines inside multiline strings");
+        end
+
+        % --- Literal string safety (B-3, B-4) --------------------------------
+
+        function testLiteralStringWithApostropheFallsBackToBasic(testCase)
+            config = tomldata();
+            config.msg = "it's here";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "singleline");
+
+            testCase.verifySubstring(text, '"it''s here"', ...
+                "Apostrophe in literal string should fall back to basic");
+            testCase.verifyFalse(contains(text, "= 'it"), ...
+                "Literal form must not be used with apostrophe inside");
+        end
+
+        function testLiteralStringWithNewlineFallsBackToMultiline(testCase)
+            config = tomldata();
+            config.text = "line1" + newline + "line2";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "singleline");
+
+            testCase.verifyFalse(contains(text, "= 'line1"), ...
+                "Single-line literal must not contain raw newlines");
+        end
+
+        function testMultilineLiteralWithTripleApostropheFallsBack(testCase)
+            config = tomldata();
+            config.text = "has ''' triple";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "multiline");
+
+            testCase.verifyFalse(contains(text, "'''has"), ...
+                "Multiline literal must not contain triple apostrophes");
+        end
+
+        function testLiteralApostropheAndNewlineFallsBackToMultilineBasic(testCase)
+            config = tomldata();
+            config.text = "it's" + newline + "here";
+
+            text = testCase.writeAndRead(config, ...
+                "StringEscapeStyle", "literal", "StringLayout", "singleline");
+
+            result = readtoml(testCase.writeTempFile("verify.toml", text));
+            testCase.verifyEqual(result.text, "it's" + newline + "here", ...
+                "String with both apostrophe and newline must round-trip");
         end
 
         % --- Error wrappers ------------------------------------------------

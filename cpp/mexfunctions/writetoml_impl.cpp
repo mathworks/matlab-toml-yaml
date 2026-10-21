@@ -146,6 +146,12 @@ void WriteTomlImpl::intValue(int64_t i) {
 }
 
 void WriteTomlImpl::uintValue(uint64_t u) {
+    if (u > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+        throwMexError(*engine, factory, "writetoml:IntegerOverflow",
+            "Value " + std::to_string(u) +
+            " exceeds TOML's signed 64-bit integer range.");
+        return;
+    }
     pushToParent(toml::ordered_value(
         static_cast<toml::ordered_value::integer_type>(u)));
 }
@@ -157,7 +163,27 @@ void WriteTomlImpl::doubleValue(double d) {
 void WriteTomlImpl::stringValue(std::string_view s) {
     toml::string_format_info fmt;
     fmt.fmt = resolveStringFormat();
-    pushToParent(toml::ordered_value(std::string(s), fmt));
+
+    std::string str(s);
+    bool hasNewline = str.find('\n') != std::string::npos;
+    bool hasApostrophe = str.find('\'') != std::string::npos;
+    bool hasTripleApostrophe = str.find("'''") != std::string::npos;
+
+    if (fmt.fmt == toml::string_format::literal) {
+        if (hasNewline && !hasApostrophe) {
+            fmt.fmt = toml::string_format::multiline_literal;
+        } else if (hasNewline) {
+            fmt.fmt = toml::string_format::multiline_basic;
+        } else if (hasApostrophe) {
+            fmt.fmt = toml::string_format::basic;
+        }
+    } else if (fmt.fmt == toml::string_format::multiline_literal) {
+        if (hasTripleApostrophe) {
+            fmt.fmt = toml::string_format::multiline_basic;
+        }
+    }
+
+    pushToParent(toml::ordered_value(std::move(str), fmt));
 }
 
 void WriteTomlImpl::datetimeValue(std::string_view iso) {
@@ -242,11 +268,46 @@ std::string WriteTomlImpl::removeBlankLines(const std::string& s) {
     std::string result;
     result.reserve(s.size());
     bool prevNewline = false;
-    for (char c : s) {
+    bool inMultilineBasic = false;
+    bool inMultilineLiteral = false;
+    size_t len = s.size();
+
+    for (size_t i = 0; i < len; ++i) {
+        char c = s[i];
+
+        if (inMultilineBasic && c == '\\' && i + 1 < len) {
+            result += c;
+            result += s[++i];
+            prevNewline = false;
+            continue;
+        }
+
+        if (!inMultilineLiteral && i + 2 < len &&
+            c == '"' && s[i+1] == '"' && s[i+2] == '"') {
+            inMultilineBasic = !inMultilineBasic;
+            result += c; result += s[i+1]; result += s[i+2];
+            i += 2;
+            prevNewline = false;
+            continue;
+        }
+
+        if (!inMultilineBasic && i + 2 < len &&
+            c == '\'' && s[i+1] == '\'' && s[i+2] == '\'') {
+            inMultilineLiteral = !inMultilineLiteral;
+            result += c; result += s[i+1]; result += s[i+2];
+            i += 2;
+            prevNewline = false;
+            continue;
+        }
+
+        if (inMultilineBasic || inMultilineLiteral) {
+            result += c;
+            prevNewline = false;
+            continue;
+        }
+
         if (c == '\n') {
-            if (prevNewline) {
-                continue;
-            }
+            if (prevNewline) continue;
             prevNewline = true;
         } else {
             prevNewline = false;

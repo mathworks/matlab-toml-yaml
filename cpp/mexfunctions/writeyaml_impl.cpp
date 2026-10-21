@@ -182,6 +182,11 @@ void WriteYamlImpl::datetimeValue(std::string_view iso) {
 bool WriteYamlImpl::needsQuoting(const std::string& s) {
     if (s.empty()) return true;
 
+    for (unsigned char c : s) {
+        if (c < 0x20 && c != '\t') return true;
+        if (c == 0x7F) return true;
+    }
+
     char c0 = s[0];
     if (c0 == '!' || c0 == '#' || c0 == '&' || c0 == '*' ||
         c0 == '{' || c0 == '[' || c0 == '|' || c0 == '>' ||
