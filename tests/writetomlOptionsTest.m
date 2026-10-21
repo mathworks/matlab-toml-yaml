@@ -435,5 +435,46 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
             testCase.verifySubstring(text, "items = [1, ""two""]", ...
                 "A cell value should serialize as a TOML array");
         end
+
+        % --- Leading newline preservation ----------------------------------
+
+        function testLeadingNewlinePreservedLiteral(testCase)
+            original = string(sprintf('\necho hello\n'));
+            config = tomldata();
+            config.script = original;
+
+            file = testCase.tempFile("nl.toml");
+            writetoml(config, file, StringEscapeStyle="literal");
+            data = readtoml(file);
+
+            testCase.verifyEqual(data.script, original, ...
+                "Leading newline should survive literal multiline round-trip");
+        end
+
+        function testLeadingNewlinePreservedMultiline(testCase)
+            original = string(sprintf('\nfirst\nsecond'));
+            config = tomldata();
+            config.text = original;
+
+            file = testCase.tempFile("nl.toml");
+            writetoml(config, file, StringLayout="multiline");
+            data = readtoml(file);
+
+            testCase.verifyEqual(data.text, original, ...
+                "Leading newline should survive multiline basic round-trip");
+        end
+
+        % --- Empty struct array ------------------------------------------
+
+        function testEmptyStructArrayWritesEmptyArray(testCase)
+            data = tomldata();
+            data.servers = repmat(struct('host', "localhost"), 0, 1);
+
+            file = testCase.tempFile("empty.toml");
+            writetoml(data, file);
+            result = readtoml(file);
+
+            testCase.verifyEmpty(result.servers);
+        end
     end
 end

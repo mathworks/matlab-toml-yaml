@@ -13,6 +13,15 @@ function dt = parseYAMLDatetime(str)
         datePat = textBoundary("start") + d4 + "-" + d2 + "-" + d2 + textBoundary("end");
     end
 
+    if ~isscalar(str)
+        dt = parseArray(str, fracPat, datetimeOffsetPat, datetimeLocalPat, datePat);
+        return
+    end
+
+    dt = parseOne(str, fracPat, datetimeOffsetPat, datetimeLocalPat, datePat);
+end
+
+function dt = parseOne(str, fracPat, datetimeOffsetPat, datetimeLocalPat, datePat)
     dt = [];
     if strlength(str) < 10
         return
@@ -32,6 +41,22 @@ function dt = parseYAMLDatetime(str)
                 dt = datetime(str, InputFormat="uuuu-MM-dd");
             end
         end
+    catch
+    end
+end
+
+function dt = parseArray(str, fracPat, datetimeOffsetPat, datetimeLocalPat, datePat)
+    dt = [];
+    results = cell(numel(str), 1);
+    for j = 1:numel(str)
+        d = parseOne(str(j), fracPat, datetimeOffsetPat, datetimeLocalPat, datePat);
+        if isempty(d)
+            return
+        end
+        results{j} = d;
+    end
+    try
+        dt = vertcat(results{:});
     catch
     end
 end

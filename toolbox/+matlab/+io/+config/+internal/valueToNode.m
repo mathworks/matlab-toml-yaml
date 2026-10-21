@@ -8,7 +8,7 @@ function node = valueToNode(val)
 
     if isa(val, "matlab.io.config.ConfigurationData")
         if isempty(val)
-            node = struct("Data", [], "Type", "missing");
+            node = double.empty(0, 0);
         else
             node = toNodeTree(val);
         end

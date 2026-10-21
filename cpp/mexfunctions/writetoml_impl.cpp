@@ -183,6 +183,13 @@ void WriteTomlImpl::stringValue(std::string_view s) {
         }
     }
 
+    bool isMultiline =
+        fmt.fmt == toml::string_format::multiline_basic ||
+        fmt.fmt == toml::string_format::multiline_literal;
+    if (isMultiline && !str.empty() && str[0] == '\n') {
+        fmt.start_with_newline = true;
+    }
+
     pushToParent(toml::ordered_value(std::move(str), fmt));
 }
 

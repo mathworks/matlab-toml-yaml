@@ -11,6 +11,10 @@ function obj = importFrom(obj, inputData)
     obj = matlab.io.config.internal.createArray(obj);
 
     if isstruct(inputData)
+        if isempty(inputData)
+            obj = reshape(matlab.io.config.internal.createArray(obj).empty, size(inputData));
+            return;
+        end
         if ~isscalar(inputData)
             arr(numel(inputData)) = matlab.io.config.internal.createArray(obj);
             for i = 1:numel(inputData)

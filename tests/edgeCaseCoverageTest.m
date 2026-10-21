@@ -149,7 +149,7 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             obj = yamldata();
             obj.sub = matlab.io.config.YAMLData.empty;
             text = testCase.writeYAMLToString(obj);
-            testCase.verifySubstring(text, "null");
+            testCase.verifySubstring(text, "[]");
         end
 
         function testWriteCellWithNestedObject(testCase)

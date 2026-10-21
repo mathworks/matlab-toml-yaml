@@ -204,5 +204,31 @@ classdef builderTypeTest < ConfigurationFileTestCase
             testCase.verifyClass(data.items, "cell");
             testCase.verifySize(data.items, [3 1]);
         end
+
+        %% YAML hex and octal parsing
+
+        function testYAMLHexIntegerParsesCorrectly(testCase)
+            file = testCase.writeTempFile("t.yaml", "v: 0xFF");
+            data = readyaml(file);
+            testCase.verifyEqual(data.v, 255);
+        end
+
+        function testYAMLOctalIntegerParsesCorrectly(testCase)
+            file = testCase.writeTempFile("t.yaml", "v: 0o755");
+            data = readyaml(file);
+            testCase.verifyEqual(data.v, 493);
+        end
+
+        function testYAMLBinaryIntegerParsesCorrectly(testCase)
+            file = testCase.writeTempFile("t.yaml", "v: 0b1010");
+            data = readyaml(file);
+            testCase.verifyEqual(data.v, 10);
+        end
+
+        function testYAMLNegativeHexParsesCorrectly(testCase)
+            file = testCase.writeTempFile("t.yaml", "v: -0x10");
+            data = readyaml(file);
+            testCase.verifyEqual(data.v, -16);
+        end
     end
 end
