@@ -105,9 +105,9 @@ void MatlabBuilder::endArray() {
         }
     }
 
-    auto out = factory.createArray<matlab::data::Array>({1, n});
+    auto out = factory.createArray<matlab::data::Array>({n, 1});
     for (size_t i = 0; i < n; ++i) {
-        out[0][i] = std::move(af.elements[i]);
+        out[i][0] = std::move(af.elements[i]);
     }
     pushValue(std::move(out));
 }
