@@ -198,6 +198,13 @@ MATLAB types are converted to YAML as follows:
 
 Keys with special characters (hyphens, spaces) are automatically quoted when necessary to maintain valid YAML syntax.
 
+## Limitations
+
+- **Singleton array collapse on edit:** Editing or replacing the sole element of a one-item sequence (e.g., `data.steps(1).uses = "new"`) causes the sequence to collapse to a single mapping in the written output. Workaround: wrap the value in a cell array before writing.
+- **`struct` conversion is lossy:** Converting a YAMLData object to a struct via `struct()` normalizes keys to valid MATLAB identifiers (e.g., `build-system` becomes `build_system`). Writing the struct back produces different keys than the original file. Use the YAMLData object directly for lossless round-trips.
+- **Heterogeneous struct arrays gain null fields:** MATLAB struct arrays require all elements to share the same fields. Converting a YAMLData array of mappings with different keys to a struct array pads missing fields with empty values, which serialize as `null` in the output. Use YAMLData arrays to preserve per-record key sets.
+- Comments are not preserved during round-trip.
+
 ## See Also
 
 [readyaml](readyaml.md), [writetoml](writetoml.md), [YAMLData](YAMLData.md), [struct](https://www.mathworks.com/help/matlab/ref/struct.html)

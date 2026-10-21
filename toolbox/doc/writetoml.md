@@ -237,6 +237,13 @@ TOML supports multiple ways to represent the same data:
   ]
   ```
 
+## Limitations
+
+- **Singleton array collapse on edit:** Editing or replacing the sole element of a one-item array (e.g., `data.deps(1) = "new"`) causes the array to collapse to a scalar in the written output. Workaround: wrap the value in a cell array before writing (e.g., `data.deps = {"new"}`).
+- **`uint64` values above `intmax("int64")`** cannot be written to TOML because the TOML specification defines integers as signed 64-bit. An error is raised.
+- **`struct` conversion is lossy:** Converting a TOMLData object to a struct via `struct()` normalizes keys to valid MATLAB identifiers (e.g., `build-system` becomes `build_system`). Writing the struct back produces different keys than the original file. Use the TOMLData object directly for lossless round-trips.
+- Comments are not preserved during round-trip.
+
 ## See Also
 
 [readtoml](readtoml.md), [writeyaml](writeyaml.md), [TOMLData](TOMLData.md), [datetime](https://www.mathworks.com/help/matlab/ref/datetime.html)

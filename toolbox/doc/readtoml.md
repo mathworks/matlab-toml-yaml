@@ -161,7 +161,8 @@ TOML values are converted to MATLAB types as follows:
 
 ## Limitations
 
-- Extremely large integers may lose precision due to MATLAB's double precision representation.
+- Integers with magnitude above 2^53 are returned as `int64` or `uint64` to preserve precision. Smaller integers are returned as `double`.
+- Comments are not preserved during round-trip (read then write).
 
 ## See Also
 
