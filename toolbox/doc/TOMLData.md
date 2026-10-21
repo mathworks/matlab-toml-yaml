@@ -253,6 +253,7 @@ config.logging.level = "INFO";
 
 - Very deeply nested structures may impact performance due to recursive object creation.
 - Field names are case-sensitive, matching TOML behavior.
+- Converting to `struct` normalizes keys to valid MATLAB identifiers: hyphens, dots, and spaces become underscores, and collisions are resolved with numeric suffixes. Use dot notation on the TOMLData object to preserve original keys.
 
 ## See Also
 
