@@ -397,6 +397,8 @@ classdef roundTripEdgeCaseTest < ConfigurationFileTestCase
             data = readtoml(file);
 
             testCase.verifyClass(data.val, "cell");
+            testCase.verifySize(data.val, [3 1], ...
+                "Mixed-type arrays should be column cells");
             testCase.verifyEqual(data.val{1}, 1);
             testCase.verifyEqual(data.val{2}, "two");
             testCase.verifyEqual(data.val{3}, true);
@@ -406,6 +408,7 @@ classdef roundTripEdgeCaseTest < ConfigurationFileTestCase
             data2 = readtoml(out);
 
             testCase.verifyClass(data2.val, "cell");
+            testCase.verifySize(data2.val, [3 1]);
             testCase.verifyEqual(data2.val{1}, 1);
             testCase.verifyEqual(data2.val{2}, "two");
             testCase.verifyEqual(data2.val{3}, true);

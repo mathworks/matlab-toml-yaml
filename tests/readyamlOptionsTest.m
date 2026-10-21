@@ -54,6 +54,36 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
             testCase.verifyEqual(config.created, datetime(2020, 01, 15, 10, 30, 0, 0, TimeZone="UTC"));
         end
 
+        function testDatetimeTypeParsesZonedFractionalSeconds(testCase)
+            file = testCase.writeText("ts: 2024-01-15T10:30:00.123Z");
+
+            config = readyaml(file, "DatetimeType", "datetime");
+
+            testCase.verifyClass(config.ts, "datetime");
+            expected = datetime(2024, 1, 15, 10, 30, 0.123, TimeZone="UTC");
+            testCase.verifyEqual(config.ts, expected, ...
+                "Fractional-second zoned timestamps should parse as datetime");
+        end
+
+        function testDatetimeTypeParsesLocalFractionalSeconds(testCase)
+            file = testCase.writeText("ts: 2024-01-15T10:30:00.456789");
+
+            config = readyaml(file, "DatetimeType", "datetime");
+
+            testCase.verifyClass(config.ts, "datetime");
+            expected = datetime(2024, 1, 15, 10, 30, 0.456789);
+            testCase.verifyLessThan(abs(config.ts - expected), seconds(1e-4), ...
+                "Fractional-second local timestamps should parse as datetime");
+        end
+
+        function testDatetimeTypeParsesOffsetFractionalSeconds(testCase)
+            file = testCase.writeText("ts: 2024-01-15T10:30:00.5+05:30");
+
+            config = readyaml(file, "DatetimeType", "datetime");
+
+            testCase.verifyClass(config.ts, "datetime");
+        end
+
         function testDatetimeTypeLeavesNonDateStringsAlone(testCase)
             file = testCase.writeText("name: hello");
 

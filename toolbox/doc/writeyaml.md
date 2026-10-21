@@ -58,7 +58,7 @@ Spacing between top-level sections.
 - `"compact"` - No blank lines
 
 #### Precision
-Number of decimal places for numeric values.
+Number of significant digits for numeric values.
 *Type:* positive integer scalar
 *Default:* `6`
 
@@ -159,7 +159,7 @@ For more examples, see [readyamlExample.m](../../examples/readyamlExample.m).
 - Scalars and arrays are written directly as top-level YAML values.
 - Use `ArrayStyle="flow"` for compact, single-line arrays in configuration files.
 - Use `SectionSpacing="compact"` to reduce file size when readability isn't critical.
-- The `Precision` option controls decimal places; use smaller values for cleaner output when full precision isn't needed.
+- The `Precision` option controls significant digits; use smaller values for cleaner output when full precision isn't needed.
 - YAMLData, structs, and dictionaries produce equivalent YAML output; choose based on your workflow preferences.
 
 ## More About
