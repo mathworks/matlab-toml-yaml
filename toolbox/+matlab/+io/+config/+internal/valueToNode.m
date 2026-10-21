@@ -13,7 +13,14 @@ function node = valueToNode(val)
             node = toNodeTree(val);
         end
     elseif isa(val, "datetime")
-        node = struct("Data", formatDatetime(val), "Type", "datetime");
+        if isscalar(val)
+            node = struct("Data", formatDatetime(val), "Type", "datetime");
+        else
+            node = cell(size(val));
+            for j = 1:numel(val)
+                node{j} = struct("Data", formatDatetime(val(j)), "Type", "datetime");
+            end
+        end
     elseif isa(val, "missing")
         node = struct("Data", [], "Type", "missing");
     elseif iscell(val)

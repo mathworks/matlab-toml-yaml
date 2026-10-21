@@ -179,6 +179,46 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
                 "[true,false]");
         end
 
+        % --- Method-name keys (B-2) ----------------------------------------
+
+        function testStructWithMethodNameKeys(testCase)
+            s = struct("keys", 123, "empty", 456, "show", 789);
+            text = testCase.writeAndRead(s);
+            testCase.verifySubstring(text, "keys: 123");
+            testCase.verifySubstring(text, "empty: 456");
+            testCase.verifySubstring(text, "show: 789");
+        end
+
+        % --- Char and complex input (I-4) ---------------------------------
+
+        function testCharVectorWritesAsString(testCase)
+            text = testCase.writeAndRead('hello');
+            testCase.verifySubstring(text, "hello");
+        end
+
+        function testCharScalarWritesAsString(testCase)
+            text = testCase.writeAndRead('x');
+            testCase.verifySubstring(text, "x");
+        end
+
+        function testComplexInputErrors(testCase)
+            file = testCase.tempFile();
+            testCase.verifyError( ...
+                @() writeyaml(1+2i, file), ...
+                "writeyaml:InvalidInput");
+        end
+
+        % --- Precision (I-2) ----------------------------------------------
+
+        function testDefaultPrecisionPreservesCoordinates(testCase)
+            s = struct("latitude", 37.7749295, "longitude", -122.4194155);
+            file = testCase.tempFile("prec.yaml");
+            writeyaml(s, file);
+            result = readyaml(file);
+            testCase.verifyEqual(result.latitude, 37.7749295, RelTol=1e-15);
+            testCase.verifyEqual(result.longitude, -122.4194155, RelTol=1e-15);
+        end
+
         % --- Error wrappers ----------------------------------------------
 
         function testUnwritablePathErrors(testCase)

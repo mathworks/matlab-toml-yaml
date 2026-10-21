@@ -63,6 +63,36 @@ classdef writetomlOptionsTest < ConfigurationFileTestCase
                 "Omitting the filename should write untitled.toml");
         end
 
+        % --- Method-name keys (B-2) ----------------------------------------
+
+        function testStructWithMethodNameKeys(testCase)
+            s = struct("keys", 123, "empty", 456, "show", 789);
+            text = testCase.writeAndRead(s);
+            testCase.verifySubstring(text, "keys = 123");
+            testCase.verifySubstring(text, "empty = 456");
+            testCase.verifySubstring(text, "show = 789");
+        end
+
+        % --- Complex input rejection (I-4) --------------------------------
+
+        function testComplexInputErrors(testCase)
+            file = testCase.tempFile();
+            testCase.verifyError( ...
+                @() writetoml(struct("z", 1+2i), file), ...
+                "ConfigurationData:InvalidType");
+        end
+
+        % --- Precision (I-2) ----------------------------------------------
+
+        function testDefaultPrecisionPreservesCoordinates(testCase)
+            s = struct("latitude", 37.7749295, "longitude", -122.4194155);
+            file = testCase.tempFile("prec.toml");
+            writetoml(s, file);
+            result = readtoml(file);
+            testCase.verifyEqual(result.latitude, 37.7749295, RelTol=1e-15);
+            testCase.verifyEqual(result.longitude, -122.4194155, RelTol=1e-15);
+        end
+
         % --- TableStyle ----------------------------------------------------
 
         function testTableStyleInlineForcesInlineTable(testCase)

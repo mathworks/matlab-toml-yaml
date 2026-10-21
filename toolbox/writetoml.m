@@ -88,22 +88,14 @@ function writetoml(data, filename, options)
         options.ArrayStyle (1,1) string {mustBeMember(options.ArrayStyle, ["auto", "flow", "block"])} = "auto"
         options.NumIndentationSpaces (1,1) double {mustBeInteger, mustBePositive} = 2
         options.SectionSpacing (1,1) string {mustBeMember(options.SectionSpacing, ["compact", "loose"])} = "loose"
-        options.Precision (1,1) double {mustBeInteger, mustBePositive} = 6
+        options.Precision (1,1) double {mustBeInteger, mustBePositive} = 17
         options.TableStyle (1,1) string {mustBeMember(options.TableStyle, ["auto", "inline", "expanded"])} = "auto"
         options.TableArrayStyle (1,1) string {mustBeMember(options.TableArrayStyle, ["auto", "inline", "expanded"])} = "expanded"
         options.StringEscapeStyle (1,1) string {mustBeMember(options.StringEscapeStyle, ["auto", "escaped", "literal"])} = "auto"
         options.StringLayout (1,1) string {mustBeMember(options.StringLayout, ["auto", "singleline", "multiline"])} = "auto"
     end
 
-    % Convert input to TOMLData for consistent processing
-    if isa(data, 'dictionary') || isstruct(data) || isa(data, 'containers.Map')
-        data = tomldata(data);
-    elseif ~isa(data, 'matlab.io.config.ConfigurationData')
-        error("writetoml:InvalidInput", ...
-            "Input must be TOMLData, struct, dictionary, or containers.Map.");
-    end
-
-    tree = toNodeTree(data);
+    tree = matlab.io.config.internal.validateWriteInput(data, "toml");
     bytes = configMex("writetoml", tree, options);
 
     [fid, msg] = fopen(filename, 'w');

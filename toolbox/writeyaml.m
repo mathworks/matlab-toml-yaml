@@ -54,20 +54,10 @@ function writeyaml(data, filename, options)
         options.NumIndentationSpaces (1,1) double {mustBeInteger, mustBePositive} = 2
         options.SectionSpacing (1,1) string ...
             {mustBeMember(options.SectionSpacing, ["compact", "loose"])} = "loose"
-        options.Precision (1,1) double {mustBeInteger, mustBePositive} = 6
+        options.Precision (1,1) double {mustBeInteger, mustBePositive} = 17
     end
 
-    % Convert mapping types to YAMLData; pass primitives directly to MEX
-    if isa(data, 'dictionary') || isstruct(data) || isa(data, 'containers.Map')
-        data = yamldata(data);
-    end
-
-    if isa(data, 'matlab.io.config.ConfigurationData')
-        tree = toNodeTree(data);
-    else
-        % Passthrough for primitive types (scalars, arrays, cell arrays)
-        tree = data;
-    end
+    tree = matlab.io.config.internal.validateWriteInput(data, "yaml");
     bytes = configMex("writeyaml", tree, options);
 
     [fid, msg] = fopen(filename, 'w');
