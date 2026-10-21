@@ -59,46 +59,49 @@ void MatlabBuilder::endArray() {
     }
 
     size_t n = af.elements.size();
-
     auto firstType = af.elements[0].getType();
-    bool homogeneous = true;
-    for (size_t i = 0; i < n; ++i) {
+    auto firstDims = af.elements[0].getDimensions();
+    size_t firstNumel = af.elements[0].getNumberOfElements();
+
+    bool uniform = (n > 1);
+    for (size_t i = 1; uniform && i < n; ++i) {
         if (af.elements[i].getType() != firstType ||
-            af.elements[i].getNumberOfElements() != 1) {
-            homogeneous = false;
+            af.elements[i].getDimensions() != firstDims) {
+            uniform = false;
+        }
+    }
+
+    if (uniform && firstNumel == 1) {
+        switch (firstType) {
+        case ArrayType::DOUBLE:
+            consolidateTypedArray<double>(af.elements, n); return;
+        case ArrayType::LOGICAL:
+            consolidateTypedArray<bool>(af.elements, n); return;
+        case ArrayType::INT64:
+            consolidateTypedArray<int64_t>(af.elements, n); return;
+        case ArrayType::UINT64:
+            consolidateTypedArray<uint64_t>(af.elements, n); return;
+        case ArrayType::MATLAB_STRING:
+            consolidateTypedArray<matlab::data::MATLABString>(af.elements, n); return;
+        default:
             break;
         }
     }
 
-    if (homogeneous && n > 1) {
-        if (firstType == ArrayType::DOUBLE) {
-            auto arr = factory.createArray<double>({n, 1});
-            for (size_t i = 0; i < n; ++i) {
-                matlab::data::TypedArray<double> el = af.elements[i];
-                arr[i][0] = el[0];
-            }
-            pushValue(std::move(arr));
-            return;
-        }
-        if (firstType == ArrayType::LOGICAL) {
-            auto arr = factory.createArray<bool>({n, 1});
-            for (size_t i = 0; i < n; ++i) {
-                matlab::data::TypedArray<bool> el = af.elements[i];
-                arr[i][0] = static_cast<bool>(el[0]);
-            }
-            pushValue(std::move(arr));
-            return;
-        }
-        if (firstType == ArrayType::MATLAB_STRING) {
-            auto arr = factory.createArray<matlab::data::MATLABString>({n, 1});
-            for (size_t i = 0; i < n; ++i) {
-                matlab::data::TypedArray<matlab::data::MATLABString> el =
-                    af.elements[i];
-                matlab::data::MATLABString s = el[0];
-                arr[i][0] = s;
-            }
-            pushValue(std::move(arr));
-            return;
+    if (uniform && firstNumel > 1) {
+        switch (firstType) {
+        case ArrayType::DOUBLE:
+            reconstructNDArray<double>(af.elements, n, firstDims); return;
+        case ArrayType::LOGICAL:
+            reconstructNDArray<bool>(af.elements, n, firstDims); return;
+        case ArrayType::INT64:
+            reconstructNDArray<int64_t>(af.elements, n, firstDims); return;
+        case ArrayType::UINT64:
+            reconstructNDArray<uint64_t>(af.elements, n, firstDims); return;
+        case ArrayType::MATLAB_STRING:
+            reconstructNDArray<matlab::data::MATLABString>(af.elements, n, firstDims); return;
+        default:
+            break;
         }
     }
 
@@ -119,11 +122,20 @@ void MatlabBuilder::boolValue(bool b) {
 }
 
 void MatlabBuilder::intValue(int64_t i) {
-    pushValue(factory.createScalar<double>(static_cast<double>(i)));
+    constexpr int64_t limit = 1LL << 53;
+    if (i > limit || i < -limit) {
+        pushValue(factory.createScalar<int64_t>(i));
+    } else {
+        pushValue(factory.createScalar<double>(static_cast<double>(i)));
+    }
 }
 
 void MatlabBuilder::uintValue(uint64_t u) {
-    pushValue(factory.createScalar<double>(static_cast<double>(u)));
+    if (u > (1ULL << 53)) {
+        pushValue(factory.createScalar<uint64_t>(u));
+    } else {
+        pushValue(factory.createScalar<double>(static_cast<double>(u)));
+    }
 }
 
 void MatlabBuilder::doubleValue(double d) {

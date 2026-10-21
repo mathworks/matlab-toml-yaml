@@ -137,55 +137,97 @@ void MatlabWalker::walkTypedArray(const matlab::data::Array& val,
                                   DocumentHandler& handler) {
     auto type = val.getType();
     size_t numel = val.getNumberOfElements();
-    handler.startArray(numel);
+    auto dims = val.getDimensions();
+
+    std::vector<size_t> nestDims;
+    std::vector<size_t> nestStrides;
+    size_t stride = 1;
+    for (size_t d = 0; d < dims.size(); ++d) {
+        if (dims[d] > 1) {
+            nestDims.push_back(dims[d]);
+            nestStrides.push_back(stride);
+        }
+        stride *= dims[d];
+    }
+
+    auto emitSequence = [&](auto emitElement) {
+        if (nestDims.size() <= 1) {
+            handler.startArray(numel);
+            for (size_t i = 0; i < numel; ++i) {
+                emitElement(i);
+            }
+            handler.endArray();
+        } else {
+            auto emitLevel = [&](auto& self, size_t level, size_t base) -> void {
+                if (level == nestDims.size()) {
+                    emitElement(base);
+                    return;
+                }
+                handler.startArray(nestDims[level]);
+                for (size_t i = 0; i < nestDims[level]; ++i) {
+                    self(self, level + 1, base + i * nestStrides[level]);
+                }
+                handler.endArray();
+            };
+            emitLevel(emitLevel, 0, 0);
+        }
+    };
+
+    auto emitDouble = [&](double d) {
+        if (!std::isnan(d) && !std::isinf(d) &&
+            d == std::floor(d) &&
+            std::abs(d) < static_cast<double>(1LL << 53)) {
+            handler.intValue(static_cast<int64_t>(d));
+        } else {
+            handler.doubleValue(d);
+        }
+    };
 
     if (type == ArrayType::LOGICAL) {
         matlab::data::TypedArray<bool> arr = val;
-        for (size_t i = 0; i < numel; ++i) {
-            handler.boolValue(arr[i]);
-        }
+        std::vector<bool> flat(arr.begin(), arr.end());
+        emitSequence([&](size_t i) { handler.boolValue(flat[i]); });
     } else if (type == ArrayType::DOUBLE || type == ArrayType::SINGLE) {
-        auto emitDouble = [&](double d) {
-            if (!std::isnan(d) && !std::isinf(d) &&
-                d == std::floor(d) &&
-                std::abs(d) < static_cast<double>(1LL << 53)) {
-                handler.intValue(static_cast<int64_t>(d));
-            } else {
-                handler.doubleValue(d);
-            }
-        };
+        std::vector<double> flat;
+        flat.reserve(numel);
         if (type == ArrayType::SINGLE) {
             matlab::data::TypedArray<float> arr = val;
-            for (size_t i = 0; i < numel; ++i) emitDouble(arr[i]);
+            for (auto it = arr.begin(); it != arr.end(); ++it)
+                flat.push_back(static_cast<double>(*it));
         } else {
             matlab::data::TypedArray<double> arr = val;
-            for (size_t i = 0; i < numel; ++i) emitDouble(arr[i]);
+            for (auto it = arr.begin(); it != arr.end(); ++it)
+                flat.push_back(*it);
         }
+        emitSequence([&](size_t i) { emitDouble(flat[i]); });
     } else if (type == ArrayType::UINT64) {
         matlab::data::TypedArray<uint64_t> arr = val;
-        for (size_t i = 0; i < numel; ++i) {
-            handler.uintValue(arr[i]);
-        }
+        std::vector<uint64_t> flat(arr.begin(), arr.end());
+        emitSequence([&](size_t i) { handler.uintValue(flat[i]); });
     } else if (isIntegerType(type)) {
+        std::vector<int64_t> flat;
+        flat.reserve(numel);
         switch (type) {
-        case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; for (auto v : a) handler.intValue(v); break; }
-        case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; for (auto v : a) handler.intValue(v); break; }
+        case ArrayType::INT8:   { matlab::data::TypedArray<int8_t>   a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::INT16:  { matlab::data::TypedArray<int16_t>  a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::INT32:  { matlab::data::TypedArray<int32_t>  a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::INT64:  { matlab::data::TypedArray<int64_t>  a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::UINT8:  { matlab::data::TypedArray<uint8_t>  a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::UINT16: { matlab::data::TypedArray<uint16_t> a = val; for (auto v : a) flat.push_back(v); break; }
+        case ArrayType::UINT32: { matlab::data::TypedArray<uint32_t> a = val; for (auto v : a) flat.push_back(v); break; }
         default: break;
         }
+        emitSequence([&](size_t i) { handler.intValue(flat[i]); });
     } else if (type == ArrayType::MATLAB_STRING) {
         matlab::data::TypedArray<matlab::data::MATLABString> arr = val;
-        for (size_t i = 0; i < numel; ++i) {
-            std::string text = matlabStringToUtf8(arr[i]);
-            handler.stringValue(text);
+        std::vector<std::string> flat;
+        flat.reserve(numel);
+        for (auto it = arr.begin(); it != arr.end(); ++it) {
+            matlab::data::MATLABString ms = *it;
+            flat.push_back(matlabStringToUtf8(ms));
         }
+        emitSequence([&](size_t i) { handler.stringValue(flat[i]); });
     }
-
-    handler.endArray();
 }
 
 bool MatlabWalker::isIntegerType(matlab::data::ArrayType type) {

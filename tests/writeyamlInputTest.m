@@ -219,6 +219,52 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
             testCase.verifyEqual(result.longitude, -122.4194155, RelTol=1e-15);
         end
 
+        % --- Matrix serialization (I-5) -----------------------------------
+
+        function testMatrixRoundTrip(testCase)
+            config = yamldata();
+            config.matrix = [1 2 3; 4 5 6];
+
+            file = testCase.tempFile("matrix.yaml");
+            writeyaml(config, file);
+            result = readyaml(file);
+
+            testCase.verifyEqual(result.matrix, [1 2 3; 4 5 6], ...
+                "A 2x3 matrix should round-trip through nested sequences");
+        end
+
+        % --- Multiline indentation (B-1) ---------------------------------
+
+        function testMultilineStringPreservesIndentation(testCase)
+            config = yamldata();
+            config.code = "def hello():" + newline + "    print('world')";
+
+            file = testCase.tempFile("indent.yaml");
+            writeyaml(config, file);
+            result = readyaml(file);
+
+            testCase.verifyEqual(result.code, config.code, ...
+                "Significant indentation in multiline strings must survive round-trip");
+        end
+
+        % --- Control character escaping (B-5) -----------------------------
+
+        function testControlCharactersAreEscaped(testCase)
+            config = yamldata();
+            config.text = "back" + char(8) + "space";
+
+            file = testCase.tempFile("ctrl.yaml");
+            writeyaml(config, file);
+            raw = string(fileread(file));
+
+            testCase.verifyFalse(contains(raw, char(8)), ...
+                "Raw backspace byte must not appear in YAML output");
+
+            result = readyaml(file);
+            testCase.verifyEqual(result.text, config.text, ...
+                "Control character must round-trip correctly");
+        end
+
         % --- Error wrappers ----------------------------------------------
 
         function testUnwritablePathErrors(testCase)
