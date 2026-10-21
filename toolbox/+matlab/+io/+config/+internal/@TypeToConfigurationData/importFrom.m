@@ -19,7 +19,7 @@ function obj = importFrom(obj, inputData)
         fields = fieldnames(inputData);
         for i = 1:numel(fields)
             key = fields{i};
-            obj.(key) = inputData.(key);
+            obj = matlab.io.config.internal.assignKey(obj, key, inputData.(key));
         end
     elseif isa(inputData, 'dictionary')
         keyList = keys(inputData);
@@ -29,13 +29,13 @@ function obj = importFrom(obj, inputData)
             if iscell(val)
                 val = val{1};
             end
-            obj.(key) = val;
+            obj = matlab.io.config.internal.assignKey(obj, key, val);
         end
     elseif isa(inputData, 'containers.Map')
         keyList = keys(inputData);
         for i = 1:numel(keyList)
             key = string(keyList{i});
-            obj.(key) = inputData(keyList{i});
+            obj = matlab.io.config.internal.assignKey(obj, key, inputData(keyList{i}));
         end
     else
         error('ConfigurationData:InvalidInput', ...

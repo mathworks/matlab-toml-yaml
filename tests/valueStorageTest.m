@@ -278,6 +278,13 @@ classdef valueStorageTest < matlab.unittest.TestCase
             testCase.verifyEqual([result.a], [1 2]);
         end
 
+        function testDatetimeVectorAssignment(testCase)
+            c = tomldata();
+            dates = [datetime(2026,10,16), datetime(2026,10,17)];
+            c.deadlines = dates;
+            testCase.verifyLength(c.deadlines, 2);
+        end
+
         function testStructDescendsIntoCellOfObjects(testCase)
             % Traversal checks each cell element for nested objects, so a
             % cell holding an object is converted rather than passed through.
