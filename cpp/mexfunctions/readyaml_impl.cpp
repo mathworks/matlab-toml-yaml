@@ -210,6 +210,19 @@ void ReadYamlImpl::emitScalar(ryml::ConstNodeRef node,
         return;
     }
 
+    if (val.is_integer()) {
+        int64_t i;
+        if (ryml::from_chars(val, &i)) {
+            handler.intValue(i);
+            return;
+        }
+        uint64_t u;
+        if (ryml::from_chars(val, &u)) {
+            handler.uintValue(u);
+            return;
+        }
+    }
+
     if (val.is_integer() || val.is_real()) {
         if (ryml::from_chars(val, &d)) {
             handler.doubleValue(d);
