@@ -84,6 +84,27 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
             testCase.verifyClass(config.ts, "datetime");
         end
 
+        function testDatetimeTypeConvertsMultiElementDateList(testCase)
+            file = testCase.writeText( ...
+                ["dates:"; "  - 2026-10-21"; "  - 2026-10-22"]);
+
+            config = readyaml(file, "DatetimeType", "datetime");
+
+            testCase.verifyClass(config.dates, "datetime");
+            testCase.verifyNumElements(config.dates, 2);
+            testCase.verifyEqual(config.dates(1), datetime(2026, 10, 21));
+        end
+
+        function testDatetimeTypeConvertsMultiElementTimestampList(testCase)
+            file = testCase.writeText( ...
+                ["times:"; "  - 2026-10-21T10:00:00Z"; "  - 2026-10-22T11:00:00Z"]);
+
+            config = readyaml(file, "DatetimeType", "datetime");
+
+            testCase.verifyClass(config.times, "datetime");
+            testCase.verifyNumElements(config.times, 2);
+        end
+
         function testDatetimeTypeLeavesNonDateStringsAlone(testCase)
             file = testCase.writeText("name: hello");
 
@@ -220,6 +241,35 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
             testCase.verifySize(config.servers, [2 1]);
             testCase.verifyEqual(config.servers(1).name, "alpha");
             testCase.verifyEqual(config.servers(2).name, "beta");
+        end
+
+        % --- ArrayType="cell" edge cases ----------------------------------
+
+        function testArrayTypeCellWrapsSingletonNumeric(testCase)
+            file = testCase.writeText("ports: [8080]");
+
+            config = readyaml(file, "ArrayType", "cell");
+
+            testCase.verifyClass(config.ports, "cell");
+            testCase.verifyEqual(config.ports{1}, 8080);
+        end
+
+        function testArrayTypeCellWrapsSingletonString(testCase)
+            file = testCase.writeText("tags: [web]");
+
+            config = readyaml(file, "ArrayType", "cell");
+
+            testCase.verifyClass(config.tags, "cell");
+            testCase.verifyEqual(config.tags{1}, "web");
+        end
+
+        function testArrayTypeCellPreservesMultiElement(testCase)
+            file = testCase.writeText("ports: [8080, 8443]");
+
+            config = readyaml(file, "ArrayType", "cell");
+
+            testCase.verifyClass(config.ports, "cell");
+            testCase.verifyNumElements(config.ports, 2);
         end
 
         % --- Validation ---------------------------------------------------

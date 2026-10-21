@@ -296,5 +296,16 @@ classdef writeyamlInputTest < ConfigurationFileTestCase
             testCase.verifyError(@() writeyaml(config, ""), ?MException, ...
                 "An empty filename should be rejected by validation");
         end
+
+        % --- Empty struct array ------------------------------------------
+
+        function testEmptyStructArrayWritesEmptySequence(testCase)
+            data = struct;
+            data.servers = repmat(struct('host', "localhost"), 0, 1);
+
+            text = testCase.writeAndRead(data);
+
+            testCase.verifySubstring(text, "servers: []");
+        end
     end
 end

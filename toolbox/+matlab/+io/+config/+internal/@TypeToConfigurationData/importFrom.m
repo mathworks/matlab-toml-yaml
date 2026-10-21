@@ -7,6 +7,10 @@ function obj = importFrom(obj, inputData)
     %   with the same shape as the input struct array.
 
     if isstruct(inputData)
+        if isempty(inputData)
+            obj = reshape(matlab.io.config.internal.createArray(obj).empty, size(inputData));
+            return;
+        end
         if ~isscalar(inputData)
             arr(numel(inputData)) = matlab.io.config.internal.createArray(obj);
             for i = 1:numel(inputData)

@@ -17,7 +17,13 @@ function val = expandNodeValue(val, store)
 
     if iscell(val)
         if isscalar(val)
-            val = expandNodeValue(val{1}, store);
+            expanded = expandNodeValue(val{1}, store);
+            if store.ArrayType == "cell" ...
+                    && ~isa(expanded, 'matlab.io.config.ConfigurationData')
+                val = {expanded};
+            else
+                val = expanded;
+            end
             return
         end
         for j = 1:numel(val)
@@ -28,7 +34,7 @@ function val = expandNodeValue(val, store)
     end
 
     if store.Format == "yaml" && store.DatetimeType == "datetime" ...
-            && isstring(val) && isscalar(val)
+            && isstring(val) && ~isempty(val)
         dt = matlab.io.config.internal.read.parseYAMLDatetime(val);
         if ~isempty(dt)
             val = dt;
