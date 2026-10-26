@@ -123,7 +123,7 @@ classdef readtomlParserTest < ConfigurationFileTestCase
         function testLocalTimeIsParsed(testCase)
             file = testCase.writeToml("at = 07:32:00");
 
-            testCase.verifyClass(readtoml(file).at, "datetime");
+            testCase.verifyClass(readtoml(file).at, "duration");
         end
 
         function testOffsetDatetimeIsParsed(testCase)
