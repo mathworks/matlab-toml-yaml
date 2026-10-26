@@ -31,11 +31,6 @@ function value = validateValue(obj, value, key)
         return;
     end
 
-    if isa(value, 'duration')
-        value = seconds(value);
-        return;
-    end
-
     if isa(value, 'dictionary')
         value = importFrom(matlab.io.config.internal.createArray(obj), value);
         return;

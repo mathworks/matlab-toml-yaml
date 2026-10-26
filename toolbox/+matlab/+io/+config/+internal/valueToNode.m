@@ -21,6 +21,15 @@ function node = valueToNode(val)
                 node{j} = struct("Data", formatDatetime(val(j)), "Type", "datetime");
             end
         end
+    elseif isa(val, "duration")
+        if isscalar(val)
+            node = struct("Data", formatDuration(val), "Type", "datetime");
+        else
+            node = cell(size(val));
+            for j = 1:numel(val)
+                node{j} = struct("Data", formatDuration(val(j)), "Type", "datetime");
+            end
+        end
     elseif isa(val, "missing")
         node = struct("Data", [], "Type", "missing");
     elseif iscell(val)
@@ -55,4 +64,19 @@ function fmt = fractionalFormat(dt)
         digits = strip(sprintf('%.9f', frac), 'right', '0');
         fmt = "." + repmat('S', 1, strlength(digits) - 2);
     end
+end
+
+function str = formatDuration(d)
+    totalSec = seconds(d);
+    h = floor(totalSec / 3600);
+    m = floor(mod(totalSec, 3600) / 60);
+    s = mod(totalSec, 60);
+    wholeSec = floor(s);
+    frac = s - wholeSec;
+    str = sprintf("%02d:%02d:%02d", h, m, wholeSec);
+    if frac ~= 0
+        fracStr = strip(sprintf('%.9f', frac), 'right', '0');
+        str = str + extractAfter(fracStr, 1);
+    end
+    str = string(str);
 end

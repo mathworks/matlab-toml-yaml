@@ -15,8 +15,7 @@ function dt = parseTOMLDatetime(str)
             dt = datetime(str, InputFormat=fmt);
         end
     elseif contains(str, ":")
-        fmt = "HH:mm:ss" + frac;
-        dt = datetime(str, InputFormat=fmt);
+        dt = matlab.io.config.internal.read.timeStringToDuration(str);
     else
         dt = datetime(str, InputFormat="uuuu-MM-dd");
     end

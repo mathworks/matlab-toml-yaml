@@ -24,6 +24,7 @@ end
 function dt = parseOne(str, fracPat, datetimeOffsetPat, datetimeLocalPat, datePat)
     dt = [];
     if strlength(str) < 10
+        dt = tryParseTimeOnly(str);
         return
     end
     try
@@ -59,6 +60,20 @@ function dt = parseArray(str, fracPat, datetimeOffsetPat, datetimeLocalPat, date
         dt = vertcat(results{:});
     catch
     end
+end
+
+function d = tryParseTimeOnly(str)
+    persistent timePat
+    if isempty(timePat)
+        timePat = textBoundary("start") + digitsPattern(2) + ":" ...
+            + digitsPattern(2) + ":" + digitsPattern(2) ...
+            + optionalPattern("." + digitsPattern) + textBoundary("end");
+    end
+    d = [];
+    if ~matches(str, timePat)
+        return
+    end
+    d = matlab.io.config.internal.read.timeStringToDuration(str);
 end
 
 function fmt = fractionalFormat(str, fracPat)

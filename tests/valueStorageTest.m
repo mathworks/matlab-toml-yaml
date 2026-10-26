@@ -20,6 +20,7 @@ classdef valueStorageTest < matlab.unittest.TestCase
             uint8 = uint8(3), ...
             single = single(1.5), ...
             datetime = datetime(2026, 1, 1), ...
+            duration = hours(2) + minutes(30), ...
             missingValue = missing, ...
             cellOfScalars = {{1, 2}})
 
@@ -61,22 +62,23 @@ classdef valueStorageTest < matlab.unittest.TestCase
 
         % --- Converted input types ----------------------------------------
 
-        function testDurationConvertsToSeconds(testCase)
+        function testDurationStoredAsDuration(testCase)
             config = yamldata();
 
             config.elapsed = minutes(1.5);
 
-            testCase.verifyEqual(config.elapsed, 90, ...
-                "A duration should be stored as a number of seconds");
+            testCase.verifyClass(config.elapsed, 'duration');
+            testCase.verifyEqual(seconds(config.elapsed), 90);
         end
 
-        function testDurationArrayConvertsElementwise(testCase)
+        function testDurationArrayStoredElementwise(testCase)
             config = yamldata();
 
             config.elapsed = [seconds(1), seconds(2)];
 
-            testCase.verifyEqual(config.elapsed, [1; 2], ...
-                "Each duration converts, and the vector becomes a column");
+            testCase.verifyClass(config.elapsed, 'cell');
+            testCase.verifyEqual(config.elapsed{1}, seconds(1));
+            testCase.verifyEqual(config.elapsed{2}, seconds(2));
         end
 
         function testCellValuedDictionaryBecomesNestedObject(testCase)

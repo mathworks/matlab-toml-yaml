@@ -211,7 +211,7 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
         function testReadTOMLTimeOnly(testCase)
             text = testCase.writeTempFile("t = 10:30:00", '.toml');
             obj = readtoml(text);
-            testCase.verifyClass(obj.t, 'datetime');
+            testCase.verifyClass(obj.t, 'duration');
         end
 
         %% parseTOMLDatetime — fractional seconds
@@ -229,9 +229,9 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
         end
 
         function testParseTOMLTimeOnlyFractional(testCase)
-            dt = matlab.io.config.internal.read.parseTOMLDatetime("12:30:45.125");
-            testCase.verifyClass(dt, 'datetime');
-            testCase.verifyEqual(second(dt), 45.125);
+            d = matlab.io.config.internal.read.parseTOMLDatetime("12:30:45.125");
+            testCase.verifyClass(d, 'duration');
+            testCase.verifyEqual(seconds(d), 12*3600 + 30*60 + 45.125);
         end
 
         function testParseTOMLOffsetDatetimeSixDigitFractional(testCase)
@@ -554,6 +554,70 @@ classdef edgeCaseCoverageTest < matlab.unittest.TestCase
             file = testCase.writeTempFile(toml, '.toml');
             obj = readtoml(file, DatetimeType="string");
             testCase.verifyClass(obj.stamp, "string");
+        end
+
+        %% duration — TOML time-only round-trip
+
+        function testTOMLTimeOnlyRoundtripWithModification(testCase)
+            file = testCase.writeTempFile("start = 10:30:00", '.toml');
+            config = readtoml(file);
+            config.start = config.start + seconds(1);
+            writetoml(config, file);
+            restored = readtoml(file);
+            testCase.verifyClass(restored.start, 'duration');
+            testCase.verifyEqual(seconds(restored.start), 10*3600 + 30*60 + 1);
+        end
+
+        function testTOMLTimeOnlyMidnightRoundtrip(testCase)
+            file = testCase.writeTempFile("t = 00:00:00", '.toml');
+            config = readtoml(file);
+            testCase.verifyEqual(seconds(config.t), 0);
+            writetoml(config, file);
+            restored = readtoml(file);
+            testCase.verifyEqual(seconds(restored.t), 0);
+        end
+
+        function testTOMLTimeOnlyFractionalRoundtrip(testCase)
+            file = testCase.writeTempFile("t = 12:30:45.125", '.toml');
+            config = readtoml(file);
+            writetoml(config, file);
+            restored = readtoml(file);
+            testCase.verifyEqual(seconds(restored.t), 12*3600 + 30*60 + 45.125);
+        end
+
+        function testDurationAssignedToTOMLDataRoundtrips(testCase)
+            config = tomldata();
+            config.elapsed = hours(2) + minutes(30);
+            file = testCase.writeTempFile("", '.toml');
+            writetoml(config, file);
+            restored = readtoml(file);
+            testCase.verifyClass(restored.elapsed, 'duration');
+            testCase.verifyEqual(seconds(restored.elapsed), 2*3600 + 30*60);
+        end
+
+        %% duration — YAML time-only
+
+        function testYAMLTimeOnlyParsedAsDuration(testCase)
+            file = testCase.writeTempFile("start: 10:30:00", '.yaml');
+            config = readyaml(file, DatetimeType="datetime");
+            testCase.verifyClass(config.start, 'duration');
+            testCase.verifyEqual(seconds(config.start), 10*3600 + 30*60);
+        end
+
+        function testYAMLTimeOnlyStaysStringWithoutDatetimeType(testCase)
+            file = testCase.writeTempFile("start: 10:30:00", '.yaml');
+            config = readyaml(file);
+            testCase.verifyClass(config.start, 'string');
+        end
+
+        function testYAMLDurationWriteRoundtrip(testCase)
+            config = yamldata();
+            config.elapsed = hours(1) + minutes(15);
+            file = testCase.writeTempFile("", '.yaml');
+            writeyaml(config, file);
+            restored = readyaml(file, DatetimeType="datetime");
+            testCase.verifyClass(restored.elapsed, 'duration');
+            testCase.verifyEqual(seconds(restored.elapsed), 1*3600 + 15*60);
         end
 
     end
