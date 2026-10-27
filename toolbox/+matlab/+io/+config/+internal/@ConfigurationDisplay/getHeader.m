@@ -4,12 +4,12 @@ function header = getHeader(obj)
     if isscalar(obj)
         nKeys = numKeys(obj.Data);
         if nKeys == 0
-            header = sprintf('  %s with no keys\n', className);
+            header = sprintf('  %s with no keys\n\n', className);
         else
-            header = sprintf('  %s with keys:\n', className);
+            header = sprintf('  %s with keys:\n\n', className);
         end
     else
         dimStr = matlab.mixin.CustomDisplay.convertDimensionsToString(obj);
-        header = sprintf('  %s %s array with keys:\n', dimStr, className);
+        header = sprintf('  %s %s array with keys:\n\n', dimStr, className);
     end
 end
