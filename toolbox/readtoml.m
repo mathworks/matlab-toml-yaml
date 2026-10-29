@@ -449,7 +449,8 @@ function [rootData, tableRef] = parseKeyValue(rootData, tableRef, tablePath, arr
         else
             % Ensure both are column vectors before concatenation
             tablePathKeys = splitDottedKey(tablePath);
-            rootData = updateDataPath(rootData, [tablePathKeys(:); keys(:)], currentData, numel(keys) - 1);
+            allKeys = [tablePathKeys(:); keys(:)];
+            rootData = updateDataPath(rootData, allKeys, currentData, numel(allKeys) - 1);
         end
         tableRef = getDataPath(rootData, tablePath);
     else
