@@ -425,67 +425,69 @@ function [rootData, tableRef] = parseKeyValue(rootData, tableRef, tablePath, arr
     % Parse value
     value = parseValue(valuePart, datetimeType);
 
-    % Handle dotted keys (e.g., a.b.c = value)
-    % Use splitDottedKey to respect quotes in keys
+    % Handle dotted keys (e.g., a.b.c = value) by treating them as the plain
+    % key "a" whose value is the table holding b.c, so the write-back below
+    % applies to both. Use splitDottedKey to respect quotes in keys
     keys = splitDottedKey(keyPart);
     if numel(keys) > 1
-        currentData = tableRef;
-
-        for i = 1:numel(keys) - 1
-            k = char(cleanKey(strtrim(keys(i))));
-
-            if ~isfield(currentData, k)
-                currentData.(k) = matlab.io.config.TOMLData;
-            end
-            currentData = currentData.(k);
-        end
-
-        finalKey = char(cleanKey(strtrim(keys(end))));
-        currentData.(finalKey) = value;
-
-        % Update tableRef in rootData
-        if strlength(tablePath) == 0
-            rootData = updateDataPath(rootData, keys(:), currentData, numel(keys) - 1);
+        key = cleanKey(keys(1));
+        if isfield(tableRef, key)
+            subTable = tableRef.(key);
         else
-            % Ensure both are column vectors before concatenation
-            tablePathKeys = splitDottedKey(tablePath);
-            allKeys = [tablePathKeys(:); keys(:)];
-            rootData = updateDataPath(rootData, allKeys, currentData, numel(allKeys) - 1);
+            subTable = matlab.io.config.TOMLData;
         end
-        tableRef = getDataPath(rootData, tablePath);
-    else
-        tableRef.(key) = value;
-
-        % Update in rootData (value semantics require explicit write-back)
-        if arrayIndex > 0 && (strcmp(tablePath, arrayPath) || startsWith(tablePath, arrayPath + "."))
-            % Array element update (direct or nested table within array)
-            % Use array-aware navigation for nested arrays
-            currentArray = getArrayAtPath(rootData, arrayPath, arrayOfTables);
-
-            % Get the array element
-            element = currentArray(arrayIndex);
-
-            if strcmp(tablePath, arrayPath)
-                % Direct array element field
-                element.(key) = value;
-            else
-                % Nested table within array element - use helper for value semantics
-                relativePath = extractAfter(tablePath, arrayPath + ".");
-                relativeKeys = split(relativePath, ".");
-                element = setNestedValue(element, relativeKeys, key, value);
-            end
-
-            % Write the modified element back to the array
-            currentArray(arrayIndex) = element;
-            rootData = setArrayAtPath(rootData, arrayPath, arrayOfTables, currentArray);
-            tableRef = currentArray(arrayIndex);
-        elseif strlength(tablePath) == 0
-            rootData = tableRef;
-        else
-            pathKeys = split(tablePath, ".");
-            rootData = setDataPath(rootData, pathKeys, tableRef);
-        end
+        value = setDottedValue(subTable, keys(2:end), value);
     end
+
+    tableRef.(key) = value;
+
+    % Update in rootData (value semantics require explicit write-back)
+    if arrayIndex > 0 && (tablePath == arrayPath || startsWith(tablePath, arrayPath + "."))
+        % Array element update (direct or nested table within array)
+        % Use array-aware navigation for nested arrays
+        currentArray = getArrayAtPath(rootData, arrayPath, arrayOfTables);
+
+        % Get the array element
+        element = currentArray(arrayIndex);
+
+        if tablePath == arrayPath
+            % Direct array element field
+            element.(key) = value;
+            tableRef = element;
+        else
+            % Nested table within array element - use helper for value semantics
+            relativePath = extractAfter(tablePath, arrayPath + ".");
+            relativeKeys = split(relativePath, ".");
+            element = setNestedValue(element, relativeKeys, key, value);
+            tableRef = getDataPathFromObj(element, relativePath);
+        end
+
+        % Write the modified element back to the array
+        currentArray(arrayIndex) = element;
+        rootData = setArrayAtPath(rootData, arrayPath, arrayOfTables, currentArray);
+    elseif strlength(tablePath) == 0
+        rootData = tableRef;
+    else
+        pathKeys = split(tablePath, ".");
+        rootData = setDataPath(rootData, pathKeys, tableRef);
+    end
+end
+
+function data = setDottedValue(data, keyParts, value)
+    % Set value at the path given by the parts of a dotted key, creating
+    % intermediate tables that do not exist yet
+    key = cleanKey(keyParts(1));
+    if isscalar(keyParts)
+        data.(key) = value;
+        return;
+    end
+
+    if isfield(data, key)
+        nestedData = data.(key);
+    else
+        nestedData = matlab.io.config.TOMLData;
+    end
+    data.(key) = setDottedValue(nestedData, keyParts(2:end), value);
 end
 
 function data = setDataPath(data, pathKeys, value)
@@ -498,25 +500,6 @@ function data = setDataPath(data, pathKeys, value)
             data.(key) = setDataPath(data.(key), pathKeys(2:end), value);
         else
             data.(key) = setDataPath(matlab.io.config.TOMLData, pathKeys(2:end), value);
-        end
-    end
-end
-
-function data = updateDataPath(data, pathKeys, value, levelsFromEnd)
-    % Update data at given path
-    if levelsFromEnd == 0
-        data = value;
-        return;
-    end
-
-    key = char(cleanKey(pathKeys(1)));
-    if isscalar(pathKeys)
-        data.(key) = value;
-    else
-        if isfield(data, key)
-            data.(key) = updateDataPath(data.(key), pathKeys(2:end), value, levelsFromEnd - 1);
-        else
-            data.(key) = updateDataPath(matlab.io.config.TOMLData, pathKeys(2:end), value, levelsFromEnd - 1);
         end
     end
 end

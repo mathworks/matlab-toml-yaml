@@ -15,9 +15,9 @@ classdef readtomlParserTest < ConfigurationFileTestCase
     %     208-209, 232-233, 410-411) protect against a call the callers never
     %     make: each one is entered under a numel(pathKeys) > 1 test and
     %     recurses with pathKeys(2:end) only while more than one key remains.
-    %   - The missing-intermediate branches of setDataPath (512) and
-    %     updateDataPath (526) cannot fire, because every table path is
-    %     created by ensureDataPath before either is called.
+    %   - The missing-intermediate branch of setDataPath (512) cannot fire,
+    %     because every table path is created by ensureDataPath before it
+    %     is called.
     %   - The empty-element branch of parseArray (767) is unreachable:
     %     parseArray returns early when the bracket content is empty, and for
     %     any non-empty content splitArrayElements yields at least one

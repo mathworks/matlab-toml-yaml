@@ -220,17 +220,16 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
         end
 
         function testDottedKeyInsideTablePreservesLevels(testCase)
-
             file = testCase.writeToml(["[tool]"; "a.b.c = 1"]);
 
             config = readtoml(file);
 
             testCase.verifyEqual(keys(config.tool.a.b), "c", ...
                 "Middle level of a dotted key is preserved");
+            testCase.verifyEqual(config.tool.a.b.c, 1);
         end
 
         function testDottedKeyInsideTablePreservesSiblingKeys(testCase)
-
             file = testCase.writeToml([...
                 "[tool]"; "name = ""alpha"""; "a.b = 1"]);
 
@@ -238,6 +237,38 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
 
             testCase.verifyEqual(keys(config.tool), ["name" "a"], ...
                 "Dotted key preserves the keys written before it");
+            testCase.verifyEqual(config.tool.name, "alpha");
+            testCase.verifyEqual(config.tool.a.b, 1);
+        end
+
+        function testDottedKeyInsideDeepTableHeader(testCase)
+            % Issue #54: a dotted key under a multi-level header errored
+            % because the write-back replaced an ancestor of the header table.
+            file = testCase.writeToml(["[a.b]"; "c.d = 5"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(config.a.b.c.d, 5);
+        end
+
+        function testDottedKeysInsideDeepTableHeaderPreserveSiblingKeys(testCase)
+            file = testCase.writeToml([...
+                "[a.b]"; ...
+                "x = 1"; ...
+                "c.d = 5"; ...
+                "c.e = 6"; ...
+                "y = 2"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(keys(config.a.b), ["x" "c" "y"], ...
+                "Dotted keys preserve the keys written around them");
+            testCase.verifyEqual(keys(config.a.b.c), ["d" "e"], ...
+                "The second dotted key reuses the intermediate table");
+            testCase.verifyEqual(config.a.b.x, 1);
+            testCase.verifyEqual(config.a.b.c.d, 5);
+            testCase.verifyEqual(config.a.b.c.e, 6);
+            testCase.verifyEqual(config.a.b.y, 2);
         end
 
         function testDottedKeyInsideArrayElementPreservesLevels(testCase)
@@ -246,8 +277,40 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
             config = readtoml(file);
 
             testCase.verifyEqual(keys(config.tool.a.b), "c", ...
-                "Middle levels of a dotted key are preserved.");
+                "Middle levels of a dotted key are preserved");
+            testCase.verifyEqual(config.tool.a.b.c, 1);
         end
 
+        function testDottedKeyIsPerArrayElement(testCase)
+            % A dotted key used to be written to every element of the array.
+            file = testCase.writeToml([...
+                "[[tool]]"; ...
+                "n = 1"; ...
+                "[[tool]]"; ...
+                "n = 2"; ...
+                "a.b = 2"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(keys(config.tool(1)), "n", ...
+                "The first element should not get the second element's key");
+            testCase.verifyEqual(config.tool(2).a.b, 2);
+        end
+
+        function testDottedKeysInsideTableInArrayElement(testCase)
+            file = testCase.writeToml([...
+                "[[tool]]"; ...
+                "[tool.sub]"; ...
+                "z = 0"; ...
+                "x.y = 1"; ...
+                "x.w = 2"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(keys(config.tool.sub), ["z" "x"]);
+            testCase.verifyEqual(keys(config.tool.sub.x), ["y" "w"], ...
+                "The second dotted key reuses the intermediate table");
+            testCase.verifyEqual(config.tool.sub.x.w, 2);
+        end
     end
 end
