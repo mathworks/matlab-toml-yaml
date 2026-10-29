@@ -219,38 +219,35 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
                 "The second key should be added to the existing table");
         end
 
-        function testDottedKeyInsideTableLosesLevels(testCase)
-            % Issue #43: the write-back depth counts only the dotted key, not
-            % the enclosing table path, so the inner table overwrites an
-            % ancestor. Expect config.tool.a.b.c once #43 is fixed.
+        function testDottedKeyInsideTablePreservesLevels(testCase)
+
             file = testCase.writeToml(["[tool]"; "a.b.c = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool.a), "c", ...
-                "Issue #43: the middle level of a dotted key is dropped");
+            testCase.verifyEqual(keys(config.tool.a.b), "c", ...
+                "Middle level of a dotted key is preserved");
         end
 
-        function testDottedKeyInsideTableDiscardsSiblingKeys(testCase)
-            % Issue #43: the same mis-aimed write replaces the table that held
-            % the sibling keys. Expect ["name", "a"] once #43 is fixed.
+        function testDottedKeyInsideTablePreservesSiblingKeys(testCase)
+
             file = testCase.writeToml([...
                 "[tool]"; "name = ""alpha"""; "a.b = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool), "b", ...
-                "Issue #43: a dotted key wipes the keys written before it");
+            testCase.verifyEqual(keys(config.tool), ["name" "a"], ...
+                "Dotted key preserves the keys written before it");
         end
 
-        function testDottedKeyInsideArrayElementLosesLevels(testCase)
-            % Issue #43: array elements take the same path as plain tables.
+        function testDottedKeyInsideArrayElementPreservesLevels(testCase)
             file = testCase.writeToml(["[[tool]]"; "a.b.c = 1"]);
 
             config = readtoml(file);
 
-            testCase.verifyEqual(keys(config.tool.a), "c", ...
-                "Issue #43: the middle level of a dotted key is dropped");
+            testCase.verifyEqual(keys(config.tool.a.b), "c", ...
+                "Middle levels of a dotted key are preserved.");
         end
+
     end
 end
