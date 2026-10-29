@@ -468,7 +468,7 @@ function [rootData, tableRef] = parseKeyValue(rootData, tableRef, tablePath, arr
     elseif strlength(tablePath) == 0
         rootData = tableRef;
     else
-        pathKeys = split(tablePath, ".");
+        pathKeys = splitDottedKey(tablePath);
         rootData = setDataPath(rootData, pathKeys, tableRef);
     end
 end

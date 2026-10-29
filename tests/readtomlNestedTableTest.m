@@ -241,6 +241,15 @@ classdef readtomlNestedTableTest < ConfigurationFileTestCase
             testCase.verifyEqual(config.tool.a.b, 1);
         end
 
+        function testDottedKeyInsideQuotedTableHeader(testCase)
+            file = testCase.writeToml(["[""a.b""]"; "c.d = 5"]);
+
+            config = readtoml(file);
+
+            testCase.verifyEqual(keys(config), "a.b");
+            testCase.verifyEqual(config.("a.b").c.d, 5);
+        end
+
         function testDottedKeyInsideDeepTableHeader(testCase)
             % Issue #54: a dotted key under a multi-level header errored
             % because the write-back replaced an ancestor of the header table.
