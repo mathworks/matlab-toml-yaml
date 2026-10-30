@@ -132,11 +132,19 @@ jobs:
         with:
           name: MATLAB_Toolbox_for_TOML_and_YAML.mltbx
 
-      - name: Create GitHub release
+      # Create a draft; an admin reviews and publishes it (published releases are immutable).
+      - name: Create draft GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" MATLAB_Toolbox_for_TOML_and_YAML.mltbx \
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes
+            --generate-notes \
+            --draft
+          {
+            echo "Draft release created for \`$GITHUB_REF_NAME\`. Verify the asset digest before publishing:"
+            echo '```'
+            sha256sum MATLAB_Toolbox_for_TOML_and_YAML.mltbx
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
