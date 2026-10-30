@@ -47,5 +47,19 @@ All work must be done on a branch, not on main. Create a new branch for new work
 - Run `buildtool test` and verify that code coverage has not regressed compared to the base branch.
 - Before starting work on an issue, review all open and closed issues, discussions, and other open branches to check for prior work, related decisions, or overlapping efforts.
 
+## Releasing
+**Repository admins only.** A tag ruleset restricts tag creation to admins.
+
+1. Tag the release commit on `main` and push the tag. The toolbox version comes from the tag.
+   ```
+   git checkout main && git pull
+   git tag v0.1.5
+   git push origin v0.1.5
+   ```
+2. CI runs the tests, packages the `.mltbx`, and creates a **draft** release.
+3. Open the draft under **Releases**. Check that the `.mltbx` digest matches the SHA-256 in the `release` job summary, edit the notes if needed, and click **Publish**.
+
+Published releases are immutable, and their version cannot be reused. If the draft is wrong, delete the draft and the tag (`git push origin :v0.1.5`), fix the issue, and tag again.
+
 
 **Again, thanks for contributing, and we look forward to your issues and pull requests!**
