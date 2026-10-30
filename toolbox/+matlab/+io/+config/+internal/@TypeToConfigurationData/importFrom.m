@@ -6,6 +6,10 @@ function obj = importFrom(obj, inputData)
     %   For struct arrays, returns an array of ConfigurationData objects
     %   with the same shape as the input struct array.
 
+    % Clear obj since it is being unconditionally overridden in this
+    % function.
+    obj = matlab.io.config.internal.createArray(obj);
+
     if isstruct(inputData)
         if ~isscalar(inputData)
             arr(numel(inputData)) = matlab.io.config.internal.createArray(obj);

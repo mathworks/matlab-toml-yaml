@@ -2,9 +2,8 @@ classdef dataConstructorTest < matlab.unittest.TestCase
     % Tests for the yamldata() and tomldata() constructor functions and the
     % importFrom conversion they delegate to.
     %
-    % Nested structs and dictionaries as *values* are not covered here
-    % because importing them is broken (issue #20); only flat inputs and the
-    % cell-valued dictionary form work today.
+    % Nested structs and dictionaries as *values* are covered in
+    % siblingStructImportTest.
 
     properties(TestParameter)
         % Each constructor paired with the class it should produce.
