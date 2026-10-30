@@ -68,7 +68,7 @@ function mltbxTask(~)
     if ~isMATLABReleaseOlderThan("R2026b")
         opts.PackageName = "tomlyaml";
     end
-    opts.ToolboxVersion = "0.1.4";
+    opts.ToolboxVersion = toolboxVersion();
     opts.MinimumMatlabRelease = "R2022b";
     opts.OutputFile = fullfile("release", "MATLAB_Toolbox_for_TOML_and_YAML.mltbx");
     opts.Summary = "Read and write TOML and YAML configuration files with dot notation access.";
@@ -78,6 +78,22 @@ function mltbxTask(~)
     opts.AuthorCompany = "MathWorks";
     opts.AuthorName = "Aylin Dmello, Jeremy Hughes, Michelle Hirsch";
     matlab.addons.toolbox.packageToolbox(opts);
+end
+
+function versionNumber = toolboxVersion()
+    % Toolbox version: TOOLBOX_VERSION (set by CI from the pushed tag), else
+    % the most recent vX.Y.Z git tag. Errors if neither is available.
+    versionNumber = string(getenv("TOOLBOX_VERSION"));
+    if versionNumber ~= ""
+        return
+    end
+    [status, output] = system("git describe --tags --abbrev=0 --match ""v[0-9]*""");
+    if status ~= 0
+        error("buildfile:NoToolboxVersion", ...
+            "Unable to determine toolbox version. Set TOOLBOX_VERSION " + ...
+            "or run from a git checkout with vX.Y.Z tags.\ngit: %s", strtrim(output));
+    end
+    versionNumber = extractAfter(strtrim(string(output)), "v");
 end
 
 %% ---- Formatting and static analysis ----------------------------------------
