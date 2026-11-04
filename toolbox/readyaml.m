@@ -140,7 +140,7 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
         end
 
         % Check if this is a list item
-        if startsWith(trimmedLine, '-')
+        if startsWith(trimmedLine, '- ')
             % This is a sequence (array)
             itemContent = strtrim(trimmedLine(2:end));
 
@@ -191,11 +191,11 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
                             values{end+1} = value; %#ok<AGROW>
                         else
                             fields{end+1} = key; %#ok<AGROW>
-                            values{end+1} = []; %#ok<AGROW>
+                            values{end+1} = missing; %#ok<AGROW>
                         end
                     else
                         fields{end+1} = key; %#ok<AGROW>
-                        values{end+1} = []; %#ok<AGROW>
+                        values{end+1} = missing; %#ok<AGROW>
                     end
                 else
                     % Value is on same line
