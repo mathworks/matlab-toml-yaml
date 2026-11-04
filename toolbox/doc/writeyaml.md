@@ -156,8 +156,9 @@ MATLAB types are converted to YAML as follows:
 - Converted to YAML sequences
 - Can contain mixed types
 
-**Empty arrays:**
-- `[]` → `[]` (empty sequence)
+**Missing and empty values:**
+- `missing` → `null`
+- `[]` and other empty arrays → `null`
 
 ### Special Characters in Keys
 

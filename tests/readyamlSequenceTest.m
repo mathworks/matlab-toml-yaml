@@ -25,7 +25,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
         function testItemKeyWithNoValueAndNoDeeperIndent(testCase)
             % "notes:" has nothing indented under it, so the item key is
-            % created with a missing value.
+            % created with an empty value.
             file = testCase.writeText([...
                 "servers:"; ...
                 "  - name: alpha"; ...
@@ -36,7 +36,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             testCase.verifyTrue(iskey(config.servers(1), "notes"), ...
                 "The valueless key should still be created");
-            testCase.verifyEqual(config.servers(1).notes, missing);
+            testCase.verifyEmpty(config.servers(1).notes);
             testCase.verifyEqual(config.servers(1).port, 80, ...
                 "Parsing should continue past the valueless key");
         end
@@ -52,7 +52,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
             config = readyaml(file);
 
             testCase.verifyTrue(iskey(config.servers, "notes"));
-            testCase.verifyEqual(config.servers.notes, missing);
+            testCase.verifyEmpty(config.servers.notes);
         end
 
         function testItemKeyWithNestedBlock(testCase)
@@ -212,7 +212,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
             testCase.verifyEqual(config.next, 1);
         end
 
-        function testBareDashItemIsMissing(testCase)
+        function testBareDashItemIsEmpty(testCase)
             file = testCase.writeText([...
                 "items:"; ...
                 "- a"; ...
@@ -221,7 +221,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {"a", missing, "c"});
+            testCase.verifyEqual(config.items, {"a", [], "c"});
         end
 
         function testDashWithoutSpaceIsMappingKey(testCase)

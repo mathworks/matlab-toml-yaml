@@ -143,6 +143,7 @@ YAML values are converted to MATLAB types as follows:
 
 **Null values:**
 - `null`, `~`, empty value → `[]`
+- A bare `-` sequence item → `[]`
 
 **Numbers:**
 - Automatically detected and converted to numeric values
@@ -153,7 +154,7 @@ YAML values are converted to MATLAB types as follows:
 
 **Arrays:**
 - Flow-style: `[item1, item2, item3]`
-- Block-style: List items starting with `-`
+- Block-style: List items starting with `- `. Items may be indented under their parent key or start at the same indentation as the key (indentless sequences).
 - Both styles support ArrayType conversion
 
 ### Array Conversion Details
@@ -178,6 +179,7 @@ most commonly used in configuration files. It is **not** a fully compliant YAML
 - **Complex keys** are not supported; mapping keys must be scalar strings.
 - **Flow-style mappings** (e.g. `{name: value}`) are not robustly parsed; use block style. Nested flow-style sequences (e.g. `[[1,2],[3,4]]`) are also not fully supported.
 - **Block scalars** (`|` and `>`) are not explicitly supported and may be parsed incorrectly.
+- **Multi-line plain scalars** are not supported; continuation lines are ignored.
 - **Timestamps** are detected heuristically with a regular expression covering a subset of ISO 8601 (only when `DatetimeType="datetime"`); other date/time formats are read as strings.
 - **Comments** (`#`) are removed during parsing and not preserved when writing.
 

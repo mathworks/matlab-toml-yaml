@@ -414,7 +414,7 @@ classdef yamltest < matlab.unittest.TestCase
 
             data = readyaml(filename);
 
-            testCase.verifyEqual(data.nullValue, missing);
+            testCase.verifyTrue(isempty(data.nullValue));
         end
 
         %% Roundtrip Tests with Sample Files
