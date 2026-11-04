@@ -84,9 +84,9 @@ function data = parseYAML(yamlText, arrayFormat, datetimeType)
     % Split into lines
     lines = splitlines(yamlText);
 
-    % Remove empty lines and comments
-    lines = lines(strlength(strtrim(lines)) > 0);
+    % Remove comments, then empty lines, including comment-only lines
     lines = removeComments(lines);
+    lines = lines(strlength(strtrim(lines)) > 0);
 
     % Parse the YAML structure
     [data, ~] = parseBlock(lines, 1, 0, arrayFormat, datetimeType);
@@ -127,17 +127,11 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
         indent = getIndentation(line);
 
         % If indentation is less than base, we're done with this block
-        if indent < baseIndent && ~isempty(strtrim(line))
+        if indent < baseIndent
             break;
         end
 
         trimmedLine = strtrim(line);
-
-        % Skip empty lines
-        if isempty(trimmedLine)
-            nextLine = nextLine + 1;
-            continue;
-        end
 
         % A block is either a sequence or a mapping. Once a sequence has
         % started, a non-item line at the sequence's own indentation ends
@@ -195,28 +189,14 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
 
                 if isempty(valueStr)
                     % Value is on next line(s)
-                    nextLine = nextLine + 1;
-                    if nextLine <= length(lines)
-                        nextIndent = getIndentation(lines{nextLine});
-                        if nextIndent > indent || isIndentlessSequence(lines{nextLine}, indent)
-                            [value, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
-                            fields{end+1} = key; %#ok<AGROW>
-                            values{end+1} = value; %#ok<AGROW>
-                        else
-                            fields{end+1} = key; %#ok<AGROW>
-                            values{end+1} = []; %#ok<AGROW>
-                        end
-                    else
-                        fields{end+1} = key; %#ok<AGROW>
-                        values{end+1} = []; %#ok<AGROW>
-                    end
+                    [value, nextLine] = parseNestedValue(lines, nextLine + 1, indent, arrayFormat, datetimeType);
                 else
                     % Value is on same line
                     value = parseValue(valueStr, arrayFormat, datetimeType);
-                    fields{end+1} = key; %#ok<AGROW>
-                    values{end+1} = value; %#ok<AGROW>
                     nextLine = nextLine + 1;
                 end
+                fields{end+1} = key; %#ok<AGROW>
+                values{end+1} = value; %#ok<AGROW>
             else
                 % Not a key-value pair, skip
                 nextLine = nextLine + 1;
@@ -278,11 +258,17 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
     firstKey = strtrim(itemContent(1:colonIdx-1));
     firstValueStr = strtrim(itemContent(colonIdx+1:end));
 
-    % Start building the mapping
+    % Start building the mapping. A first key with no inline value takes
+    % its value from the following lines, measured from the key's column.
+    if isempty(firstValueStr)
+        keyIndent = dashIndent + 1 + getIndentation(trimmedLine(2:end));
+        [firstValue, nextLine] = parseNestedValue(lines, startLine + 1, keyIndent, arrayFormat, datetimeType);
+    else
+        firstValue = parseValue(firstValueStr, arrayFormat, datetimeType);
+        nextLine = startLine + 1;
+    end
     itemFields = {firstKey};
-    itemValues = {parseValue(firstValueStr, arrayFormat, datetimeType)};
-
-    nextLine = startLine + 1;
+    itemValues = {firstValue};
 
     % Continue reading keys at the proper indentation level
     % Keys that belong to this list item will be indented MORE than the dash
@@ -293,14 +279,8 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
         trimmedLine = strtrim(line);
 
         % Stop if we've dedented to or past the dash level
-        if lineIndent <= dashIndent && ~isempty(trimmedLine)
+        if lineIndent <= dashIndent
             break;
-        end
-
-        % Skip empty lines
-        if isempty(trimmedLine)
-            nextLine = nextLine + 1;
-            continue;
         end
 
         % Stop if we hit another list item
@@ -316,28 +296,14 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
 
             if isempty(valueStr)
                 % Value on next line(s) - nested structure
-                nextLine = nextLine + 1;
-                if nextLine <= length(lines)
-                    nextIndent = getIndentation(lines{nextLine});
-                    if nextIndent > lineIndent || isIndentlessSequence(lines{nextLine}, lineIndent)
-                        [value, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
-                        itemFields{end+1} = key; %#ok<AGROW>
-                        itemValues{end+1} = value; %#ok<AGROW>
-                    else
-                        itemFields{end+1} = key; %#ok<AGROW>
-                        itemValues{end+1} = []; %#ok<AGROW>
-                    end
-                else
-                    itemFields{end+1} = key; %#ok<AGROW>
-                    itemValues{end+1} = []; %#ok<AGROW>
-                end
+                [value, nextLine] = parseNestedValue(lines, nextLine + 1, lineIndent, arrayFormat, datetimeType);
             else
                 % Value on same line
                 value = parseValue(valueStr, arrayFormat, datetimeType);
-                itemFields{end+1} = key; %#ok<AGROW>
-                itemValues{end+1} = value; %#ok<AGROW>
                 nextLine = nextLine + 1;
             end
+            itemFields{end+1} = key; %#ok<AGROW>
+            itemValues{end+1} = value; %#ok<AGROW>
         else
             % Not a key-value pair, skip
             nextLine = nextLine + 1;
@@ -348,6 +314,21 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
     itemData = matlab.io.config.YAMLData;
     for i = 1:length(itemFields)
         itemData.(itemFields{i}) = itemValues{i};
+    end
+end
+
+function [value, nextLine] = parseNestedValue(lines, nextLine, keyIndent, arrayFormat, datetimeType)
+    %PARSENESTEDVALUE Parse the value of a key whose value starts on a later line
+    %   NEXTLINE is the line after the key. The value is the block indented
+    %   deeper than the key, or an indentless sequence at the key's
+    %   indentation. Otherwise, the key has no value and VALUE is [].
+    value = [];
+    if nextLine > length(lines)
+        return;
+    end
+    nextIndent = getIndentation(lines{nextLine});
+    if nextIndent > keyIndent || isIndentlessSequence(lines{nextLine}, keyIndent)
+        [value, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
     end
 end
 
@@ -367,9 +348,9 @@ end
 
 function tf = isSequenceItem(trimmedLine)
     %ISSEQUENCEITEM True if a trimmed line is a block sequence entry
-    %   A dash starts a sequence entry only when followed by a space or the
-    %   end of the line, so keys such as "-key: 1" remain mapping keys.
-    tf = startsWith(trimmedLine, "- ") || trimmedLine == "-";
+    %   A dash starts a sequence entry only when followed by a space, a tab,
+    %   or the end of the line, so keys such as "-key: 1" remain mapping keys.
+    tf = startsWith(trimmedLine, ["- ", "-" + char(9)]) || trimmedLine == "-";
 end
 
 function tf = isIndentlessSequence(line, keyIndent)
@@ -394,6 +375,9 @@ function value = consolidateArray(parsedItems, arrayFormat)
         allText = true; allNumeric = true; allLogical = true;
         for iVal = 1:numel(parsedItems)
             v = parsedItems{iVal};
+            % Empty (null) items would be dropped by concatenation, so
+            % keep the sequence as a cell array to preserve them
+            if isempty(v); allText = false; allNumeric = false; allLogical = false; break; end
             if ~(ischar(v) || isstring(v)); allText = false; end
             if ~isnumeric(v); allNumeric = false; end
             if ~islogical(v); allLogical = false; end

@@ -164,6 +164,7 @@ When `ArrayType` is `"auto"` (default), arrays are converted based on element ty
 - All elements text → column string array
 - All elements logical → column logical array
 - Mixed element types → column cell array
+- Any null element (`null`, `~`, or a bare `-`) → cell array, so null elements are preserved
 
 All arrays are returned as column vectors for consistency.
 
