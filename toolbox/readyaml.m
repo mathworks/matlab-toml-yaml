@@ -341,13 +341,22 @@ end
 function indent = getIndentation(line)
     %GETINDENTATION Get number of leading spaces
     indent = 0;
+
+    % Account for implicit indentation in the top-level sequence under a
+    % mapping. E.g.:
+    % A:
+    % - B
+    % - C
+    if startsWith(line, "- ")
+        indent = 1;
+        return
+    end
+
     for i = 1:length(line)
         if line(i) == ' '
             indent = indent + 1;
         elseif line(i) == char(9) % tab
             indent = indent + 4; % Count tab as 4 spaces
-        elseif (length(line) >= i+1) && (line(i) == '-') && (line(i+1) == ' ') % sequence inside mapping.
-            indent = indent + 1;
         else
             break;
         end
