@@ -291,7 +291,7 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
         end
 
         % Stop if we hit another list item
-        if startsWith(trimmedLine, '-')
+        if startsWith(trimmedLine, '- ')
             break;
         end
 
@@ -312,11 +312,11 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
                         itemValues{end+1} = value; %#ok<AGROW>
                     else
                         itemFields{end+1} = key; %#ok<AGROW>
-                        itemValues{end+1} = []; %#ok<AGROW>
+                        itemValues{end+1} = missing; %#ok<AGROW>
                     end
                 else
                     itemFields{end+1} = key; %#ok<AGROW>
-                    itemValues{end+1} = []; %#ok<AGROW>
+                    itemValues{end+1} = missing; %#ok<AGROW>
                 end
             else
                 % Value on same line
@@ -347,7 +347,7 @@ function indent = getIndentation(line)
     % A:
     % - B
     % - C
-    if startsWith(line, "- ")
+    if startsWith(line, "- ") || line == "-" % Top-level sequence with Missing content.
         indent = 1;
         return
     end
@@ -442,7 +442,7 @@ function value = parseValue(valueStr, arrayFormat, datetimeType)
             value = false;
             return;
         case {'null', '~', ''}
-            value = [];
+            value = missing;
             return;
     end
 
