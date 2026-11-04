@@ -346,6 +346,8 @@ function indent = getIndentation(line)
             indent = indent + 1;
         elseif line(i) == char(9) % tab
             indent = indent + 4; % Count tab as 4 spaces
+        elseif (length(line) >= i+1) && (line(i) == '-') && (line(i+1) == ' ') % sequence inside mapping.
+            indent = indent + 1;
         else
             break;
         end
