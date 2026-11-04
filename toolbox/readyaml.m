@@ -325,11 +325,11 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
                         itemValues{end+1} = value; %#ok<AGROW>
                     else
                         itemFields{end+1} = key; %#ok<AGROW>
-                        itemValues{end+1} = missing; %#ok<AGROW>
+                        itemValues{end+1} = []; %#ok<AGROW>
                     end
                 else
                     itemFields{end+1} = key; %#ok<AGROW>
-                    itemValues{end+1} = missing; %#ok<AGROW>
+                    itemValues{end+1} = []; %#ok<AGROW>
                 end
             else
                 % Value on same line
@@ -461,7 +461,7 @@ function value = parseValue(valueStr, arrayFormat, datetimeType)
             value = false;
             return;
         case {'null', '~', ''}
-            value = missing;
+            value = [];
             return;
     end
 
