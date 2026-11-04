@@ -164,7 +164,9 @@ When `ArrayType` is `"auto"` (default), arrays are converted based on element ty
 - All elements text → column string array
 - All elements logical → column logical array
 - Mixed element types → column cell array
-- Any null element (`null`, `~`, or a bare `-`) → cell array, so null elements are preserved
+- Any null element (`null`, `~`, or a bare `-`) → column cell array, so null elements are preserved
+
+Flow-style and block-style sequences have the same orientation, including when `ArrayType` is `"cell"`.
 
 All arrays are returned as column vectors for consistency.
 

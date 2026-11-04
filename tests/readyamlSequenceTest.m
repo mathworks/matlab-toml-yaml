@@ -126,7 +126,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
             config = readyaml(file);
 
             testCase.verifyClass(config.servers, "cell");
-            testCase.verifySize(config.servers, [1 2]);
+            testCase.verifySize(config.servers, [2 1]);
             mapping = config.servers{1};
             testCase.verifyEqual(keys(mapping), "name", ...
                 "The stray marker should not become a key of the mapping");
@@ -220,7 +220,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {"a", [], "c"});
+            testCase.verifyEqual(config.items, {"a"; []; "c"});
         end
 
         function testBareDashInNumericSequenceIsKept(testCase)
@@ -234,7 +234,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {1, [], 3});
+            testCase.verifyEqual(config.items, {1; []; 3});
         end
 
         function testAllBareDashSequenceKeepsItems(testCase)
@@ -245,7 +245,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {[], []});
+            testCase.verifyEqual(config.items, {[]; []});
         end
 
         function testTabAfterDashIsSequenceItem(testCase)
@@ -316,6 +316,66 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             testCase.verifyEqual(config.jobs.limits.cpu, 2);
             testCase.verifyEqual(config.jobs.timeout, 10);
+        end
+
+        function testInlineCommentOnNestedSequenceItem(testCase)
+            % Stripping a comment must not strip the line's indentation.
+            file = testCase.writeText([...
+                "outer:"; ...
+                "  items:"; ...
+                "  - a # comment"; ...
+                "  - b"; ...
+                "  next: 1"]);
+
+            config = readyaml(file);
+
+            testCase.verifyEqual(config.outer.items, ["a"; "b"]);
+            testCase.verifyEqual(config.outer.next, 1);
+        end
+
+        function testInlineCommentOnNestedMappingValue(testCase)
+            file = testCase.writeText([...
+                "outer:"; ...
+                "  inner:"; ...
+                "    port: 80 # comment"; ...
+                "    host: local"; ...
+                "  next: 1"]);
+
+            config = readyaml(file);
+
+            testCase.verifyEqual(config.outer.inner.port, 80);
+            testCase.verifyEqual(config.outer.inner.host, "local");
+            testCase.verifyEqual(config.outer.next, 1);
+        end
+
+        % --- Orientation ---------------------------------------------------
+
+        function testFlowAndBlockCellSequencesAreColumns(testCase)
+            file = testCase.writeText([...
+                "flow: [1, null, 3]"; ...
+                "block:"; ...
+                "- 1"; ...
+                "-"; ...
+                "- 3"]);
+
+            config = readyaml(file);
+
+            testCase.verifyEqual(config.flow, {1; []; 3});
+            testCase.verifyEqual(config.block, config.flow, ...
+                "Flow and block sequences should have the same orientation");
+        end
+
+        function testBlockSequenceWithCellArrayTypeIsColumn(testCase)
+            file = testCase.writeText([...
+                "flow: [a, b]"; ...
+                "block:"; ...
+                "- a"; ...
+                "- b"]);
+
+            config = readyaml(file, ArrayType="cell");
+
+            testCase.verifyEqual(config.flow, {"a"; "b"});
+            testCase.verifyEqual(config.block, config.flow);
         end
 
         function testDashWithoutSpaceIsMappingKey(testCase)

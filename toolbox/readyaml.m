@@ -106,7 +106,9 @@ function lines = removeComments(lines)
             elseif inQuotes && line(j) == quoteChar
                 inQuotes = false;
             elseif ~inQuotes && line(j) == '#'
-                lines{i} = strtrim(line(1:j-1));
+                % Trim only trailing whitespace; leading whitespace is
+                % the line's indentation
+                lines{i} = strip(line(1:j-1), "right");
                 break;
             end
         end
@@ -207,7 +209,10 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
     % Convert to appropriate return type
     if isempty(fields)
         if ~isempty(values)
-            % This is a sequence
+            % This is a sequence. Use a column, like flow-style sequences,
+            % so cell results are column vectors too.
+            values = values(:);
+
             % If all values are YAMLData or ConfigurationData, handle based on arrayFormat
             allConfig = true;
             for iVal = 1:numel(values)
