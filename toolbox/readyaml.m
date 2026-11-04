@@ -180,10 +180,10 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
                         [itemValue, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
                         values{end+1} = itemValue; %#ok<AGROW>
                     else
-                        values{end+1} = missing; %#ok<AGROW>
+                        values{end+1} = []; %#ok<AGROW>
                     end
                 else
-                    values{end+1} = missing; %#ok<AGROW>
+                    values{end+1} = []; %#ok<AGROW>
                 end
             end
         else
@@ -204,11 +204,11 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
                             values{end+1} = value; %#ok<AGROW>
                         else
                             fields{end+1} = key; %#ok<AGROW>
-                            values{end+1} = missing; %#ok<AGROW>
+                            values{end+1} = []; %#ok<AGROW>
                         end
                     else
                         fields{end+1} = key; %#ok<AGROW>
-                        values{end+1} = missing; %#ok<AGROW>
+                        values{end+1} = []; %#ok<AGROW>
                     end
                 else
                     % Value is on same line
