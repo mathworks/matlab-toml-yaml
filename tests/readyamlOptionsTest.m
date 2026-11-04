@@ -115,22 +115,22 @@ classdef readyamlOptionsTest < ConfigurationFileTestCase
 
         % --- Incomplete and unrecognized lines ----------------------------
 
-        function testKeyWithNoValueAtEndOfFileIsEmpty(testCase)
+        function testKeyWithNoValueAtEndOfFileIsMissing(testCase)
             file = testCase.writeText(["host: local"; "trailing:"]);
 
             config = readyaml(file);
 
             testCase.verifyTrue(iskey(config, "trailing"), ...
                 "A trailing key with no value should still be created");
-            testCase.verifyEmpty(config.trailing);
+            testCase.verifyEqual(config.trailing, missing);
         end
 
-        function testKeyWithNoValueAndNoDeeperIndentIsEmpty(testCase)
+        function testKeyWithNoValueAndNoDeeperIndentIsMissing(testCase)
             file = testCase.writeText(["empty:"; "sibling: 1"]);
 
             config = readyaml(file);
 
-            testCase.verifyEmpty(config.empty, ...
+            testCase.verifyEqual(config.empty, missing, ...
                 "A key whose next line is not indented deeper has no value");
             testCase.verifyEqual(config.sibling, 1);
         end
