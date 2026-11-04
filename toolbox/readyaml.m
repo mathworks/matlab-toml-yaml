@@ -139,8 +139,17 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
             continue;
         end
 
+        % A block is either a sequence or a mapping. Once a sequence has
+        % started, a non-item line at the sequence's own indentation ends
+        % it. This terminates indentless sequences, whose items share the
+        % indentation of the parent key.
+        if isempty(fields) && ~isempty(values) && indent == baseIndent ...
+                && ~isSequenceItem(trimmedLine)
+            break;
+        end
+
         % Check if this is a list item
-        if startsWith(trimmedLine, '- ')
+        if isSequenceItem(trimmedLine)
             % This is a sequence (array)
             itemContent = strtrim(trimmedLine(2:end));
 
@@ -170,7 +179,11 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
                     if nextIndent > indent
                         [itemValue, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
                         values{end+1} = itemValue; %#ok<AGROW>
+                    else
+                        values{end+1} = missing; %#ok<AGROW>
                     end
+                else
+                    values{end+1} = missing; %#ok<AGROW>
                 end
             end
         else
@@ -185,7 +198,7 @@ function [data, nextLine] = parseBlock(lines, startLine, baseIndent, arrayFormat
                     nextLine = nextLine + 1;
                     if nextLine <= length(lines)
                         nextIndent = getIndentation(lines{nextLine});
-                        if nextIndent > indent
+                        if nextIndent > indent || isIndentlessSequence(lines{nextLine}, indent)
                             [value, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
                             fields{end+1} = key; %#ok<AGROW>
                             values{end+1} = value; %#ok<AGROW>
@@ -291,7 +304,7 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
         end
 
         % Stop if we hit another list item
-        if startsWith(trimmedLine, '- ')
+        if isSequenceItem(trimmedLine)
             break;
         end
 
@@ -306,7 +319,7 @@ function [itemData, nextLine] = parseListItemMapping(lines, startLine, dashInden
                 nextLine = nextLine + 1;
                 if nextLine <= length(lines)
                     nextIndent = getIndentation(lines{nextLine});
-                    if nextIndent > lineIndent
+                    if nextIndent > lineIndent || isIndentlessSequence(lines{nextLine}, lineIndent)
                         [value, nextLine] = parseBlock(lines, nextLine, nextIndent, arrayFormat, datetimeType);
                         itemFields{end+1} = key; %#ok<AGROW>
                         itemValues{end+1} = value; %#ok<AGROW>
@@ -341,17 +354,6 @@ end
 function indent = getIndentation(line)
     %GETINDENTATION Get number of leading spaces
     indent = 0;
-
-    % Account for implicit indentation in the top-level sequence under a
-    % mapping. E.g.:
-    % A:
-    % - B
-    % - C
-    if startsWith(line, "- ") || line == "-" % Top-level sequence with Missing content.
-        indent = 1;
-        return
-    end
-
     for i = 1:length(line)
         if line(i) == ' '
             indent = indent + 1;
@@ -361,6 +363,23 @@ function indent = getIndentation(line)
             break;
         end
     end
+end
+
+function tf = isSequenceItem(trimmedLine)
+    %ISSEQUENCEITEM True if a trimmed line is a block sequence entry
+    %   A dash starts a sequence entry only when followed by a space or the
+    %   end of the line, so keys such as "-key: 1" remain mapping keys.
+    tf = startsWith(trimmedLine, "- ") || trimmedLine == "-";
+end
+
+function tf = isIndentlessSequence(line, keyIndent)
+    %ISINDENTLESSSEQUENCE True if line starts a sequence at the key's indent
+    %   YAML allows a sequence value to start at the same indentation as its
+    %   parent mapping key:
+    %     key:
+    %     - a
+    %     - b
+    tf = getIndentation(line) == keyIndent && isSequenceItem(strtrim(line));
 end
 
 function value = consolidateArray(parsedItems, arrayFormat)
