@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mex.hpp"
+#include "document_handler.hpp"
 #include <string>
 
 // MATLABString is a typedef to optional<u16string>.
@@ -43,3 +44,19 @@ inline bool structHasField(
     }
     return false;
 }
+
+// Convert NodeMeta to a 1x1 struct of string fields plus a "Comments"
+// string column. Returns an empty double when the metadata is empty.
+matlab::data::Array metaToStruct(
+    matlab::data::ArrayFactory& factory, const NodeMeta& meta);
+
+// Read a metadata struct (string scalar fields plus optional Comments).
+// Anything that is not a struct yields empty metadata.
+NodeMeta structToMeta(const matlab::data::Array& arr);
+
+// Return a copy of the 1x1 struct with field `name` set to `value`.
+matlab::data::StructArray withField(
+    matlab::data::ArrayFactory& factory,
+    const matlab::data::StructArray& sa,
+    const std::string& name,
+    matlab::data::Array value);

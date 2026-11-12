@@ -27,13 +27,17 @@ class WriteTomlImpl : public DocumentHandler {
     struct ObjectFrame {
         toml::ordered_table table;
         std::string pendingKey;
+        std::vector<std::string> pendingKeyComments;
+        NodeMeta meta;
     };
     struct ArrayFrame {
         toml::ordered_array array;
+        NodeMeta meta;
     };
     using Frame = std::variant<ObjectFrame, ArrayFrame>;
     std::vector<Frame> stack;
     toml::ordered_value rootResult;
+    NodeMeta pendingMeta;
 
 public:
     explicit WriteTomlImpl(std::shared_ptr<matlab::engine::MATLABEngine> eng);
@@ -52,8 +56,13 @@ public:
     void doubleValue(double d) override;
     void stringValue(std::string_view s) override;
     void datetimeValue(std::string_view iso) override;
+    void metadata(const NodeMeta& m) override;
+    void keyMetadata(const NodeMeta& m) override;
 
 private:
+    NodeMeta takeMeta();
+    static void addComments(toml::ordered_value& val,
+                            const std::vector<std::string>& lines);
     std::string getOptionString(const matlab::data::StructArray& opts,
                                 const std::string& field);
     double getOptionDouble(const matlab::data::StructArray& opts,
@@ -63,7 +72,8 @@ private:
     void pushToParent(toml::ordered_value val);
 
     toml::ordered_value convertDouble(double v);
-    toml::string_format resolveStringFormat();
+    toml::string_format resolveStringFormat(const std::string& escapeStyle,
+                                            const std::string& layout);
     toml::array_format resolveArrayFormat(
         const toml::ordered_array& arr);
     toml::array_format resolveTableArrayFormat(

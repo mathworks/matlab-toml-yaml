@@ -146,14 +146,55 @@ void ReadYamlImpl::emitNode(ryml::ConstNodeRef node,
     }
 }
 
+// Styles recorded by rapidyaml for the node. Plain scalars and block
+// containers are the defaults and produce no metadata.
+static void emitContainerStyle(ryml::ConstNodeRef node,
+                               DocumentHandler& handler) {
+    if (node.type() & ryml::CONTAINER_STYLE_FLOW) {
+        NodeMeta m;
+        m.fields["ContainerStyle"] = "flow";
+        handler.metadata(m);
+    }
+}
+
+static void emitScalarStyle(ryml::ConstNodeRef node,
+                            DocumentHandler& handler) {
+    auto t = node.type();
+    const char* style = nullptr;
+    if (t & ryml::VAL_SQUO) style = "single-quoted";
+    else if (t & ryml::VAL_DQUO) style = "double-quoted";
+    else if (t & ryml::VAL_LITERAL) style = "literal";
+    else if (t & ryml::VAL_FOLDED) style = "folded";
+    if (style) {
+        NodeMeta m;
+        m.fields["ScalarStyle"] = style;
+        handler.metadata(m);
+    }
+}
+
+static void emitKeyStyle(ryml::ConstNodeRef node,
+                         DocumentHandler& handler) {
+    auto t = node.type();
+    const char* style = nullptr;
+    if (t & ryml::KEY_SQUO) style = "single-quoted";
+    else if (t & ryml::KEY_DQUO) style = "double-quoted";
+    if (style) {
+        NodeMeta m;
+        m.fields["KeyStyle"] = style;
+        handler.keyMetadata(m);
+    }
+}
+
 void ReadYamlImpl::emitObject(ryml::ConstNodeRef node,
                               DocumentHandler& handler) {
     size_t n = node.num_children();
+    emitContainerStyle(node, handler);
     handler.startObject(n);
 
     for (ryml::ConstNodeRef child : node.children()) {
         std::string keyStr = toStdString(child.key());
         handler.key(keyStr);
+        emitKeyStyle(child, handler);
 
         if (child.is_map()) {
             emitObject(child, handler);
@@ -176,6 +217,7 @@ void ReadYamlImpl::emitObject(ryml::ConstNodeRef node,
 void ReadYamlImpl::emitSequence(ryml::ConstNodeRef node,
                                 DocumentHandler& handler) {
     size_t count = node.num_children();
+    emitContainerStyle(node, handler);
     handler.startArray(count);
     for (ryml::ConstNodeRef child : node.children()) {
         emitNode(child, handler);
@@ -189,6 +231,8 @@ void ReadYamlImpl::emitScalar(ryml::ConstNodeRef node,
         handler.nullValue();
         return;
     }
+
+    emitScalarStyle(node, handler);
 
     if (node.is_val_quoted()) {
         std::string text = toStdString(node.val());

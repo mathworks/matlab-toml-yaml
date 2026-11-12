@@ -26,6 +26,9 @@ public:
     void stringValue(std::string_view s) override;
     void datetimeValue(std::string_view iso) override;
 
+    void metadata(const NodeMeta& m) override;
+    void keyMetadata(const NodeMeta& m) override;
+
     matlab::data::Array result();
 
 private:
@@ -34,17 +37,26 @@ private:
     struct MapFrame {
         std::vector<std::string> keys;
         std::vector<matlab::data::Array> values;
+        std::vector<NodeMeta> keyMeta;
+        NodeMeta meta;
     };
 
     struct ArrayFrame {
         std::vector<matlab::data::Array> elements;
+        NodeMeta meta;
     };
 
     using Frame = std::variant<MapFrame, ArrayFrame>;
     std::vector<Frame> stack;
     matlab::data::Array root;
 
+    // Metadata for the next scalar value (containers take it at start).
+    NodeMeta pendingMeta;
+    // Metadata of the array being finished by endArray.
+    NodeMeta arrayMeta;
+
     void pushValue(matlab::data::Array val);
+    void unwrapUniformArrayNodes(std::vector<matlab::data::Array>& elements);
 
     template<typename T>
     void consolidateTypedArray(

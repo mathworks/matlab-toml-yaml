@@ -19,10 +19,15 @@ public:
 private:
     static bool isDatetimeType(toml::value_t t);
     static std::string datetimeToString(const toml::ordered_value& val);
+    static NodeMeta valueMeta(const toml::ordered_value& val,
+                              bool includeComments);
+    static std::vector<std::string> commentLines(
+        const toml::ordered_value& val);
     void emitTable(const toml::ordered_value& table,
                    DocumentHandler& handler);
     void emitValue(const toml::ordered_value& val,
-                   DocumentHandler& handler);
+                   DocumentHandler& handler,
+                   bool includeComments);
     void emitArray(const toml::ordered_array& arr,
                    DocumentHandler& handler);
     void emitScalar(const toml::ordered_value& val,

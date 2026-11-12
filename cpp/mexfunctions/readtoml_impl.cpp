@@ -35,7 +35,7 @@ void ReadTomlImpl::execute(matlab::mex::ArgumentList outputs,
     }
 
     MatlabBuilder builder;
-    emitTable(data, builder);
+    emitValue(data, builder, true);
     outputs[0] = builder.result();
 }
 
@@ -62,6 +62,80 @@ std::string ReadTomlImpl::datetimeToString(
     }
 }
 
+std::vector<std::string> ReadTomlImpl::commentLines(
+        const toml::ordered_value& val) {
+    std::vector<std::string> lines;
+    for (const auto& c : val.comments()) {
+        std::string line = c;
+        if (!line.empty() && line[0] == '#') line.erase(0, 1);
+        if (!line.empty() && line[0] == ' ') line.erase(0, 1);
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
+
+// Record only formats that differ from the writer defaults, so files
+// without special formatting produce the same node tree as before.
+NodeMeta ReadTomlImpl::valueMeta(const toml::ordered_value& val,
+                                 bool includeComments) {
+    NodeMeta m;
+    switch (val.type()) {
+    case toml::value_t::integer:
+        switch (val.as_integer_fmt().fmt) {
+        case toml::integer_format::hex: m.fields["IntegerFormat"] = "hex"; break;
+        case toml::integer_format::oct: m.fields["IntegerFormat"] = "oct"; break;
+        case toml::integer_format::bin: m.fields["IntegerFormat"] = "bin"; break;
+        default: break;
+        }
+        break;
+    case toml::value_t::floating:
+        if (val.as_floating_fmt().fmt == toml::floating_format::scientific) {
+            m.fields["FloatFormat"] = "scientific";
+        }
+        break;
+    case toml::value_t::string:
+        switch (val.as_string_fmt().fmt) {
+        case toml::string_format::literal:
+            m.fields["StringEscapeStyle"] = "literal"; break;
+        case toml::string_format::multiline_basic:
+            m.fields["StringLayout"] = "multiline"; break;
+        case toml::string_format::multiline_literal:
+            m.fields["StringEscapeStyle"] = "literal";
+            m.fields["StringLayout"] = "multiline"; break;
+        default: break;
+        }
+        break;
+    case toml::value_t::array: {
+        bool ofTables = !val.as_array().empty() &&
+            val.as_array().front().is_table();
+        auto fmt = val.as_array_fmt().fmt;
+        if (ofTables) {
+            if (fmt == toml::array_format::oneline ||
+                fmt == toml::array_format::multiline) {
+                m.fields["TableArrayStyle"] = "inline";
+            }
+        } else if (fmt == toml::array_format::multiline) {
+            m.fields["ArrayStyle"] = "block";
+        }
+        break;
+    }
+    case toml::value_t::table:
+        switch (val.as_table_fmt().fmt) {
+        case toml::table_format::oneline:
+        case toml::table_format::multiline_oneline:
+            m.fields["TableStyle"] = "inline"; break;
+        case toml::table_format::dotted:
+            m.fields["TableStyle"] = "dotted"; break;
+        default: break;
+        }
+        break;
+    default:
+        break;
+    }
+    if (includeComments) m.comments = commentLines(val);
+    return m;
+}
+
 void ReadTomlImpl::emitTable(const toml::ordered_value& table,
                              DocumentHandler& handler) {
     const auto& tbl = table.as_table();
@@ -69,14 +143,22 @@ void ReadTomlImpl::emitTable(const toml::ordered_value& table,
 
     for (const auto& [key, val] : tbl) {
         handler.key(key);
-        emitValue(val, handler);
+        // Comments on a table entry belong to the key.
+        NodeMeta km;
+        km.comments = commentLines(val);
+        if (!km.empty()) handler.keyMetadata(km);
+        emitValue(val, handler, false);
     }
 
     handler.endObject();
 }
 
 void ReadTomlImpl::emitValue(const toml::ordered_value& val,
-                             DocumentHandler& handler) {
+                             DocumentHandler& handler,
+                             bool includeComments) {
+    NodeMeta m = valueMeta(val, includeComments);
+    if (!m.empty()) handler.metadata(m);
+
     auto t = val.type();
 
     if (t == toml::value_t::table) {
@@ -95,7 +177,7 @@ void ReadTomlImpl::emitArray(const toml::ordered_array& arr,
                              DocumentHandler& handler) {
     handler.startArray(arr.size());
     for (const auto& elem : arr) {
-        emitValue(elem, handler);
+        emitValue(elem, handler, true);
     }
     handler.endArray();
 }

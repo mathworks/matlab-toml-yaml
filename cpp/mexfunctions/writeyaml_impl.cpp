@@ -29,6 +29,8 @@ void WriteYamlImpl::execute(matlab::mex::ArgumentList outputs,
 
     stack.clear();
     hasPendingKey = false;
+    pendingKeyStyle.clear();
+    pendingMeta = NodeMeta();
 
     MatlabWalker::walk(data, *this);
 
@@ -73,11 +75,40 @@ ryml::type_bits WriteYamlImpl::seqFlags() {
         : ryml::SEQ;
 }
 
+NodeMeta WriteYamlImpl::takeMeta() {
+    NodeMeta m = std::move(pendingMeta);
+    pendingMeta = NodeMeta();
+    return m;
+}
+
+void WriteYamlImpl::metadata(const NodeMeta& m) {
+    pendingMeta = m;
+}
+
+void WriteYamlImpl::keyMetadata(const NodeMeta& m) {
+    pendingKeyStyle = m.get("KeyStyle");
+}
+
+// Scalar style from metadata. A plain style is ignored when the text
+// would not read back as the same string.
+ryml::type_bits WriteYamlImpl::scalarFlags(const std::string& style,
+                                           bool needsQuotes) {
+    if (style == "single-quoted") return ryml::VAL_SQUO;
+    if (style == "double-quoted") return ryml::VAL_DQUO;
+    if (style == "literal") return ryml::VAL_LITERAL;
+    if (style == "folded") return ryml::VAL_FOLDED;
+    if (needsQuotes) return ryml::VAL_DQUO;
+    if (style == "plain") return ryml::VAL_PLAIN;
+    return ryml::NOTYPE;
+}
+
 void WriteYamlImpl::setNodeValue(ryml::NodeRef node,
-                                 const std::string& text, bool quoted) {
+                                 const std::string& text, bool quoted,
+                                 const std::string& style) {
     ryml::csubstr arenaVal = toArena(text);
-    if (quoted) {
-        node.set_val(arenaVal, ryml::VAL_DQUO);
+    ryml::type_bits flags = scalarFlags(style, quoted);
+    if (flags != ryml::NOTYPE) {
+        node.set_val(arenaVal, flags);
     } else {
         node.set_val(arenaVal);
     }
@@ -92,7 +123,13 @@ ryml::NodeRef WriteYamlImpl::allocChild() {
     ryml::NodeRef child = parent.append_child();
     if (hasPendingKey) {
         child.set_key(toArena(pendingKey));
+        if (pendingKeyStyle == "single-quoted") {
+            child |= ryml::KEY_SQUO;
+        } else if (pendingKeyStyle == "double-quoted") {
+            child |= ryml::KEY_DQUO;
+        }
         hasPendingKey = false;
+        pendingKeyStyle.clear();
     }
     return child;
 }
@@ -106,13 +143,18 @@ void WriteYamlImpl::startObject(size_t /*count*/) {
     } else {
         node = allocChild();
     }
+    NodeMeta m = takeMeta();
     node |= ryml::MAP;
+    if (m.get("ContainerStyle") == "flow") {
+        node |= ryml::FLOW_SL;
+    }
     stack.push_back(node);
 }
 
 void WriteYamlImpl::key(std::string_view k) {
     pendingKey.assign(k.data(), k.size());
     hasPendingKey = true;
+    pendingKeyStyle.clear();
 }
 
 void WriteYamlImpl::endObject() {
@@ -126,8 +168,12 @@ void WriteYamlImpl::startArray(size_t count) {
     } else {
         node = allocChild();
     }
-    if (count == 0) {
+    // Per-node metadata takes precedence over the ArrayStyle option.
+    std::string style = takeMeta().get("ContainerStyle");
+    if (count == 0 || style == "flow") {
         node |= (ryml::SEQ | ryml::FLOW_SL);
+    } else if (style == "block") {
+        node |= ryml::SEQ;
     } else {
         node |= seqFlags();
     }
@@ -139,21 +185,25 @@ void WriteYamlImpl::endArray() {
 }
 
 void WriteYamlImpl::nullValue() {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     child.set_val(toArena("null"));
 }
 
 void WriteYamlImpl::boolValue(bool b) {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     setNodeValue(child, b ? "true" : "false", false);
 }
 
 void WriteYamlImpl::intValue(int64_t i) {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     setNodeValue(child, formatInt(i), false);
 }
 
 void WriteYamlImpl::uintValue(uint64_t u) {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     char buf[32];
     auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), u);
@@ -161,17 +211,20 @@ void WriteYamlImpl::uintValue(uint64_t u) {
 }
 
 void WriteYamlImpl::doubleValue(double d) {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     setNodeValue(child, formatDouble(d), false);
 }
 
 void WriteYamlImpl::stringValue(std::string_view s) {
+    std::string style = takeMeta().get("ScalarStyle");
     ryml::NodeRef child = allocChild();
     std::string text(s);
-    setNodeValue(child, text, needsQuoting(text));
+    setNodeValue(child, text, needsQuoting(text), style);
 }
 
 void WriteYamlImpl::datetimeValue(std::string_view iso) {
+    pendingMeta = NodeMeta();
     ryml::NodeRef child = allocChild();
     std::string text(iso);
     setNodeValue(child, text, false);

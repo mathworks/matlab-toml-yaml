@@ -25,6 +25,8 @@ class WriteYamlImpl : public DocumentHandler {
     std::vector<ryml::NodeRef> stack;
     std::string pendingKey;
     bool hasPendingKey = false;
+    std::string pendingKeyStyle;
+    NodeMeta pendingMeta;
 
 public:
     explicit WriteYamlImpl(std::shared_ptr<matlab::engine::MATLABEngine> eng);
@@ -43,13 +45,19 @@ public:
     void doubleValue(double d) override;
     void stringValue(std::string_view s) override;
     void datetimeValue(std::string_view iso) override;
+    void metadata(const NodeMeta& m) override;
+    void keyMetadata(const NodeMeta& m) override;
 
 private:
+    NodeMeta takeMeta();
+    static ryml::type_bits scalarFlags(const std::string& style,
+                                       bool needsQuotes);
     void parseOptions(const matlab::data::Array& optsArr);
     ryml::csubstr toArena(const std::string& s);
     ryml::type_bits seqFlags();
     void setNodeValue(ryml::NodeRef node,
-                      const std::string& text, bool quoted);
+                      const std::string& text, bool quoted,
+                      const std::string& style = "");
     ryml::NodeRef allocChild();
 
     static bool needsQuoting(const std::string& s);

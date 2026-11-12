@@ -31,6 +31,7 @@ void WriteTomlImpl::execute(matlab::mex::ArgumentList outputs,
 
     stack.clear();
     rootResult = toml::ordered_value();
+    pendingMeta = NodeMeta();
 
     MatlabWalker::walk(data, *this);
 
@@ -80,6 +81,29 @@ void WriteTomlImpl::parseOptions(const matlab::data::Array& optsArr) {
         getOptionDouble(opts, "Precision"));
 }
 
+NodeMeta WriteTomlImpl::takeMeta() {
+    NodeMeta m = std::move(pendingMeta);
+    pendingMeta = NodeMeta();
+    return m;
+}
+
+void WriteTomlImpl::addComments(toml::ordered_value& val,
+                                const std::vector<std::string>& lines) {
+    for (const auto& line : lines) {
+        val.comments().push_back(line.empty() ? "#" : "# " + line);
+    }
+}
+
+void WriteTomlImpl::metadata(const NodeMeta& m) {
+    pendingMeta = m;
+}
+
+void WriteTomlImpl::keyMetadata(const NodeMeta& m) {
+    if (auto* of = std::get_if<ObjectFrame>(&stack.back())) {
+        of->pendingKeyComments = m.comments;
+    }
+}
+
 void WriteTomlImpl::pushToParent(toml::ordered_value val) {
     if (stack.empty()) {
         rootResult = std::move(val);
@@ -87,6 +111,8 @@ void WriteTomlImpl::pushToParent(toml::ordered_value val) {
     }
     auto& frame = stack.back();
     if (auto* of = std::get_if<ObjectFrame>(&frame)) {
+        addComments(val, of->pendingKeyComments);
+        of->pendingKeyComments.clear();
         of->table.push_back({of->pendingKey, std::move(val)});
     } else if (auto* af = std::get_if<ArrayFrame>(&frame)) {
         af->array.push_back(std::move(val));
@@ -96,22 +122,37 @@ void WriteTomlImpl::pushToParent(toml::ordered_value val) {
 // ── DocumentHandler implementation ──────────────────────────────────
 
 void WriteTomlImpl::startObject(size_t /*count*/) {
-    stack.emplace_back(ObjectFrame{});
+    ObjectFrame of;
+    of.meta = takeMeta();
+    stack.emplace_back(std::move(of));
 }
 
 void WriteTomlImpl::key(std::string_view k) {
     auto& of = std::get<ObjectFrame>(stack.back());
     of.pendingKey.assign(k.data(), k.size());
+    of.pendingKeyComments.clear();
 }
 
 void WriteTomlImpl::endObject() {
     auto of = std::get<ObjectFrame>(std::move(stack.back()));
     stack.pop_back();
-    pushToParent(toml::ordered_value(std::move(of.table)));
+
+    toml::table_format_info fmt;
+    std::string style = of.meta.get("TableStyle");
+    if (style == "inline") {
+        fmt.fmt = toml::table_format::oneline;
+    } else if (style == "dotted") {
+        fmt.fmt = toml::table_format::dotted;
+    }
+    toml::ordered_value val(std::move(of.table), fmt);
+    addComments(val, of.meta.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::startArray(size_t /*count*/) {
-    stack.emplace_back(ArrayFrame{});
+    ArrayFrame af;
+    af.meta = takeMeta();
+    stack.emplace_back(std::move(af));
 }
 
 void WriteTomlImpl::endArray() {
@@ -121,28 +162,68 @@ void WriteTomlImpl::endArray() {
     toml::array_format_info fmt;
     fmt.body_indent = indentSize;
 
+    // Per-node metadata takes precedence over the global writer options.
     if (!af.array.empty() && af.array.front().is_table()) {
-        fmt.fmt = resolveTableArrayFormat(af.array);
+        std::string style = af.meta.get("TableArrayStyle");
+        if (style == "inline") {
+            fmt.fmt = toml::array_format::oneline;
+        } else if (style == "expanded") {
+            fmt.fmt = toml::array_format::array_of_tables;
+        } else {
+            fmt.fmt = resolveTableArrayFormat(af.array);
+        }
     } else {
-        fmt.fmt = resolveArrayFormat(af.array);
+        std::string style = af.meta.get("ArrayStyle");
+        if (style == "flow") {
+            fmt.fmt = toml::array_format::oneline;
+        } else if (style == "block") {
+            fmt.fmt = toml::array_format::multiline;
+        } else {
+            fmt.fmt = resolveArrayFormat(af.array);
+        }
     }
 
-    pushToParent(toml::ordered_value(std::move(af.array), fmt));
+    toml::ordered_value val(std::move(af.array), fmt);
+    addComments(val, af.meta.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::nullValue() {
+    pendingMeta = NodeMeta();
     // TOML has no null type — discard this value.
     // In object context the pending key is simply overwritten by the next
     // key() call; in array context we omit the element.
 }
 
 void WriteTomlImpl::boolValue(bool b) {
-    pushToParent(toml::ordered_value(b));
+    NodeMeta m = takeMeta();
+    toml::ordered_value val(b);
+    addComments(val, m.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::intValue(int64_t i) {
-    pushToParent(toml::ordered_value(
-        static_cast<toml::ordered_value::integer_type>(i)));
+    NodeMeta m = takeMeta();
+    toml::integer_format_info fmt;
+    std::string f = m.get("IntegerFormat");
+    if (f == "hex") {
+        fmt.fmt = toml::integer_format::hex;
+    } else if (f == "oct") {
+        fmt.fmt = toml::integer_format::oct;
+    } else if (f == "bin") {
+        fmt.fmt = toml::integer_format::bin;
+    }
+    // TOML only allows hex/oct/bin for non-negative integers.
+    if (i < 0) fmt.fmt = toml::integer_format::dec;
+    if (!m.get("FloatFormat").empty()) {
+        pendingMeta = std::move(m);
+        doubleValue(static_cast<double>(i));
+        return;
+    }
+    toml::ordered_value val(
+        static_cast<toml::ordered_value::integer_type>(i), fmt);
+    addComments(val, m.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::uintValue(uint64_t u) {
@@ -152,17 +233,31 @@ void WriteTomlImpl::uintValue(uint64_t u) {
             " exceeds TOML's signed 64-bit integer range.");
         return;
     }
-    pushToParent(toml::ordered_value(
-        static_cast<toml::ordered_value::integer_type>(u)));
+    intValue(static_cast<int64_t>(u));
 }
 
 void WriteTomlImpl::doubleValue(double d) {
-    pushToParent(convertDouble(d));
+    NodeMeta m = takeMeta();
+    std::string f = m.get("FloatFormat");
+    toml::ordered_value val;
+    if (f == "scientific" || f == "fixed") {
+        toml::floating_format_info fmt;
+        fmt.prec = static_cast<std::size_t>(precision);
+        fmt.fmt = (f == "scientific") ? toml::floating_format::scientific
+                                      : toml::floating_format::fixed;
+        val = toml::ordered_value(d, fmt);
+    } else {
+        val = convertDouble(d);
+    }
+    addComments(val, m.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::stringValue(std::string_view s) {
+    NodeMeta m = takeMeta();
     toml::string_format_info fmt;
-    fmt.fmt = resolveStringFormat();
+    fmt.fmt = resolveStringFormat(m.get("StringEscapeStyle"),
+                                  m.get("StringLayout"));
 
     std::string str(s);
     bool hasNewline = str.find('\n') != std::string::npos;
@@ -190,11 +285,16 @@ void WriteTomlImpl::stringValue(std::string_view s) {
         fmt.start_with_newline = true;
     }
 
-    pushToParent(toml::ordered_value(std::move(str), fmt));
+    toml::ordered_value val(std::move(str), fmt);
+    addComments(val, m.comments);
+    pushToParent(std::move(val));
 }
 
 void WriteTomlImpl::datetimeValue(std::string_view iso) {
-    pushToParent(parseDatetimeFromString(std::string(iso)));
+    NodeMeta m = takeMeta();
+    toml::ordered_value val = parseDatetimeFromString(std::string(iso));
+    addComments(val, m.comments);
+    pushToParent(std::move(val));
 }
 
 // ── TOML formatting helpers (unchanged) ─────────────────────────────
@@ -210,9 +310,13 @@ toml::ordered_value WriteTomlImpl::convertDouble(double v) {
     return toml::ordered_value(v, fmt);
 }
 
-toml::string_format WriteTomlImpl::resolveStringFormat() {
-    bool useLiteral = (stringEscapeStyle == "literal");
-    bool useMultiline = (stringLayout == "multiline");
+toml::string_format WriteTomlImpl::resolveStringFormat(
+        const std::string& escapeStyle, const std::string& layout) {
+    // Per-node metadata takes precedence over the global writer options.
+    const std::string& escape = escapeStyle.empty() ? stringEscapeStyle : escapeStyle;
+    const std::string& lines = layout.empty() ? stringLayout : layout;
+    bool useLiteral = (escape == "literal");
+    bool useMultiline = (lines == "multiline");
 
     if (useMultiline) {
         return useLiteral ? toml::string_format::multiline_literal

@@ -18,6 +18,11 @@ void MatlabWalker::walkValue(const matlab::data::Array& val,
             walkObject(val, handler);
             return;
         }
+        if (structHasField(sa, "Elements")) {
+            handler.metadata(structToMeta(sa[0]["Metadata"]));
+            walkValue(sa[0]["Elements"], handler);
+            return;
+        }
         if (structHasField(sa, "Data")) {
             walkValueNode(sa, handler);
             return;
@@ -92,11 +97,23 @@ void MatlabWalker::walkObject(const matlab::data::Array& nodeArr,
         node[0]["Values"];
 
     size_t n = keys.getNumberOfElements();
+    if (structHasField(node, "TableMetadata")) {
+        handler.metadata(structToMeta(node[0]["TableMetadata"]));
+    }
     handler.startObject(n);
 
+    bool hasKeyMeta = structHasField(node, "KeyMetadata");
     for (size_t i = 0; i < n; ++i) {
         std::string keyStr = matlabStringToUtf8(keys[i]);
         handler.key(keyStr);
+        if (hasKeyMeta) {
+            matlab::data::TypedArray<matlab::data::Array> keyMeta =
+                node[0]["KeyMetadata"];
+            if (i < keyMeta.getNumberOfElements()) {
+                NodeMeta km = structToMeta(keyMeta[i]);
+                if (!km.empty()) handler.keyMetadata(km);
+            }
+        }
         walkValue(values[i], handler);
     }
 
@@ -105,6 +122,9 @@ void MatlabWalker::walkObject(const matlab::data::Array& nodeArr,
 
 void MatlabWalker::walkValueNode(const matlab::data::StructArray& vn,
                                  DocumentHandler& handler) {
+    if (structHasField(vn, "Metadata")) {
+        handler.metadata(structToMeta(vn[0]["Metadata"]));
+    }
     if (structHasField(vn, "Type")) {
         matlab::data::TypedArray<matlab::data::MATLABString> typeArr =
             vn[0]["Type"];

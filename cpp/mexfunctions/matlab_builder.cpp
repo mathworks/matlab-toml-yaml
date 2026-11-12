@@ -1,6 +1,26 @@
 #include "matlab_builder.hpp"
 
 void MatlabBuilder::pushValue(matlab::data::Array val) {
+    if (!arrayMeta.empty()) {
+        auto node = factory.createStructArray({1, 1}, {"Elements", "Metadata"});
+        node[0]["Elements"] = std::move(val);
+        node[0]["Metadata"] = metaToStruct(factory, arrayMeta);
+        val = std::move(node);
+        arrayMeta = NodeMeta();
+    } else if (!pendingMeta.empty()) {
+        auto metaStruct = metaToStruct(factory, pendingMeta);
+        if (val.getType() == matlab::data::ArrayType::STRUCT &&
+            structHasField(matlab::data::StructArray(val), "Data")) {
+            val = withField(factory, matlab::data::StructArray(val),
+                "Metadata", std::move(metaStruct));
+        } else {
+            auto node = factory.createStructArray({1, 1}, {"Data", "Metadata"});
+            node[0]["Data"] = std::move(val);
+            node[0]["Metadata"] = std::move(metaStruct);
+            val = std::move(node);
+        }
+        pendingMeta = NodeMeta();
+    }
     if (stack.empty()) {
         root = std::move(val);
         return;
@@ -17,12 +37,24 @@ void MatlabBuilder::startObject(size_t count) {
     MapFrame mf;
     mf.keys.reserve(count);
     mf.values.reserve(count);
+    mf.meta = std::move(pendingMeta);
+    pendingMeta = NodeMeta();
     stack.emplace_back(std::move(mf));
 }
 
 void MatlabBuilder::key(std::string_view k) {
     auto& mf = std::get<MapFrame>(stack.back());
     mf.keys.emplace_back(k);
+    mf.keyMeta.emplace_back();
+}
+
+void MatlabBuilder::metadata(const NodeMeta& m) {
+    pendingMeta = m;
+}
+
+void MatlabBuilder::keyMetadata(const NodeMeta& m) {
+    auto& mf = std::get<MapFrame>(stack.back());
+    if (!mf.keyMeta.empty()) mf.keyMeta.back() = m;
 }
 
 void MatlabBuilder::endObject() {
@@ -38,12 +70,54 @@ void MatlabBuilder::endObject() {
         values[0][i] = std::move(mf.values[i]);
     }
 
-    pushValue(makeTableNode(factory, std::move(keys), std::move(values)));
+    auto node = makeTableNode(factory, std::move(keys), std::move(values));
+
+    bool anyKeyMeta = false;
+    for (const auto& km : mf.keyMeta) anyKeyMeta = anyKeyMeta || !km.empty();
+    if (anyKeyMeta) {
+        auto keyMeta = factory.createArray<matlab::data::Array>({1, n});
+        for (size_t i = 0; i < n; ++i) {
+            keyMeta[0][i] = metaToStruct(factory, mf.keyMeta[i]);
+        }
+        node = withField(factory, node, "KeyMetadata", std::move(keyMeta));
+    }
+    if (!mf.meta.empty()) {
+        node = withField(factory, node, "TableMetadata",
+            metaToStruct(factory, mf.meta));
+    }
+    pushValue(std::move(node));
+}
+
+// Nested arrays that differ only by a shared style (e.g. rows of a
+// matrix written as flow sequences) are unwrapped so they can still be
+// consolidated into one typed array. The shared row style is dropped.
+void MatlabBuilder::unwrapUniformArrayNodes(
+        std::vector<matlab::data::Array>& elements) {
+    if (elements.size() < 2) return;
+    NodeMeta first;
+    for (size_t i = 0; i < elements.size(); ++i) {
+        if (elements[i].getType() != matlab::data::ArrayType::STRUCT) return;
+        matlab::data::StructArray sa(elements[i]);
+        if (!structHasField(sa, "Elements")) return;
+        NodeMeta m = structToMeta(sa[0]["Metadata"]);
+        if (i == 0) {
+            first = m;
+        } else if (m.fields != first.fields || m.comments != first.comments) {
+            return;
+        }
+    }
+    for (auto& el : elements) {
+        matlab::data::StructArray sa(el);
+        matlab::data::Array inner = sa[0]["Elements"];
+        el = inner;
+    }
 }
 
 void MatlabBuilder::startArray(size_t count) {
     ArrayFrame af;
     af.elements.reserve(count);
+    af.meta = std::move(pendingMeta);
+    pendingMeta = NodeMeta();
     stack.emplace_back(std::move(af));
 }
 
@@ -52,6 +126,7 @@ void MatlabBuilder::endArray() {
 
     auto af = std::get<ArrayFrame>(std::move(stack.back()));
     stack.pop_back();
+    arrayMeta = std::move(af.meta);
 
     if (af.elements.empty()) {
         pushValue(factory.createArray<double>({0, 0}));
@@ -59,6 +134,7 @@ void MatlabBuilder::endArray() {
     }
 
     size_t n = af.elements.size();
+    unwrapUniformArrayNodes(af.elements);
     auto firstType = af.elements[0].getType();
     auto firstDims = af.elements[0].getDimensions();
     size_t firstNumel = af.elements[0].getNumberOfElements();
