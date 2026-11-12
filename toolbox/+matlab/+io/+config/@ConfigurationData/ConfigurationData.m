@@ -51,6 +51,9 @@ classdef (Abstract) ConfigurationData < ...
 
         tree = toNodeTree(obj)
         tf = isequaln(a, b, varargin)
+        meta = getformat(obj, keyPath)
+        obj = setformat(obj, keyPath, options)
+        obj = resetformat(obj, keyPath)
     end
 
     methods (Static, Hidden)
