@@ -38,7 +38,10 @@ function cfg = mexSourcesAndOptions()
 
     % Disable rapidyaml's debugbreak dependency (BSD-2-Clause, separate from rapidyaml's MIT license)
     noDebugBreak = "-DC4_NO_DEBUG_BREAK";
-    cfg.Options = ["-I" + includeFolder, cxx17Flag, noDebugBreak, staticLibcxxFlags()];
+    % Accept tabs as token separators after "-" and ":" (YAML 1.2 spec
+    % Example 6.3). rapidyaml disables this by default for speed.
+    tabTokens = "-DRYML_WITH_TAB_TOKENS";
+    cfg.Options = ["-I" + includeFolder, cxx17Flag, noDebugBreak, tabTokens, staticLibcxxFlags()];
 
     srcFolder = fullfile("cpp", "mexfunctions");
     fs = matlab.io.datastore.FileSet(srcFolder, FileExtensions=".cpp");

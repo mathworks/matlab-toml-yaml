@@ -203,7 +203,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
             testCase.verifyEqual(config.next, 1);
         end
 
-        function testBareDashItemIsEmpty(testCase)
+        function testBareDashItemIsMissing(testCase)
             file = testCase.writeText([...
                 "items:"; ...
                 "- a"; ...
@@ -212,11 +212,11 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {"a"; []; "c"});
+            testCase.verifyEqual(config.items, {"a"; missing; "c"});
         end
 
         function testBareDashInNumericSequenceIsKept(testCase)
-            % Numeric consolidation would drop the empty item, so the
+            % Numeric consolidation would drop the null item, so the
             % sequence stays a cell array.
             file = testCase.writeText([...
                 "items:"; ...
@@ -226,7 +226,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {1; []; 3});
+            testCase.verifyEqual(config.items, {1; missing; 3});
         end
 
         function testAllBareDashSequenceKeepsItems(testCase)
@@ -237,7 +237,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.items, {[]; []});
+            testCase.verifyEqual(config.items, {missing; missing});
         end
 
         function testTabAfterDashIsSequenceItem(testCase)
@@ -352,7 +352,7 @@ classdef readyamlSequenceTest < ConfigurationFileTestCase
 
             config = readyaml(file);
 
-            testCase.verifyEqual(config.flow, {1; []; 3});
+            testCase.verifyEqual(config.flow, {1; missing; 3});
             testCase.verifyEqual(config.block, config.flow, ...
                 "Flow and block sequences should have the same orientation");
         end
