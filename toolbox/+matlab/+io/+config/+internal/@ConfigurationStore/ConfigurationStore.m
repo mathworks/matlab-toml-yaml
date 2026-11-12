@@ -12,6 +12,14 @@ classdef (Abstract) ConfigurationStore
         store   = setValue(store, key, value)
         store   = removeKey(store, key)
         tree    = toNodeTree(store)
+
+        % Format metadata (struct, or [] when none)
+        meta    = getKeyMetadata(store, key)       % the key entry
+        store   = setKeyMetadata(store, key, meta)
+        meta    = getNodeMetadata(store, key)      % the value at key
+        store   = setNodeMetadata(store, key, meta)
+        meta    = getTableMetadata(store)          % this table
+        store   = setTableMetadata(store, meta)
     end
 
     methods (Abstract, Static)

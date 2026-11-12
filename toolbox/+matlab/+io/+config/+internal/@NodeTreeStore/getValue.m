@@ -9,6 +9,9 @@ function val = expandNodeValue(val, store)
         if isfield(val, "Keys")
             val = wrapTableNode(val, store);
             return
+        elseif isfield(val, "Elements")
+            val = expandNodeValue(val.Elements, store);
+            return
         elseif isfield(val, "Data")
             val = expandValueNode(val, store);
             return
@@ -26,10 +29,18 @@ function val = expandNodeValue(val, store)
             end
             return
         end
+        % Elements wrapped only to carry metadata were not consolidated
+        % by the reader, so consolidate them after unwrapping.
+        hasStyledElements = any(cellfun(@isStyledValueNode, val));
         for j = 1:numel(val)
             val{j} = expandNodeValue(val{j}, store);
         end
-        val = tryConcatenateCell(val);
+        if hasStyledElements && store.ArrayType ~= "cell"
+            val = tryConcatenateScalars(val);
+        end
+        if iscell(val)
+            val = tryConcatenateCell(val);
+        end
         return
     end
 
@@ -52,7 +63,9 @@ function val = expandNodeValue(val, store)
 end
 
 function val = expandValueNode(node, store)
-    if node.Type == "missing"
+    if ~isfield(node, "Type")
+        val = expandNodeValue(node.Data, store);
+    elseif node.Type == "missing"
         val = missing;
     elseif node.Type == "datetime"
         if store.DatetimeType == "datetime"
@@ -60,6 +73,21 @@ function val = expandValueNode(node, store)
         else
             val = node.Data;
         end
+    end
+end
+
+function tf = isStyledValueNode(element)
+    tf = isstruct(element) && isfield(element, "Data") ...
+        && isfield(element, "Metadata");
+end
+
+function val = tryConcatenateScalars(val)
+    concatenableTypes = ["double", "logical", "string", "int64", "uint64"];
+    firstClass = class(val{1});
+    if all(cellfun(@(v) isscalar(v) && ~iscell(v) ...
+            && strcmp(class(v), firstClass), val)) ...
+            && ismember(firstClass, concatenableTypes)
+        val = vertcat(val{:});
     end
 end
 

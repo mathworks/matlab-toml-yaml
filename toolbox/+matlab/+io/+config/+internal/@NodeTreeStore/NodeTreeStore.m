@@ -6,9 +6,16 @@ classdef NodeTreeStore < matlab.io.config.internal.ConfigurationStore
     %
     %   Node types (discriminated by struct field names):
     %     TableNode  — struct(Keys, Values, [TableMetadata], [KeyMetadata])
-    %     ArrayNode  — struct(Elements, [Metadata])
+    %     ArrayNode  — struct(Elements, Metadata); Elements holds the
+    %                  array in its usual (unwrapped) representation
     %     ValueNode  — struct(Data, [Type], [Metadata])
     %     Bare value — anything that is not one of the above structs
+    %
+    %   Metadata levels: TableMetadata describes a table, KeyMetadata{i}
+    %   describes the key entry Keys(i), and the Metadata of an
+    %   ArrayNode/ValueNode describes that array or scalar. Each metadata
+    %   value is a struct of string fields plus an optional Comments
+    %   string column. Wrapper nodes exist only when metadata is present.
     %
     %   No Expanded flag is needed. User-set values (ConfigurationData,
     %   datetime, missing) are structurally distinct from node tree nodes
@@ -30,6 +37,12 @@ classdef NodeTreeStore < matlab.io.config.internal.ConfigurationStore
 
     methods (Hidden)
         tf = isequaln(a, b)
+        meta = getKeyMetadata(store, key)
+        store = setKeyMetadata(store, key, meta)
+        meta = getNodeMetadata(store, key)
+        store = setNodeMetadata(store, key, meta)
+        meta = getTableMetadata(store)
+        store = setTableMetadata(store, meta)
     end
 
     methods (Static)
